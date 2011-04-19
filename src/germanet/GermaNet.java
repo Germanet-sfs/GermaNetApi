@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Verena Henrich, Department of General and Computational
+ * Copyright (C) 2011 Verena Henrich, Department of General and Computational
  * Linguistics, University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
@@ -87,7 +87,7 @@ import javax.xml.stream.XMLStreamException;
  * need to be changed to 256's or higher.
  * 
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
- * @version 2.0
+ * @version 6.0
  */
 public class GermaNet {
     public static final String XML_SYNSETS = "synsets";
@@ -193,7 +193,9 @@ public class GermaNet {
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
-     * files in the specified directory File.
+     * from the specified list of input stream. Please make sure that all
+     * synset files (*.*.xml) are added to the list of input streams before the
+     * relations file (gn_relations.xml).
      * @param inputStreams the GermaNet data streams
      * @param ignoreCase if true ignore case on lookups, otherwise do case
      * sensitive searches

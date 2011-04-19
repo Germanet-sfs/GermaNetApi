@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Verena Henrich, Department of General and Computational
+ * Copyright (C) 2011 Verena Henrich, Department of General and Computational
  * Linguistics, University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
@@ -23,13 +23,11 @@ package germanet;
  * Enumeration of all lexical relations.
  * 
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
- * @version 2.0
+ * @version 6.0
  */
 public enum LexRel {
-    synonymy, antonymy,
-    pertonymy, participle;
-//    arg1, arg1_pred,
-//    arg2, arg2_pred;
+    has_synonym, has_antonym,
+    has_pertainym, has_participle;
 
     /**
      * Return true if the <code>String</code> <code>relName</code> represents a

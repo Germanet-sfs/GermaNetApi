@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Verena Henrich, Department of General and Computational
+ * Copyright (C) 2011 Verena Henrich, Department of General and Computational
  * Linguistics, University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
@@ -34,7 +34,7 @@ import javax.xml.stream.XMLStreamReader;
  * Load <code>Synsets</code> into a specified <code>GermaNet</code> object.
  * 
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
- * @version 2.0
+ * @version 6.0
  */
 class SynsetLoader {
     private GermaNet germaNet;

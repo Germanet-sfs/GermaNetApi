@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Verena Henrich, Department of General and Computational
+ * Copyright (C) 2011 Verena Henrich, Department of General and Computational
  * Linguistics, University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
@@ -30,10 +30,8 @@ import java.util.*;
  * artificial (boolean), namedEntity (boolean), and source (String).<br>
  * A <code>LexUnit</code> also has the lexical relations: <br><br>
  * 
- * <code>LexRel.antonymy</code>, <code>LexRel.synonymy</code>,<br>
- * <code>LexRel.pertonymy</code>,<br>
- * <code>LexRel.arg1</code>, <code>LexRel.arg1_pred</code>,<br>
- * <code>LexRel.arg2</code>, <code>LexRel.arg2_pred</code><br><br>
+ * <code>LexRel.has_antonym</code>, <code>LexRel.has_synonym</code>,<br>
+ * <code>LexRel.has_pertainym</code><br><br>
  * 
  * Methods are provided to get each of the attributes.<br><br>
  * 
@@ -62,7 +60,7 @@ import java.util.*;
  * to indicate that no objects exist for the given request. 
  * 
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
- * @version 2.0
+ * @version 6.0
  */
 public class LexUnit {
     private int id;
@@ -276,7 +274,7 @@ public class LexUnit {
     @SuppressWarnings("unchecked")
     public List<LexUnit> getRelatedLexUnits(LexRel type) {
         ArrayList<LexUnit> rval = null;
-        if (type.equals(LexRel.synonymy)) {
+        if (type.equals(LexRel.has_synonym)) {
             return getSynonyms();
         } else {
             rval = this.relations.get(type);

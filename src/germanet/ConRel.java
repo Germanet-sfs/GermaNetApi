@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Verena Henrich, Department of General and Computational
+ * Copyright (C) 2011 Verena Henrich, Department of General and Computational
  * Linguistics, University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
@@ -23,14 +23,16 @@ package germanet;
  * Enumeration of all conceptual relations.
  * 
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
- * @version 2.0
+ * @version 6.0
  */
 public enum ConRel {
-    hyperonymy(true), hyponymy(true),
-    meronymy(true), holonymy(true),
-    entailment(false), entailed(false),
-    causation(false), caused(false),
-    association(false);
+    has_hypernym(true), has_hyponym(true),
+    has_component_meronym(true), has_component_holonym(true),
+    has_member_meronym(true), has_member_holonym(true),
+    has_substance_meronym(true), has_substance_holonym(true),
+    has_portion_meronym(true), has_portion_holonym(true),
+    entails(false), is_entailed_by(false),
+    is_related_to(false), causes(false);
     private boolean transitive;
 
     private ConRel(boolean transitive) {

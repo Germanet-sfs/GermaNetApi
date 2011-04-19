@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Verena Henrich, Department of General and Computational
+ * Copyright (C) 2011 Verena Henrich, Department of General and Computational
  * Linguistics, University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
@@ -28,21 +28,23 @@ import java.util.*;
  * consists of a paraphrase (Strings) and a list of <code>LexUnit</code>s.
  * The List of <b>LexUnit</b>s is never empty.<br>
  * A <code>Synset</code> also has the conceptual relations (<code>ConRel</code>),
- * of which hyperonymy, hyponymy, meronymy, and holonymy
+ * of which hypernymy, hyponymy, meronymy, and holonymy
  * are transitive:<br><br>
  * 
- * <code>ConRel.hyperonymy</code>, <code>ConRel.hyponymy</code>,<br>
- * <code>ConRel.meronymy</code>, <code>ConRel.holonymy</code>,<br>
- * <code>ConRel.entailment</code>, <code>ConRel.entailed</code>,<br>
- * <code>ConRel.causation</code>, <code>ConRel.caused</code>,<br>
- * <code>ConRel.association</code><br><br>
- * 
+ * <code>ConRel.has_hypernym</code>, <code>ConRel.has_hyponym</code>,<br>
+ * <code>ConRel.has_component_meronym</code>, <code>ConRel.has_component_holonym</code>,<br>
+ * <code>ConRel.has_member_meronym</code>, <code>ConRel.has_member_holonym</code>,<br>
+ * <code>ConRel.has_substance_meronym</code>, <code>ConRel.has_substance_holonym</code>,<br>
+ * <code>ConRel.has_portion_meronym</code>, <code>ConRel.has_portion_holonym</code>,<br>
+ * <code>ConRel.entails</code>, <code>ConRel.is_entailed_by</code>,<br>
+ * <code>ConRel.is_related_to</code>, <code>ConRel.causes</code><br><br>
+ *
  * Methods are provided to get the <code>WordCategory</code>, paraphrase, and
  * the <code>LexUnit</code>s.<br><br>
  * 
  * Conceptual relations can be retrieved:<br>
  * <code>
- * &nbsp;&nbsp;&nbsp;List&lt;Synset&gt; hyperonyms = aSynset.getRelatedLexUnits(ConRel.hyperonymy);<br><br>
+ * &nbsp;&nbsp;&nbsp;List&lt;Synset&gt; hypernyms = aSynset.getRelatedLexUnits(ConRel.has_hypernym);<br><br>
  * </code>
  * Transitive relations can be retrieved:<br>
  * <code>
@@ -58,7 +60,7 @@ import java.util.*;
  * to indicate that no objects exist for the given request. 
 
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
- * @version 2.0
+ * @version 6.0
  */
 public class Synset {
     private int id;
@@ -205,7 +207,7 @@ public class Synset {
 
     /**
      * Add a relation of the specified type to target <code>Synset</code>.
-     * @param type the type of relation (eg. <code>ConRel.hyperonymy</code>)
+     * @param type the type of relation (eg. <code>ConRel.has_hypernym</code>)
      * @param target the target <code>Synset</code>
      */
     protected void addRelation(ConRel type, Synset target) {
@@ -223,8 +225,8 @@ public class Synset {
      * @param type type of relations to retrieve
      * @return a <code>List</code> of this <code>Synset</code>'s relations of
      * type <code>type</code>
-     * For example, hyperonyms of this <code>Synset</code> can be retrieved with
-     * the type <code>ConRel.hyperonymy</code>
+     * For example, hypernyms of this <code>Synset</code> can be retrieved with
+     * the type <code>ConRel.has_hypernym</code>
      */
     public List<Synset> getRelatedSynsets(ConRel type) {
         ArrayList<Synset> rval = this.relations.get(type);
@@ -247,7 +249,7 @@ public class Synset {
      * depth.<br>
      * Returns an empty <code>List</code> if type is not transitive.
      * @param type the <code>type</code> of relation (e.g.
-     * <code>ConRel.hyperonymy</code>).
+     * <code>ConRel.has_hypernym</code>).
      * @return the transitive closure of all relations of type <code>type</code>
      * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
      */
