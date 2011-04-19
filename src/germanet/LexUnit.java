@@ -30,8 +30,8 @@ import java.util.*;
  * artificial (boolean), namedEntity (boolean), and source (String).<br>
  * A <code>LexUnit</code> also has the lexical relations: <br><br>
  * 
- * <code>LexRel.has_antonym</code>, <code>LexRel.has_synonym</code>,<br>
- * <code>LexRel.has_pertainym</code><br><br>
+ * <code>LexRel.has_antonym</code>, <code>LexRel.has_synonym</code>,
+ * <code>LexRel.has_pertainym</code>, <code>LexRel.has_participle</code><br><br>
  * 
  * Methods are provided to get each of the attributes.<br><br>
  * 

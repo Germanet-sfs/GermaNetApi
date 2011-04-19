@@ -37,7 +37,8 @@ import java.util.*;
  * <code>ConRel.has_substance_meronym</code>, <code>ConRel.has_substance_holonym</code>,<br>
  * <code>ConRel.has_portion_meronym</code>, <code>ConRel.has_portion_holonym</code>,<br>
  * <code>ConRel.entails</code>, <code>ConRel.is_entailed_by</code>,<br>
- * <code>ConRel.is_related_to</code>, <code>ConRel.causes</code><br><br>
+ * <code>ConRel.is_related_to</code>,<br>
+ * <code>ConRel.causes</code><br><br>
  *
  * Methods are provided to get the <code>WordCategory</code>, paraphrase, and
  * the <code>LexUnit</code>s.<br><br>
