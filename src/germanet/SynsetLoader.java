@@ -63,6 +63,7 @@ class SynsetLoader {
         XMLStreamReader parser = factory.createXMLStreamReader(in);
         int event;
         String nodeName;
+        WordClass wordClass = WordClass.valueOf(synsetFile.getName().split("\\.")[1].toString());
 
         /*
          * Parse entire file, looking for synset start elements
@@ -77,6 +78,7 @@ class SynsetLoader {
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_SYNSET)) {
                         Synset syn = processSynset(parser);
+                        syn.setWordClass(wordClass);
                         germaNet.addSynset(syn);
                     }
                     break;
@@ -112,6 +114,7 @@ class SynsetLoader {
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_SYNSET)) {
                         Synset syn = processSynset(parser);
+//                        syn.setWordClass(wordClass); TODO
                         germaNet.addSynset(syn);
                     }
                     break;

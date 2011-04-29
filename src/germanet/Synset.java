@@ -66,6 +66,7 @@ import java.util.*;
 public class Synset {
     private int id;
     private WordCategory wordCategory;
+    private WordClass wordClass;
     private ArrayList<LexUnit> lexUnits;
     private String paraphrase;
 
@@ -94,12 +95,29 @@ public class Synset {
     }
 
     /**
+     * Returns the <code>WordClass</code> that this <code>Synset</code> belongs to.
+     * @return the <code>WordClass</code> that this <code>Synset</code> belongs to
+     */
+    public WordClass getWordClass() {
+        return wordClass;
+    }
+
+    /**
      * Return true if this <code>Synset</code> is in <code>wordCategory</code>.
      * @param wordCategory the <code>WordCategory</code> (eg. nomen, verben, adj)
      * @return true if this <code>Synset</code> is in <code>wordCategory</code>
      */
     public boolean inWordCategory(WordCategory wordCategory) {
         return wordCategory == this.wordCategory;
+    }
+
+    /**
+     * Return true if this <code>Synset</code> is in <code>wordClass</code>.
+     * @param wordClass the <code>WordClass</code> (eg. nomen, verben, adj)
+     * @return true if this <code>Synset</code> is in <code>wordClass</code>
+     */
+    public boolean inWordClass(WordClass wordClass) {
+        return wordClass == this.wordClass;
     }
 
     /**
@@ -133,6 +151,14 @@ public class Synset {
      */
     protected void setParaphrase(String paraphrase) {
         this.paraphrase = paraphrase;
+    }
+
+    /**
+     * Sets the word class of this <code>Synset</code>.
+     * @param wordClass the word class to set for this <code>Synset</code>
+     */
+    protected void setWordClass(WordClass wordClass) {
+        this.wordClass = wordClass;
     }
 
     /**

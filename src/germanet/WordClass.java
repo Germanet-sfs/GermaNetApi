@@ -20,11 +20,48 @@
 package germanet;
 
 /**
- * Enumeration of possible word categories, i.e., part-of-speech.
- * 
+ * Enumeration of possible word classes.
+ *
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
  * @version 6.0
  */
-public enum WordCategory {
-    adj, nomen, verben;
+public enum WordClass {
+    Allgemein,
+    Bewegung,
+    Gefuehl,
+    Geist,
+    Gesellschaft,
+    Koerper,
+    Menge,
+    natPhaenomen,
+    Ort,
+    Pertonym,
+    Perzeption,
+    privativ,
+    Relation,
+    Substanz,
+    Verhalten,
+    Zeit,
+    Artefakt,
+    Attribut,
+    Besitz,
+    Form,
+    Geschehen,
+    Gruppe,
+    Kognition,
+    Kommunikation,
+    Mensch,
+    Motiv,
+    Nahrung,
+    natGegenstand,
+    Pflanze,
+    Tier,
+    Tops,
+    Koerperfunktion,
+    Konkurrenz,
+    Kontakt,
+    Lokation,
+    Schoepfung,
+    Veraenderung,
+    Verbrauch
 }
