@@ -447,8 +447,12 @@ public class GermaNet {
     }
 
     /**
-     * Returns a <code>List</code> of <code>Synsets</code> with the specified
-     * <code>orthForm</code> and <code>WordCategory</code>.
+     * Returns a <code>List</code> of all <code>Synsets</code> with the
+     * specified <code>WordCategory</code> in which <code>orthForm</code> occurs
+     * as main orthographical form in one of its <code>LexUnits</code>. It uses
+     * the <code>ignoreCase</code> flag as set in the constructor. Same than
+     * calling <code>getSynsets(orthForm, wordCategory, false)</code> with
+     * <code>considerMainOrthFormOnly=false</code>.
      * @param orthForm the <code>orthForm</code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
      * <code>Synsets</code> to be found (e.g. <code>WordCategory.adj</code>)
@@ -456,6 +460,29 @@ public class GermaNet {
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
     public List<Synset> getSynsets(String orthForm, WordCategory wordCategory) {
+        return getSynsets(orthForm, wordCategory, false);
+    }
+
+    /**
+     * Returns a <code>List</code> of all <code>Synsets</code> with the
+     * specified <code>WordCategory</code> in which <code>orthForm</code> occurs
+     * as main orthographical form in one of its <code>LexUnits</code> -- in
+     * case <code>considerAllOrthForms</code> is true. Else returns a
+     * <code>List</code> of all <code>Synsets</code> in which
+     * <code>orthForm</code> occurs as orthographical variant, as old
+     * orthographical form, or as old orthographic variant in one of its
+     * <code>LexUnits</code> -- in case <code>considerAllOrthForms</code> is
+     * false. It uses the <code>ignoreCase</code> flag as set in the constructor.
+     * @param orthForm the <code>orthForm</code> to be found
+     * @param wordCategory the <code>WordCategory</code> of the
+     * <code>Synsets</code> to be found (e.g. <code>WordCategory.adj</code>)
+     * @param considerMainOrthFormOnly considering main orthographical form only
+     * (true) or all variants (false)
+     * @return a <code>List</code> of <code>Synsets</code> with the specified
+     * <code>orthForm</code> and <code>wordCategory</code>.
+     */
+    public List<Synset> getSynsets(String orthForm, WordCategory wordCategory,
+            boolean considerMainOrthFormOnly) {
         /*
          * This method can probably be removed since it is very rare that
          * an orthForm is contained in more than one word class
@@ -464,7 +491,11 @@ public class GermaNet {
         HashMap<String, ArrayList<LexUnit>> map;
         List<LexUnit> tmpList;
 
-        map = wordCategoryMap.get(wordCategory);
+        if (considerMainOrthFormOnly) {
+            map = wordCategoryMap.get(wordCategory);
+        } else {
+            map = wordCategoryMapAllOrthForms.get(wordCategory);
+        }
         if (map != null) {
             tmpList = map.get(orthForm);
             if (tmpList != null) {
@@ -544,27 +575,55 @@ public class GermaNet {
 
     /**
      * Returns a <code>List</code> of all <code>LexUnits</code> in which
-     * <code>orthForm</code> occurs, using the <code>ignoreCase</code> flag as
-     * set in the constructor.
+     * <code>orthForm</code> occurs as orthographical variant, as old
+     * orthographical form, or as old orthographic variant. It uses the
+     * <code>ignoreCase</code> flag as set in the constructor. Same than
+     * calling <code>getSynsets(orthForm, false)</code> with
+     * <code>considerMainOrthFormOnly=false</code>.
      * @param orthForm the <code>orthForm</code> to search for
      * @return a <code>List</code> of all <code>LexUnits</code> containing
      * <code>orthForm</code>. If no <code>LexUnits</code> were found, this is a
      * <code>List</code> containing no <code>LexUnits</code>.
      */
     public List<LexUnit> getLexUnits(String orthForm) {
+        return getLexUnits(orthForm, false);
+    }
+
+    /**
+     * Returns a <code>List</code> of all <code>LexUnits</code> in which
+     * <code>orthForm</code> occurs as main orthographical form -- in case
+     * <code>considerAllOrthForms</code> is true. Else returns a
+     * <code>List</code> of all <code>LexUnits</code> in which
+     * <code>orthForm</code> occurs as orthographical variant, as old
+     * orthographical form, or as old orthographic variant -- in case
+     * <code>considerAllOrthForms</code> is false. It uses the
+     * <code>ignoreCase</code> flag as set in the constructor.
+     * @param orthForm the <code>orthForm</code> to search for
+     * @param considerMainOrthFormOnly considering main orthographical form only
+     * (true) or all variants (false)
+     * @return a <code>List</code> of all <code>LexUnits</code> containing
+     * <code>orthForm</code>. If no <code>LexUnits</code> were found, this is a
+     * <code>List</code> containing no <code>LexUnits</code>.
+     */
+    public List<LexUnit> getLexUnits(String orthForm, boolean considerMainOrthFormOnly) {
         ArrayList<LexUnit> rval = new ArrayList<LexUnit>();
 
         // get LexUnits from each word class
         for (WordCategory wc : WordCategory.values()) {
-            rval.addAll(getLexUnits(orthForm, wc));
+            rval.addAll(getLexUnits(orthForm, wc, considerMainOrthFormOnly));
         }
         rval.trimToSize();
         return rval;
     }
 
     /**
-     * Returns a <code>List</code> of <code>LexUnits</code> with the specified
-     * <code>orthForm</code> and <code>wordCategory</code>.
+     * Returns a <code>List</code> of all <code>LexUnits</code> with the
+     * specified <code>WordCategory</code> in which <code>orthForm</code>
+     * occurs as orthographical variant, as old orthographical form, or as old
+     * orthographic variant. It uses the <code>ignoreCase</code> flag as set in
+     * the constructor. Same than calling
+     * <code>getSynsets(orthForm, wordCategory, false)</code> with
+     * <code>considerMainOrthFormOnly=false</code>.
      * @param orthForm the <code>orthForm<code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
      * <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
@@ -572,6 +631,28 @@ public class GermaNet {
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
     public List<LexUnit> getLexUnits(String orthForm, WordCategory wordCategory) {
+        return getLexUnits(orthForm, wordCategory, false);
+    }
+
+    /**
+     * Returns a <code>List</code> of all <code>LexUnits</code> with the
+     * specified <code>WordCategory</code> in which <code>orthForm</code> occurs
+     * as main orthographical form -- in case <code>considerAllOrthForms</code>
+     * is true. Else returns a <code>List</code> of all <code>LexUnits</code> in
+     * which <code>orthForm</code> occurs as orthographical variant, as old
+     * orthographical form, or as old orthographic variant -- in case
+     * <code>considerAllOrthForms</code> is false. It uses the
+     * <code>ignoreCase</code> flag as set in the constructor.
+     * @param orthForm the <code>orthForm<code> to be found
+     * @param wordCategory the <code>WordCategory</code> of the
+     * <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
+     * @param considerMainOrthFormOnly considering main orthographical form only
+     * (true) or all variants (false)
+     * @return a <code>List</code> of <code>LexUnits</code> with the specified
+     * <code>orthForm</code> and <code>wordCategory</code>.
+     */
+    public List<LexUnit> getLexUnits(String orthForm, WordCategory wordCategory,
+            boolean considerMainOrthFormOnly) {
         List<LexUnit> rval = null;
         ArrayList<LexUnit> tmpList;
         HashMap<String, ArrayList<LexUnit>> map;
@@ -581,7 +662,12 @@ public class GermaNet {
             mapForm = orthForm.toLowerCase();
         }
 
-        map = wordCategoryMap.get(wordCategory);
+        if (considerMainOrthFormOnly) {
+            map = wordCategoryMap.get(wordCategory);
+        } else {
+            map = wordCategoryMapAllOrthForms.get(wordCategory);
+        }
+
         if (map != null) {
             tmpList = map.get(mapForm);
             if (tmpList == null) {
