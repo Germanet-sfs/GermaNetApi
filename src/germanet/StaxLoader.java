@@ -106,7 +106,7 @@ class StaxLoader {
      * @throws javax.xml.stream.XMLStreamException
      */
     protected void load() throws XMLStreamException {
-        if (this.germaNetDir != null) { // load GermaNet from file
+//        if (this.germaNetDir != null) { // load GermaNet from file
             FilenameFilter filter = new SynsetFilter(); //get only synset files
 
             File[] germaNetFiles = germaNetDir.listFiles(filter);
@@ -137,34 +137,34 @@ class StaxLoader {
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(StaxLoader.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } else { // load GermaNet from InputStream list
-            if (germaNetStreams == null || germaNetStreams.size() == 0) {
-                try {
-                    throw new StreamCorruptedException("Unable to load GermaNet from input stream \"" + this.germaNetStreams.toString() + "\"");
-                } catch (StreamCorruptedException ex) {
-                    Logger.getLogger(StaxLoader.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            // load all synset input streams first with a SynsetLoader
-            System.out.println("streams = " + germaNetStreams.size());
-            for (int i = 0; i < germaNetStreams.size() - 1; i++) {
-
-                System.out.println("Loading input stream " +
-//                        germaNetStreams.get(i) +
-                        i + "...");
-                synLoader.loadSynsets(germaNetStreams.get(i));
-            }
-
-//            germaNetFiles = germaNetDir.listFiles(filter);
-
-            // load relations with a RelationLoader
-              System.out.println("Loading input stream " +
-//                        germaNetFiles[i].getName() +
-                    (germaNetStreams.size() - 1) + "...");
-            relLoader.loadRelations(germaNetStreams.get(germaNetStreams.size() - 1));
-            System.out.println("Done.");
-        }
+//        } else { // load GermaNet from InputStream list
+//            if (germaNetStreams == null || germaNetStreams.size() == 0) {
+//                try {
+//                    throw new StreamCorruptedException("Unable to load GermaNet from input stream \"" + this.germaNetStreams.toString() + "\"");
+//                } catch (StreamCorruptedException ex) {
+//                    Logger.getLogger(StaxLoader.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//            }
+//
+//            // load all synset input streams first with a SynsetLoader
+//            System.out.println("streams = " + germaNetStreams.size());
+//            for (int i = 0; i < germaNetStreams.size() - 1; i++) {
+//
+//                System.out.println("Loading input stream " +
+////                        germaNetStreams.get(i) +
+//                        i + "...");
+//                synLoader.loadSynsets(germaNetStreams.get(i));
+//            }
+//
+////            germaNetFiles = germaNetDir.listFiles(filter);
+//
+//            // load relations with a RelationLoader
+//              System.out.println("Loading input stream " +
+////                        germaNetFiles[i].getName() +
+//                    (germaNetStreams.size() - 1) + "...");
+//            relLoader.loadRelations(germaNetStreams.get(germaNetStreams.size() - 1));
+//            System.out.println("Done.");
+//        }
     }
 
     /**

@@ -93,35 +93,35 @@ class SynsetLoader {
      * @param synsetFile the file containing <code>GermaNet Synset<code> data
      * @throws javax.xml.stream.XMLStreamException
      */
-    protected void loadSynsets(InputStream inputStream) throws XMLStreamException {
-//        InputStream in = new FileInputStream(synsetFile);
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        System.out.println("loadSynsets...");
-        XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
-        int event;
-        String nodeName;
-
-        /*
-         * Parse entire file, looking for synset start elements
-         */
-        while (parser.hasNext()) {
-            event = parser.next();
-            switch (event) {
-                case XMLStreamConstants.START_DOCUMENT:
-                    namespace = parser.getNamespaceURI();
-                    break;
-                case XMLStreamConstants.START_ELEMENT:
-                    nodeName = parser.getLocalName();
-                    if (nodeName.equals(GermaNet.XML_SYNSET)) {
-                        Synset syn = processSynset(parser);
-//                        syn.setWordClass(wordClass); TODO
-                        germaNet.addSynset(syn);
-                    }
-                    break;
-            }
-        }
-        parser.close();
-    }
+//    protected void loadSynsets(InputStream inputStream) throws XMLStreamException {
+////        InputStream in = new FileInputStream(synsetFile);
+//        XMLInputFactory factory = XMLInputFactory.newInstance();
+//        System.out.println("loadSynsets...");
+//        XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
+//        int event;
+//        String nodeName;
+//
+//        /*
+//         * Parse entire file, looking for synset start elements
+//         */
+//        while (parser.hasNext()) {
+//            event = parser.next();
+//            switch (event) {
+//                case XMLStreamConstants.START_DOCUMENT:
+//                    namespace = parser.getNamespaceURI();
+//                    break;
+//                case XMLStreamConstants.START_ELEMENT:
+//                    nodeName = parser.getLocalName();
+//                    if (nodeName.equals(GermaNet.XML_SYNSET)) {
+//                        Synset syn = processSynset(parser);
+////                        syn.setWordClass(wordClass); TODO
+//                        germaNet.addSynset(syn);
+//                    }
+//                    break;
+//            }
+//        }
+//        parser.close();
+//    }
 
     /**
      * Returns the <code>Synset</code> for which the start tag was just encountered.

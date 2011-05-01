@@ -126,6 +126,7 @@ public class GermaNet {
     public static final String NO = "no";
 
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
+    private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
     private ArrayList<Synset> synsets;
     private HashMap<Integer, LexUnit> lexUnitID;
     private HashMap<Integer, Synset> synsetID;
@@ -186,6 +187,8 @@ public class GermaNet {
         this.synsetID = new HashMap<Integer, Synset>();
         this.lexUnitID = new HashMap<Integer, LexUnit>();
         this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String,
+                ArrayList<LexUnit>>>(WordCategory.class);
+        this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String,
                 ArrayList<LexUnit>>>(WordCategory.class);
 
         load();
@@ -294,6 +297,7 @@ public class GermaNet {
     protected void addSynset(Synset synset) {
         ArrayList<LexUnit> luList;
         HashMap<String, ArrayList<LexUnit>> map;
+        HashMap<String, ArrayList<LexUnit>> mapAllOrthForms;
 
         // add synset to synset list and synsetID map
         synsets.add(synset);
@@ -301,8 +305,12 @@ public class GermaNet {
 
         // add synset to its wordCategory map
         map = wordCategoryMap.get(synset.getWordCategory());
+        mapAllOrthForms = wordCategoryMapAllOrthForms.get(synset.getWordCategory());
         if (map == null) {
             map = new HashMap<String, ArrayList<LexUnit>>();
+        }
+        if (mapAllOrthForms == null) {
+            mapAllOrthForms = new HashMap<String, ArrayList<LexUnit>>();
         }
 
         // add LexUnits of synset to lexUnitID map and add mapping
@@ -321,44 +329,52 @@ public class GermaNet {
             luList.add(lu);
             map.put(orthForm, luList);
 
-//            String orthVar = lu.getOrthVar();
-//            if (ignoreCase) {
-//                orthVar = orthVar.toLowerCase();
-//            }
-//            luList = map.get(orthVar);
-//            if (luList == null) {
-//                luList = new ArrayList<LexUnit>();
-//            }
-//            luList.add(lu);
-//            map.put(orthVar, luList);
-//
-//            String oldOrthForm = lu.getOldOrthForm();
-//            if (ignoreCase) {
-//                oldOrthForm = oldOrthForm.toLowerCase();
-//            }
-//            luList = map.get(oldOrthForm);
-//            if (luList == null) {
-//                luList = new ArrayList<LexUnit>();
-//            }
-//            if (!luList.contains(lu)) {
-//                luList.add(lu);
-//            }
-//            map.put(oldOrthForm, luList);
-//
-//            String oldOrthVar = lu.getOldOrthVar();
-//            if (ignoreCase) {
-//                oldOrthVar = oldOrthVar.toLowerCase();
-//            }
-//            luList = map.get(oldOrthVar);
-//            if (luList == null) {
-//                luList = new ArrayList<LexUnit>();
-//            }
-//            if (!luList.contains(lu)) {
-//                luList.add(lu);
-//            }
-//            map.put(oldOrthVar, luList);
+            luList = mapAllOrthForms.get(orthForm);
+            if (luList == null) {
+                luList = new ArrayList<LexUnit>();
+            }
+            luList.add(lu);
+            mapAllOrthForms.put(orthForm, luList);
+
+            String orthVar = lu.getOrthVar();
+            if (ignoreCase) {
+                orthVar = orthVar.toLowerCase();
+            }
+            luList = mapAllOrthForms.get(orthVar);
+            if (luList == null) {
+                luList = new ArrayList<LexUnit>();
+            }
+            luList.add(lu);
+            mapAllOrthForms.put(orthVar, luList);
+
+            String oldOrthForm = lu.getOldOrthForm();
+            if (ignoreCase) {
+                oldOrthForm = oldOrthForm.toLowerCase();
+            }
+            luList = mapAllOrthForms.get(oldOrthForm);
+            if (luList == null) {
+                luList = new ArrayList<LexUnit>();
+            }
+            if (!luList.contains(lu)) {
+                luList.add(lu);
+                mapAllOrthForms.put(oldOrthForm, luList);
+            }
+
+            String oldOrthVar = lu.getOldOrthVar();
+            if (ignoreCase) {
+                oldOrthVar = oldOrthVar.toLowerCase();
+            }
+            luList = mapAllOrthForms.get(oldOrthVar);
+            if (luList == null) {
+                luList = new ArrayList<LexUnit>();
+            }
+            if (!luList.contains(lu)) {
+                luList.add(lu);
+                mapAllOrthForms.put(oldOrthVar, luList);
+            }
         }
         wordCategoryMap.put(synset.getWordCategory(), map);
+        wordCategoryMapAllOrthForms.put(synset.getWordCategory(), mapAllOrthForms);
     }
 
     /**
@@ -371,14 +387,37 @@ public class GermaNet {
 
     /**
      * Returns a <code>List</code> of all <code>Synsets</code> in which
-     * <code>orthForm</code> occurs in one of its <code>LexUnits</code>, using
-     * the <code>ignoreCase</code> flag as set in the constructor.
+     * <code>orthForm</code> occurs as main orthographical form in one of its
+     * <code>LexUnits</code>, using the <code>ignoreCase</code> flag as
+     * set in the constructor. Same than calling
+     * <code>getSynsets(orthForm, false)</code> with
+     * <code>considerMainOrthFormOnly=false</code>.
      * @param orthForm the <code>orthForm</code> to search for
      * @return a <code>List</code> of all <code>Synsets</code> containing
      * orthForm. If no <code>Synsets</code> were found, this is a
      * <code>List</code> containing no <code>Synsets</code>
      */
     public List<Synset> getSynsets(String orthForm) {
+        return getSynsets(orthForm, false);
+    }
+
+    /**
+     * Returns a <code>List</code> of all <code>Synsets</code> in which
+     * <code>orthForm</code> occurs as main orthographical form in one of its
+     * <code>LexUnits</code> -- in case <code>considerAllOrthForms</code> is
+     * true. Else returns a <code>List</code> of all <code>Synsets</code> in
+     * which <code>orthForm</code> occurs as orthographical variant, as old
+     * orthographical form, or as old orthographic variant in one of its
+     * <code>LexUnits</code> -- in case <code>considerAllOrthForms</code> is
+     * false. It uses the <code>ignoreCase</code> flag as set in the constructor.
+     * @param orthForm the <code>orthForm</code> to search for
+     * @param considerMainOrthFormOnly considering main orthographical form only
+     * (true) or all variants (false)
+     * @return a <code>List</code> of all <code>Synsets</code> containing
+     * orthForm. If no <code>Synsets</code> were found, this is a
+     * <code>List</code> containing no <code>Synsets</code>
+     */
+    public List<Synset> getSynsets(String orthForm, boolean considerMainOrthFormOnly) {
         ArrayList<Synset> rval = new ArrayList<Synset>();
         HashMap<String, ArrayList<LexUnit>> map;
         List<LexUnit> tmpList;
@@ -387,8 +426,13 @@ public class GermaNet {
         if (ignoreCase) {
             mapForm = orthForm.toLowerCase();
         }
+
         for (WordCategory wc : WordCategory.values()) {
-            map = wordCategoryMap.get(wc);
+            if (considerMainOrthFormOnly) {
+                map = wordCategoryMap.get(wc);
+            } else {
+                map = wordCategoryMapAllOrthForms.get(wc);
+            }
             tmpList = map.get(mapForm);
             if (tmpList != null) {
                 for (LexUnit lu : tmpList) {
