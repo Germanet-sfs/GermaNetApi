@@ -131,7 +131,7 @@ public class GermaNet {
     private HashMap<Integer, LexUnit> lexUnitID;
     private HashMap<Integer, Synset> synsetID;
     private File dir = null;
-    private List<InputStream> inputStreams = null;
+//    private List<InputStream> inputStreams = null;
     private boolean ignoreCase = false;
     
     /**
@@ -182,7 +182,7 @@ public class GermaNet {
         checkMemory();
         this.ignoreCase = ignoreCase;
         this.dir = dir;
-        this.inputStreams = null;
+//        this.inputStreams = null;
         this.synsets = new ArrayList<Synset>();
         this.synsetID = new HashMap<Integer, Synset>();
         this.lexUnitID = new HashMap<Integer, LexUnit>();
@@ -252,21 +252,21 @@ public class GermaNet {
             "com.sun.xml.internal.stream.XMLInputFactoryImpl");
         
         // load data
-        if (this.dir != null) {
+//        if (this.dir != null) {
             try {
                 loader = new StaxLoader(dir, this);
                 loader.load();
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } else {
-            try {
-                loader = new StaxLoader(inputStreams, this);
-                loader.load();
-            } catch (StreamCorruptedException ex) {
-                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
+//        } else {
+//            try {
+//                loader = new StaxLoader(inputStreams, this);
+//                loader.load();
+//            } catch (StreamCorruptedException ex) {
+//                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//        }
         
         trimAll();
         
@@ -274,6 +274,16 @@ public class GermaNet {
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
         }
+
+        System.out.println(wordCategoryMap.get(WordCategory.adj).size() + " "
+                + wordCategoryMap.get(WordCategory.nomen).size() + " "
+                + wordCategoryMap.get(WordCategory.verben).size() + " ");
+        System.out.println(wordCategoryMapAllOrthForms.get(WordCategory.adj).size() + " "
+                + wordCategoryMapAllOrthForms.get(WordCategory.nomen).size() + " "
+                + wordCategoryMapAllOrthForms.get(WordCategory.verben).size() + " ");
+        System.out.println(synsets.size());
+        System.out.println(synsetID.size());
+        System.out.println(lexUnitID.size());
     }
 
     /**
