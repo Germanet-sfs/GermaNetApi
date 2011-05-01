@@ -202,19 +202,20 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public GermaNet(List<InputStream> inputStreams, boolean ignoreCase) throws FileNotFoundException, XMLStreamException {
-        checkMemory();
-        this.ignoreCase = ignoreCase;
-        this.inputStreams = inputStreams;
-        this.dir = null;
-        this.synsets = new ArrayList<Synset>();
-        this.synsetID = new HashMap<Integer, Synset>();
-        this.lexUnitID = new HashMap<Integer, LexUnit>();
-        this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String,
-                ArrayList<LexUnit>>>(WordCategory.class);
-
-        load();
-    }
+// TODO: cannot handle word class yet
+//    public GermaNet(List<InputStream> inputStreams, boolean ignoreCase) throws FileNotFoundException, XMLStreamException {
+//        checkMemory();
+//        this.ignoreCase = ignoreCase;
+//        this.inputStreams = inputStreams;
+//        this.dir = null;
+//        this.synsets = new ArrayList<Synset>();
+//        this.synsetID = new HashMap<Integer, Synset>();
+//        this.lexUnitID = new HashMap<Integer, LexUnit>();
+//        this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String,
+//                ArrayList<LexUnit>>>(WordCategory.class);
+//
+//        load();
+//    }
 
 //    public void setIgnoreCase(boolean ignoreCase) {
 //        this.ignoreCase = ignoreCase;
