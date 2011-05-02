@@ -56,16 +56,16 @@ import javax.xml.stream.XMLStreamException;
  * searching will be performed:<br><br>
  * <code>
  *    // Use case-sensitive searching<br>
- *    GermaNet gnet = new GermaNet("/home/myName/germanet/V51_UTF/");<br>
+ *    GermaNet gnet = new GermaNet("/home/myName/germanet/GN_V60");<br>
  * </code>
  * or<br>
  * <code>
  *    // Ignore case when searching<br>
- *    File gnetDir = new File("/home/myName/germanet/V51_UTF");<br>
+ *    File gnetDir = new File("/home/myName/germanet/GN_V60");<br>
  *    GermaNet gnet = new GermaNet(gnetDir, true);<br><br>
  * </code>
  * The <code>GermaNet</code> class has methods that return <code>Lists</code> of
- * <code>Synsets</code> or <code>LexUnits/code>, given
+ * <code>Synsets</code> or <code>LexUnits</code>, given
  * an orthForm or a WordCategory.  For example,<br><br><code>
  *    List&lt;LexUnit&gt; lexList = gnet.getLexUnits("Bank");<br>
  *    List&lt;LexUnit&gt;> verbenLU = gnet.getLexUnits(WordCategory.verben);<br>
@@ -274,16 +274,16 @@ public class GermaNet {
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
         }
-
-        System.out.println(wordCategoryMap.get(WordCategory.adj).size() + " "
-                + wordCategoryMap.get(WordCategory.nomen).size() + " "
-                + wordCategoryMap.get(WordCategory.verben).size() + " ");
-        System.out.println(wordCategoryMapAllOrthForms.get(WordCategory.adj).size() + " "
-                + wordCategoryMapAllOrthForms.get(WordCategory.nomen).size() + " "
-                + wordCategoryMapAllOrthForms.get(WordCategory.verben).size() + " ");
-        System.out.println(synsets.size());
-        System.out.println(synsetID.size());
-        System.out.println(lexUnitID.size());
+//
+//        System.out.println(wordCategoryMap.get(WordCategory.adj).size() + " "
+//                + wordCategoryMap.get(WordCategory.nomen).size() + " "
+//                + wordCategoryMap.get(WordCategory.verben).size() + " ");
+//        System.out.println(wordCategoryMapAllOrthForms.get(WordCategory.adj).size() + " "
+//                + wordCategoryMapAllOrthForms.get(WordCategory.nomen).size() + " "
+//                + wordCategoryMapAllOrthForms.get(WordCategory.verben).size() + " ");
+//        System.out.println(synsets.size());
+//        System.out.println(synsetID.size());
+//        System.out.println(lexUnitID.size());
     }
 
     /**
@@ -397,9 +397,10 @@ public class GermaNet {
 
     /**
      * Returns a <code>List</code> of all <code>Synsets</code> in which
-     * <code>orthForm</code> occurs as main orthographical form in one of its
-     * <code>LexUnits</code>, using the <code>ignoreCase</code> flag as
-     * set in the constructor. Same than calling
+     * <code>orthForm</code> occurs as main orthographical form, as
+     * orthographical variant, as old orthographical form, or as old
+     * orthographic variant in one of its <code>LexUnits</code>, using the
+     * <code>ignoreCase</code> flag as set in the constructor. Same than calling
      * <code>getSynsets(orthForm, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
      * @param orthForm the <code>orthForm</code> to search for
@@ -416,13 +417,14 @@ public class GermaNet {
      * <code>orthForm</code> occurs as main orthographical form in one of its
      * <code>LexUnits</code> -- in case <code>considerAllOrthForms</code> is
      * true. Else returns a <code>List</code> of all <code>Synsets</code> in
-     * which <code>orthForm</code> occurs as orthographical variant, as old
-     * orthographical form, or as old orthographic variant in one of its
-     * <code>LexUnits</code> -- in case <code>considerAllOrthForms</code> is
-     * false. It uses the <code>ignoreCase</code> flag as set in the constructor.
+     * which <code>orthForm</code> occurs as main orthographical form, as
+     * orthographical variant, as old orthographical form, or as old
+     * orthographic variant in one of its <code>LexUnits</code> -- in case
+     * <code>considerAllOrthForms</code> is false. It uses the
+     * <code>ignoreCase</code> flag as set in the constructor.
      * @param orthForm the <code>orthForm</code> to search for
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (true) or all variants (false)
+     * (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of all <code>Synsets</code> containing
      * orthForm. If no <code>Synsets</code> were found, this is a
      * <code>List</code> containing no <code>Synsets</code>
@@ -459,9 +461,11 @@ public class GermaNet {
     /**
      * Returns a <code>List</code> of all <code>Synsets</code> with the
      * specified <code>WordCategory</code> in which <code>orthForm</code> occurs
-     * as main orthographical form in one of its <code>LexUnits</code>. It uses
-     * the <code>ignoreCase</code> flag as set in the constructor. Same than
-     * calling <code>getSynsets(orthForm, wordCategory, false)</code> with
+     * as main orthographical form, as orthographical variant, as old
+     * orthographical form, or as old orthographic variant in one of its
+     * <code>LexUnits</code>. It uses the <code>ignoreCase</code> flag as set in
+     * the constructor. Same than calling
+     * <code>getSynsets(orthForm, wordCategory, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
      * @param orthForm the <code>orthForm</code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
@@ -479,15 +483,16 @@ public class GermaNet {
      * as main orthographical form in one of its <code>LexUnits</code> -- in
      * case <code>considerAllOrthForms</code> is true. Else returns a
      * <code>List</code> of all <code>Synsets</code> in which
-     * <code>orthForm</code> occurs as orthographical variant, as old
-     * orthographical form, or as old orthographic variant in one of its
-     * <code>LexUnits</code> -- in case <code>considerAllOrthForms</code> is
-     * false. It uses the <code>ignoreCase</code> flag as set in the constructor.
+     * <code>orthForm</code> occurs as as main orthographical form, as
+     * orthographical variant, as old orthographical form, or as old
+     * orthographic variant in one of its <code>LexUnits</code> -- in case
+     * <code>considerAllOrthForms</code> is false. It uses the
+     * <code>ignoreCase</code> flag as set in the constructor.
      * @param orthForm the <code>orthForm</code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
      * <code>Synsets</code> to be found (e.g. <code>WordCategory.adj</code>)
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (true) or all variants (false)
+     * (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of <code>Synsets</code> with the specified
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
@@ -585,8 +590,9 @@ public class GermaNet {
 
     /**
      * Returns a <code>List</code> of all <code>LexUnits</code> in which
-     * <code>orthForm</code> occurs as orthographical variant, as old
-     * orthographical form, or as old orthographic variant. It uses the
+     * <code>orthForm</code> occurs as main orthographical form, as
+     * orthographical variant, as old orthographical form, or as old
+     * orthographic variant. It uses the
      * <code>ignoreCase</code> flag as set in the constructor. Same than
      * calling <code>getSynsets(orthForm, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
@@ -604,13 +610,14 @@ public class GermaNet {
      * <code>orthForm</code> occurs as main orthographical form -- in case
      * <code>considerAllOrthForms</code> is true. Else returns a
      * <code>List</code> of all <code>LexUnits</code> in which
-     * <code>orthForm</code> occurs as orthographical variant, as old
-     * orthographical form, or as old orthographic variant -- in case
+     * <code>orthForm</code> occurs as main orthographical form, as
+     * orthographical variant, as old orthographical form, or as old
+     * orthographic variant -- in case
      * <code>considerAllOrthForms</code> is false. It uses the
      * <code>ignoreCase</code> flag as set in the constructor.
      * @param orthForm the <code>orthForm</code> to search for
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (true) or all variants (false)
+     * (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of all <code>LexUnits</code> containing
      * <code>orthForm</code>. If no <code>LexUnits</code> were found, this is a
      * <code>List</code> containing no <code>LexUnits</code>.
@@ -629,12 +636,13 @@ public class GermaNet {
     /**
      * Returns a <code>List</code> of all <code>LexUnits</code> with the
      * specified <code>WordCategory</code> in which <code>orthForm</code>
-     * occurs as orthographical variant, as old orthographical form, or as old
+     * occurs as as main orthographical form, as
+     * orthographical variant, as old orthographical form, or as old
      * orthographic variant. It uses the <code>ignoreCase</code> flag as set in
      * the constructor. Same than calling
      * <code>getSynsets(orthForm, wordCategory, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
-     * @param orthForm the <code>orthForm<code> to be found
+     * @param orthForm the <code>orthForm</code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
      * <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
      * @return a <code>List</code> of <code>LexUnits</code> with the specified
@@ -649,15 +657,16 @@ public class GermaNet {
      * specified <code>WordCategory</code> in which <code>orthForm</code> occurs
      * as main orthographical form -- in case <code>considerAllOrthForms</code>
      * is true. Else returns a <code>List</code> of all <code>LexUnits</code> in
-     * which <code>orthForm</code> occurs as orthographical variant, as old
-     * orthographical form, or as old orthographic variant -- in case
+     * which <code>orthForm</code> occurs as main orthographical form, as
+     * orthographical variant, as old orthographical form, or as old
+     * orthographic variant -- in case
      * <code>considerAllOrthForms</code> is false. It uses the
      * <code>ignoreCase</code> flag as set in the constructor.
-     * @param orthForm the <code>orthForm<code> to be found
+     * @param orthForm the <code>orthForm</code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
      * <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (true) or all variants (false)
+     * (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of <code>LexUnits</code> with the specified
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
