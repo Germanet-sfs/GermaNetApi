@@ -332,4 +332,14 @@ public class Synset {
 
         return synsetAsString;
     }
+
+    public List<IliRecord> getIliRecords() {
+        List<IliRecord> iliRecords = new ArrayList<IliRecord>();
+        for (LexUnit unit : lexUnits) {
+            for (IliRecord ili : unit.getIliRecords()) {
+                iliRecords.add(ili);
+            }
+        }
+        return iliRecords;
+    }
 }
