@@ -107,8 +107,12 @@ public class WiktionaryParaphrase {
      */
     @Override
     public String toString() {
+        String sense = this.wiktionarySense.replaceAll("&quot;", "\"");
+        sense = sense.replaceAll("&lt;", "<");
+        sense = sense.replaceAll("&gt;", ">");
+        sense = sense.replaceAll("&amp;", "&");
         String stringIli = "LexUnit ID: " + this.lexUnitId + ", Wiktionary ID: " +
-                this.wiktionaryId + ", Wiktionary Sense: " + this.wiktionarySense +
+                this.wiktionaryId + ", Wiktionary Sense: " + sense +
                 ", edited: " + this.edited;
         return stringIli;
     }

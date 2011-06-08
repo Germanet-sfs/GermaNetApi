@@ -911,6 +911,35 @@ public class GermaNet {
      * to <code>LexUnits</code>
      */
     protected void updateLexUnitsWithWiktionary() {
+ /*       ArrayList<Integer> errors = new ArrayList<Integer>();
+        List<LexUnit> allLu = this.getLexUnits();
+        for (WiktionaryParaphrase wiki : wiktionaryParaphrases) {
+            int id = wiki.getLexUnitId();
+            boolean found = false;
+            
+            for (LexUnit unit : allLu) {
+                if (unit.getId() == id) {
+                    unit.addWiktionaryParaphrase(wiki);
+                    lexUnitID.put(id, unit);
+                    found = true;
+                    break;
+                }
+                            }
+            if (!found) errors.add(id);
+            }
+        PrintWriter outputStream = null;
+        try {
+            outputStream = new PrintWriter("no_ids_in_gn.txt");
+
+        } catch (FileNotFoundException e) {
+            System.out.println("Error opening the file");
+            System.exit(0);
+        }
+
+        for (Integer problem : errors)
+            outputStream.println(problem);
+        outputStream.close();*/
+
         for (WiktionaryParaphrase wiki : wiktionaryParaphrases) {
             int id = wiki.getLexUnitId();
             LexUnit lu = getLexUnitByID(id);

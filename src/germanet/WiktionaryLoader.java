@@ -19,9 +19,7 @@
  */
 package germanet;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.io.InputStream;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -38,6 +36,7 @@ public class WiktionaryLoader {
 
     private GermaNet germaNet;
     private String namespace;
+    private File wikiDir;
 
     /**
      * Constructs an <code>WiktionaryLoader</code> for the specified
@@ -57,32 +56,49 @@ public class WiktionaryLoader {
      * @throws javax.xml.stream.XMLStreamException
      */
     protected void loadWiktionary(File wiktionaryFile) throws FileNotFoundException, XMLStreamException {
-        InputStream in = new FileInputStream(wiktionaryFile);
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        XMLStreamReader parser = factory.createXMLStreamReader(in);
-        int event;
-        String nodeName;
-        System.out.println("Loading " +
-                            wiktionaryFile.getName() + "...");
+        wikiDir = wiktionaryFile;
+        FilenameFilter filter = new WikiFilter(); //get only wiktionary files
+        File[] wikiFiles = wikiDir.listFiles(filter);
 
-        //Parse entire file, looking for wictionary paraphrase start elements
-        while (parser.hasNext()) {
-            event = parser.next();
-            switch (event) {
-                case XMLStreamConstants.START_DOCUMENT:
-                    namespace = parser.getNamespaceURI();
-                    break;
-                case XMLStreamConstants.START_ELEMENT:
-                    nodeName = parser.getLocalName();
-                    if (nodeName.equals(GermaNet.XML_WIKTONARY_PARAPHRASE)) {
-                        WiktionaryParaphrase wiki = processWictionaryParaphrase(parser);
-                        germaNet.addWictionaryParaphrase(wiki);
-                    }
-                    break;
-            }
+
+        if (wikiFiles == null || wikiFiles.length == 0) {
+            throw new FileNotFoundException("Unable to load Wiktionary Paraphrases from \""
+                    + this.wikiDir.getPath() + "\"");
         }
-        parser.close();
+
+        // load all synset files first with a SynsetLoader
+        for (int i = 0; i < wikiFiles.length; i++) {
+            System.out.println("Loading "
+                    + wikiFiles[i].getName() + "...");
+            InputStream in = new FileInputStream(wikiFiles[i]);
+            XMLInputFactory factory = XMLInputFactory.newInstance();
+            XMLStreamReader parser = factory.createXMLStreamReader(in);
+            int event;
+            String nodeName;
+
+
+            //Parse entire file, looking for wictionary paraphrase start elements
+            while (parser.hasNext()) {
+                event = parser.next();
+                switch (event) {
+                    case XMLStreamConstants.START_DOCUMENT:
+                        namespace = parser.getNamespaceURI();
+                        break;
+                    case XMLStreamConstants.START_ELEMENT:
+                        nodeName = parser.getLocalName();
+                        if (nodeName.equals(GermaNet.XML_WIKTONARY_PARAPHRASE)) {
+                            WiktionaryParaphrase wiki = processWictionaryParaphrase(parser);
+                            germaNet.addWictionaryParaphrase(wiki);
+                        }
+                        break;
+                }
+            }
+            parser.close();
+        }
+
         System.out.println("Done.");
+
+
     }
 
     /**
@@ -100,7 +116,7 @@ public class WiktionaryLoader {
         WiktionaryParaphrase curWiki;
 
         lexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
-        wiktionaryId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_ID));
+        wiktionaryId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_ID).substring(1));
         wiktionarySenseId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_SENSE_ID));
         wiktionarySense = parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_SENSE);
 
@@ -113,5 +129,14 @@ public class WiktionaryLoader {
                 wiktionarySense, edited);
 
         return curWiki;
+    }
+
+    private class WikiFilter implements FilenameFilter {
+
+        @Override
+        public boolean accept(File directory, String name) {
+            return (name.endsWith("xml")
+                    && (name.startsWith("wiktionaryParaphrases")));
+        }
     }
 }
