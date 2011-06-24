@@ -347,7 +347,7 @@ public class GermaNet {
             mapAllOrthForms.put(orthForm, luList);
 
             String orthVar = lu.getOrthVar();
-            if (ignoreCase) {
+            if (ignoreCase && orthVar != null) {
                 orthVar = orthVar.toLowerCase();
             }
             luList = mapAllOrthForms.get(orthVar);
@@ -358,7 +358,7 @@ public class GermaNet {
             mapAllOrthForms.put(orthVar, luList);
 
             String oldOrthForm = lu.getOldOrthForm();
-            if (ignoreCase) {
+            if (ignoreCase && oldOrthForm != null) {
                 oldOrthForm = oldOrthForm.toLowerCase();
             }
             luList = mapAllOrthForms.get(oldOrthForm);
@@ -371,7 +371,7 @@ public class GermaNet {
             }
 
             String oldOrthVar = lu.getOldOrthVar();
-            if (ignoreCase) {
+            if (ignoreCase && oldOrthVar != null) {
                 oldOrthVar = oldOrthVar.toLowerCase();
             }
             luList = mapAllOrthForms.get(oldOrthVar);
