@@ -19,6 +19,7 @@
  */
 package germanet;
 
+import java.util.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -97,19 +98,31 @@ public class IliLoader {
         String gnWord;
         String ewnRelation;
         String pwnWord;
-        int pwnSense;
-        String pwnId;
+        int pwn20Sense;
+        String pwn20Id;
+        String pwn30Id;
+        String source;
         IliRecord curIli;
+        List<String> englishSynonyms = new ArrayList<String>();
+        boolean done = false;
+        int event;
+        String nodeName;
 
         iliId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
         lexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
         gnWord = parser.getAttributeValue(namespace, GermaNet.XML_GN_WORD);
         ewnRelation = parser.getAttributeValue(namespace, GermaNet.XML_EWN_RELATION);
         pwnWord = parser.getAttributeValue(namespace, GermaNet.XML_PWN_WORD);
-        pwnSense = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_PWN_SENSE));
-        pwnId = parser.getAttributeValue(namespace, GermaNet.XML_PWN_ID);
+        pwn20Sense = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_PWN20_SENSE));
+        pwn20Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_ID);
+        pwn30Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN30_ID);
+        source = parser.getAttributeValue(namespace, GermaNet.XML_SOURCE);
 
-        curIli = new IliRecord(iliId, lexUnitId, gnWord, ewnRelation, pwnWord, pwnSense, pwnId);
+                curIli = new IliRecord(iliId, lexUnitId, gnWord, ewnRelation, pwnWord, pwn20Sense, pwn20Id, pwn30Id, source);
+
+        for (String synonym : englishSynonyms) {
+            curIli.addEnglishSynonym(synonym);
+        }
 
         return curIli;
     }

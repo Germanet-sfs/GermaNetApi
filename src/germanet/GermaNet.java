@@ -125,8 +125,11 @@ public class GermaNet {
     public static final String XML_GN_WORD = "gnWord";
     public static final String XML_EWN_RELATION = "ewnRelation";
     public static final String XML_PWN_WORD = "pwnWord";
-    public static final String XML_PWN_SENSE = "pwnSense";
-    public static final String XML_PWN_ID = "pwnId";
+    public static final String XML_PWN20_SENSE = "pwn20Sense";
+    public static final String XML_PWN20_ID = "pwn20Id";
+    public static final String XML_PWN30_ID = "pwn30Id";
+    public static final String XML_PWN20_SYNONYMS = "pwn20Synonyms";
+    public static final String XML_PWN20_SYNONYM = "pwn20Synonym";
     public static final String YES = "yes";
     public static final String NO = "no";
     //for Wiktionary
