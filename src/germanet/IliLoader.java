@@ -118,12 +118,36 @@ public class IliLoader {
         pwn30Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN30_ID);
         source = parser.getAttributeValue(namespace, GermaNet.XML_SOURCE);
 
-                curIli = new IliRecord(iliId, lexUnitId, gnWord, ewnRelation, pwnWord, pwn20Sense, pwn20Id, pwn30Id, source);
+        // process this lexUnit
+        while (parser.hasNext() && !done) {
+            event = parser.next();
+            switch (event) {
+                case XMLStreamConstants.START_ELEMENT:
+                    nodeName = parser.getLocalName();
+                    if (nodeName.equals(GermaNet.XML_PWN20_SYNONYM)) {
+                        englishSynonyms.add(processEnglishExamples(parser));
+                    }
+                case XMLStreamConstants.END_ELEMENT:
+                    nodeName = parser.getLocalName();
+                    // quit when we reach the end lexUnit tag
+                    if (nodeName.equals(GermaNet.XML_ILI_RECORD)) {
+                        done = true;
+                    }
+                    break;
+            }
+        }
+
+        curIli = new IliRecord(iliId, lexUnitId, gnWord, ewnRelation, pwnWord, pwn20Sense, pwn20Id, pwn30Id, source);
 
         for (String synonym : englishSynonyms) {
             curIli.addEnglishSynonym(synonym);
         }
 
         return curIli;
+    }
+
+    private String processEnglishExamples (XMLStreamReader parser) throws XMLStreamException {
+        String englishSynonym = parser.getElementText();
+        return englishSynonym;
     }
 }

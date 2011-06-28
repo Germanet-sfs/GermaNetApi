@@ -165,7 +165,8 @@ public class IliRecord {
         if (englishSynonyms.size() > 0) {
             stringIli += "\nEnglish synonyms from PWN 2.0: ";
             for (String synonym : englishSynonyms)
-                stringIli += synonym + " ";
+                stringIli += synonym + ", ";
+            stringIli = stringIli.substring(0, stringIli.length() - 2);
         }
         return stringIli;
     }
