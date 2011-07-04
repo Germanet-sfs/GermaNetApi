@@ -23,10 +23,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.StreamCorruptedException;
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.stream.XMLStreamException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipException;
+import java.io.FileInputStream;
 
 /**
  * Provides high-level look-up access to GermaNet data. Intended as a read-only
@@ -131,7 +137,8 @@ public class GermaNet {
     private HashMap<Integer, LexUnit> lexUnitID;
     private HashMap<Integer, Synset> synsetID;
     private File dir = null;
-//    private List<InputStream> inputStreams = null;
+    private List<InputStream> inputStreams = null;
+    private List<String> xmlNames = null;
     private boolean ignoreCase = false;
     
     /**
@@ -141,7 +148,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException 
      */
-    public GermaNet(String dirName) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(String dirName) throws FileNotFoundException, XMLStreamException, ZipException, IOException {
         this(new File(dirName), false);
     }
 
@@ -154,7 +161,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public GermaNet(String dirName, boolean ignoreCase) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(String dirName, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, ZipException, IOException {
         this(new File(dirName), ignoreCase);
     }
 
@@ -165,7 +172,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException 
      */
-    public GermaNet(File dir) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(File dir) throws FileNotFoundException, XMLStreamException, ZipException, IOException {
         this(dir, false);
     }
 
@@ -178,11 +185,10 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public GermaNet(File dir, boolean ignoreCase) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(File dir, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, ZipException, IOException {
         checkMemory();
         this.ignoreCase = ignoreCase;
-        this.dir = dir;
-//        this.inputStreams = null;
+        this.inputStreams = null;
         this.synsets = new ArrayList<Synset>();
         this.synsetID = new HashMap<Integer, Synset>();
         this.lexUnitID = new HashMap<Integer, LexUnit>();
@@ -191,7 +197,51 @@ public class GermaNet {
         this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String,
                 ArrayList<LexUnit>>>(WordCategory.class);
 
-        load();
+        if (dir.getName().endsWith(".zip")) {
+            ZipFile zipFile = new ZipFile(dir);
+            Enumeration entries = zipFile.entries();
+
+            List<InputStream> inputStreamList = new ArrayList<InputStream>();
+            List<String> nameList = new ArrayList<String>();
+        while(entries.hasMoreElements()) {
+            ZipEntry entry = (ZipEntry)entries.nextElement();
+            String entryName = entry.getName();
+ //           if (entryName.endsWith(".xml")) {
+                nameList.add(entryName);
+                InputStream stream = (zipFile.getInputStream(entry));
+                inputStreamList.add(stream);
+ //           }
+        }
+        inputStreams = inputStreamList;
+        xmlNames = nameList;
+/*
+            ArrayList<File> xmls = new ArrayList<File>();
+            try {
+                ZipInputStream zipStream = new ZipInputStream(new FileInputStream(dir));
+                ZipEntry entry = zipStream.getNextEntry();
+                if (entry.isDirectory()) {
+                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                } else {
+                    while (entry != null) {
+                        String entryName = entry.getName();
+                        if (entryName.endsWith(".xml")) {
+                            File xml = new File(entryName);
+                            System.out.println(xml.exists());
+                            xmls.add(xml);
+                        }
+                        entry = zipStream.getNextEntry();
+                    }
+                    File[] xmlFiles = new File[xmls.size()];
+                    xmlFiles = xmls.toArray(xmlFiles);
+                    loadFromZip(xmlFiles);
+                }
+                zipStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }*/
+        }
+        else this.dir = dir;
+            load();
     }
 
     /**
@@ -242,7 +292,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    void load() throws XMLStreamException {
+    void load() throws XMLStreamException, FileNotFoundException {
         StaxLoader loader;
         String oldVal = null;
         
@@ -252,21 +302,21 @@ public class GermaNet {
             "com.sun.xml.internal.stream.XMLInputFactoryImpl");
         
         // load data
-//        if (this.dir != null) {
+        if (this.dir != null) {
             try {
                 loader = new StaxLoader(dir, this);
                 loader.load();
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
             }
-//        } else {
-//            try {
-//                loader = new StaxLoader(inputStreams, this);
-//                loader.load();
-//            } catch (StreamCorruptedException ex) {
-//                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//        }
+        } else {
+            try {
+                loader = new StaxLoader(inputStreams, xmlNames, this);
+                loader.load();
+            } catch (StreamCorruptedException ex) {
+                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
         
         trimAll();
         
