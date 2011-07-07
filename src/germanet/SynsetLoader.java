@@ -97,7 +97,6 @@ class SynsetLoader {
      */
     protected void loadSynsets(InputStream inputStream, String fileName) throws FileNotFoundException, XMLStreamException {
         XMLInputFactory factory = XMLInputFactory.newInstance();
-        System.out.println("loadSynsets...");
         XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
         int event;
         String nodeName;

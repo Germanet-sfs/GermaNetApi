@@ -159,7 +159,6 @@ class StaxLoader {
             }
 
             // load all synset input streams first with a SynsetLoader
-            System.out.println("streams = " + germaNetStreams.size());
             for (int i = 0; i < germaNetStreams.size() - 1; i++) {
 
                 if (xmlNames.get(i).endsWith("xml") &&
@@ -167,8 +166,7 @@ class StaxLoader {
                     xmlNames.get(i).startsWith("verben") ||
                     xmlNames.get(i).startsWith("adj"))) {
                 System.out.println("Loading input stream " +
-                        germaNetStreams.get(i) +
-                        i + "...");
+                        xmlNames.get(i) + "...");
                 synLoader.loadSynsets(germaNetStreams.get(i), xmlNames.get(i));
                 }
             }
@@ -177,8 +175,7 @@ class StaxLoader {
             for (int i = 0; i < germaNetStreams.size() - 1; i++) {
                 if(xmlNames.get(i).equals("gn_relations.xml")) {
               System.out.println("Loading input stream " +
-                        germaNetStreams.get(i) +
-                    (germaNetStreams.size() - 1) + "...");
+                        xmlNames.get(i) + "...");
             relLoader.loadRelations(germaNetStreams.get(germaNetStreams.size() - 1));
             }
             }

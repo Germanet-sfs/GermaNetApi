@@ -32,7 +32,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipException;
-import java.io.FileInputStream;
+import java.io.RandomAccessFile;
 
 /**
  * Provides high-level look-up access to GermaNet data. Intended as a read-only
@@ -96,12 +96,12 @@ import java.io.FileInputStream;
  * @version 6.0
  */
 public class GermaNet {
+
     public static final String XML_SYNSETS = "synsets";
     public static final String XML_SYNSET = "synset";
     public static final String XML_ID = "id";
     public static final String XML_PARAPHRASE = "paraphrase";
     public static final String XML_WORD_CATEGORY = "category";
-
     public static final String XML_LEX_UNIT = "lexUnit";
     public static final String XML_ORTH_FORM = "orthForm";
     public static final String XML_ORTH_VAR = "orthVar";
@@ -112,12 +112,10 @@ public class GermaNet {
     public static final String XML_STYLE_MARKING = "styleMarking";
     public static final String XML_NAMED_ENTITY = "namedEntity";
     public static final String XML_ARTIFICIAL = "artificial";
-
     public static final String XML_EXAMPLE = "example";
     public static final String XML_TEXT = "text";
     public static final String XML_EXFRAME = "exframe";
     public static final String XML_FRAME = "frame";
-
     public static final String XML_RELATIONS = "relations";
     public static final String XML_RELATION = "relation";
     public static final String XML_CON_REL = "con_rel";
@@ -127,10 +125,8 @@ public class GermaNet {
     public static final String XML_RELATION_INV = "inv";
     public static final String XML_RELATION_TO = "to";
     public static final String XML_RELATION_FROM = "from";
-
     public static final String YES = "yes";
     public static final String NO = "no";
-
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
     private ArrayList<Synset> synsets;
@@ -140,7 +136,7 @@ public class GermaNet {
     private List<InputStream> inputStreams = null;
     private List<String> xmlNames = null;
     private boolean ignoreCase = false;
-    
+
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
      * files in the specified directory path name - searches are case sensitive.
@@ -192,56 +188,32 @@ public class GermaNet {
         this.synsets = new ArrayList<Synset>();
         this.synsetID = new HashMap<Integer, Synset>();
         this.lexUnitID = new HashMap<Integer, LexUnit>();
-        this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String,
-                ArrayList<LexUnit>>>(WordCategory.class);
-        this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String,
-                ArrayList<LexUnit>>>(WordCategory.class);
+        this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
+        this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
 
-        if (dir.getName().endsWith(".zip")) {
+        if (!dir.isDirectory() && isZipFile(dir)) {
             ZipFile zipFile = new ZipFile(dir);
             Enumeration entries = zipFile.entries();
 
             List<InputStream> inputStreamList = new ArrayList<InputStream>();
             List<String> nameList = new ArrayList<String>();
-        while(entries.hasMoreElements()) {
-            ZipEntry entry = (ZipEntry)entries.nextElement();
-            String entryName = entry.getName();
- //           if (entryName.endsWith(".xml")) {
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = (ZipEntry) entries.nextElement();
+                if (entry.isDirectory()) {
+                    //////////////////////////////
+                }
+                String entryName = entry.getName();
                 nameList.add(entryName);
                 InputStream stream = (zipFile.getInputStream(entry));
                 inputStreamList.add(stream);
- //           }
+            }
+            inputStreams = inputStreamList;
+            xmlNames = nameList;
+            
+        } else {
+            this.dir = dir;
         }
-        inputStreams = inputStreamList;
-        xmlNames = nameList;
-/*
-            ArrayList<File> xmls = new ArrayList<File>();
-            try {
-                ZipInputStream zipStream = new ZipInputStream(new FileInputStream(dir));
-                ZipEntry entry = zipStream.getNextEntry();
-                if (entry.isDirectory()) {
-                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                } else {
-                    while (entry != null) {
-                        String entryName = entry.getName();
-                        if (entryName.endsWith(".xml")) {
-                            File xml = new File(entryName);
-                            System.out.println(xml.exists());
-                            xmls.add(xml);
-                        }
-                        entry = zipStream.getNextEntry();
-                    }
-                    File[] xmlFiles = new File[xmls.size()];
-                    xmlFiles = xmls.toArray(xmlFiles);
-                    loadFromZip(xmlFiles);
-                }
-                zipStream.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }*/
-        }
-        else this.dir = dir;
-            load();
+        load();
     }
 
     /**
@@ -269,19 +241,17 @@ public class GermaNet {
 //
 //        load();
 //    }
-
 //    public void setIgnoreCase(boolean ignoreCase) {
 //        this.ignoreCase = ignoreCase;
 //    }
-
     /**
      * Prints warning if available memory is low.
      */
     private void checkMemory() {
         long freeMemory = Runtime.getRuntime().freeMemory() / 1000000;
         if (freeMemory < 120) {
-            System.out.println("Warning: you may not have enough memory to " +
-                    "load GermaNet.");
+            System.out.println("Warning: you may not have enough memory to "
+                    + "load GermaNet.");
             System.out.println("Try using \"-Xms128m -Xmx128m\" JVM options:");
             System.out.println("java -Xms128m -Xmx128m <restOfCommand>");
         }
@@ -295,12 +265,12 @@ public class GermaNet {
     void load() throws XMLStreamException, FileNotFoundException {
         StaxLoader loader;
         String oldVal = null;
-        
+
         // use xerces xml parser
         oldVal = System.getProperty("javax.xml.stream.XMLInputFactory");
         System.setProperty("javax.xml.stream.XMLInputFactory",
-            "com.sun.xml.internal.stream.XMLInputFactoryImpl");
-        
+                "com.sun.xml.internal.stream.XMLInputFactoryImpl");
+
         // load data
         if (this.dir != null) {
             try {
@@ -317,9 +287,9 @@ public class GermaNet {
                 Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
+
         trimAll();
-        
+
         // set parser back to whatever it was before
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
@@ -800,5 +770,20 @@ public class GermaNet {
                 luList.trimToSize();
             }
         }
+    }
+    
+    /**
+     * Checks whether the <code>File</code> is a <code>ZipFile</code>.
+     * @param file the <code>File</code> to check
+     * @return true if this <code>File</code> is a <code>ZipFile</code>
+     */
+    protected static boolean isZipFile(File file) throws IOException {
+        RandomAccessFile raf = new RandomAccessFile(file, "r");  
+        long n = raf.readInt();
+        raf.close();  
+        if (n == 0x504B0304) {
+            return true;
+        }
+        else return false;
     }
 }

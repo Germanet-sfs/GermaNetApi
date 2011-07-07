@@ -20,7 +20,7 @@ public class test {
      */
     public static void main(String[] args) {
         try {
-            File gnetDir = new File("/space/abrskva/GermaNet/GN_V60/GN_V60/GN_V60.zip");
+            File gnetDir = new File("/space/abrskva/GermaNet/GN_V60/GN_V60_direct.zip");
 //            File iliFile = new File("/afs/sfs/home/abrskva/NetBeansProjects/ili.xml");
             String fileName = "/space/abrskva/NetBeansProjects/ConvertToXML/ili_with_syn.xml";
             GermaNet gnet = new GermaNet(gnetDir);

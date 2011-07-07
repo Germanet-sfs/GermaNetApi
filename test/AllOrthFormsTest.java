@@ -2,13 +2,14 @@ import java.util.*;
 import germanet.*;
 import java.io.*;
 import javax.xml.stream.XMLStreamException;
+import java.util.zip.ZipException;
 
 /**
  *
  * @author vhenrich
  */
 public class AllOrthFormsTest {
-    public static void main(String[] args) throws FileNotFoundException, XMLStreamException {
+    public static void main(String[] args) throws FileNotFoundException, XMLStreamException, ZipException, IOException {
         File gnetDir = new File("/Users/vhenrich/NetBeansProjects/GN_V60");;
         GermaNet gnet = new GermaNet(gnetDir);
 
