@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 import javax.xml.stream.XMLStreamException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipException;
 import java.io.RandomAccessFile;
 
