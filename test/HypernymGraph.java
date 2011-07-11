@@ -1,5 +1,5 @@
 import java.util.*;
-import germanet.*;
+import de.tuebingen.uni.sfs.germanet.api.*;
 import java.io.*;
 
 /**
