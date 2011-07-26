@@ -20,6 +20,7 @@
 package germanet;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.StreamCorruptedException;
@@ -32,6 +33,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipException;
 import java.io.RandomAccessFile;
+import java.io.StringWriter;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.zip.ZipInputStream;
+import sun.misc.IOUtils;
 
 /**
  * Provides high-level look-up access to GermaNet data. Intended as a read-only
@@ -170,6 +176,9 @@ public class GermaNet {
     public GermaNet(File dir) throws FileNotFoundException, XMLStreamException, ZipException, IOException {
         this(dir, false);
     }
+public String convertStreamToString(InputStream is) {
+    return new Scanner(is).useDelimiter("\\A").next();
+}
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
@@ -202,19 +211,22 @@ public class GermaNet {
                     //////////////////////////////
                 }
                 String entryName = entry.getName();
+                if (entryName.split(File.separator).length > 1) {
+                    entryName = entryName.split(File.separator)[entryName.split(File.separator).length - 1];
+                }
                 nameList.add(entryName);
                 InputStream stream = (zipFile.getInputStream(entry));
                 inputStreamList.add(stream);
             }
             inputStreams = inputStreamList;
             xmlNames = nameList;
-            
+
         } else {
             this.dir = dir;
         }
         load();
     }
-
+    
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
      * from the specified list of input stream. Please make sure that all
