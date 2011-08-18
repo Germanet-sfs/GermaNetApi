@@ -333,6 +333,12 @@ public class Synset {
         return synsetAsString;
     }
 
+    /**
+     * Returns a <code>List</code> of all of the <code>IliRecords</code> that this
+     * <code>Synset</code> is associated with.
+     * @return a <code>List</code> of all of the <code>IliRecords</code> that this
+     * <code>Synset</code> is associated with
+     */
     public List<IliRecord> getIliRecords() {
         List<IliRecord> iliRecords = new ArrayList<IliRecord>();
         for (LexUnit unit : lexUnits) {
@@ -341,5 +347,17 @@ public class Synset {
             }
         }
         return iliRecords;
+    }
+    
+    /**
+     * Return true if this <code>Synset</code> is equal to another <code>Synset</code>.
+     * @param other the <code>Synset</code> to compare to
+     * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
+     */
+    public boolean equals(Synset other) {
+        if (this.id == other.id) {
+            return true;
+        }
+        return false;
     }
 }
