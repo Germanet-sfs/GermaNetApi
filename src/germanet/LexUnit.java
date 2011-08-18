@@ -423,4 +423,16 @@ public class LexUnit {
     public int numExamples() {
         return this.examples.size();
     }
+    
+    /**
+     * Return true if this <code>LexUnit</code> is equal to another <code>LexUnit</code>.
+     * @param other the <code>LexUnit</code> to compare to
+     * @return true if this <code>LexUnit</code> is equal to another <code>LexUnit</code>
+     */
+    public boolean equals(LexUnit other) {
+        if (this.id == other.id) {
+            return true;
+        }
+        return false;
+    }
 }

@@ -64,12 +64,12 @@ import java.util.*;
  * @version 6.0
  */
 public class Synset {
+
     private int id;
     private WordCategory wordCategory;
     private WordClass wordClass;
     private ArrayList<LexUnit> lexUnits;
     private String paraphrase;
-
     // Relations of this Synset
     private EnumMap<ConRel, ArrayList<Synset>> relations;
 
@@ -206,7 +206,6 @@ public class Synset {
 //        }
 //        return rval;
 //    }
-
     /**
      * Returns a <code>List</code> of all (old) orthographic forms and variants
      * contained in all <code>LexUnits</code> of this <code>Synset</code>.
@@ -331,5 +330,17 @@ public class Synset {
         }
 
         return synsetAsString;
+    }
+
+    /**
+     * Return true if this <code>Synset</code> is equal to another <code>Synset</code>.
+     * @param other the <code>Synset</code> to compare to
+     * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
+     */
+    public boolean equals(Synset other) {
+        if (this.id == other.id) {
+            return true;
+        }
+        return false;
     }
 }
