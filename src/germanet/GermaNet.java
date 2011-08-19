@@ -176,9 +176,10 @@ public class GermaNet {
     public GermaNet(File dir) throws FileNotFoundException, XMLStreamException, ZipException, IOException {
         this(dir, false);
     }
-public String convertStreamToString(InputStream is) {
-    return new Scanner(is).useDelimiter("\\A").next();
-}
+
+    public String convertStreamToString(InputStream is) {
+        return new Scanner(is).useDelimiter("\\A").next();
+    }
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
@@ -207,9 +208,6 @@ public String convertStreamToString(InputStream is) {
             List<String> nameList = new ArrayList<String>();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) entries.nextElement();
-                if (entry.isDirectory()) {
-                    //////////////////////////////
-                }
                 String entryName = entry.getName();
                 if (entryName.split(File.separator).length > 1) {
                     entryName = entryName.split(File.separator)[entryName.split(File.separator).length - 1];
@@ -226,7 +224,7 @@ public String convertStreamToString(InputStream is) {
         }
         load();
     }
-    
+
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
      * from the specified list of input stream. Please make sure that all
@@ -486,7 +484,7 @@ public String convertStreamToString(InputStream is) {
             }
         }
         rval.trimToSize();
-        return rval;
+        return sortSynsets(rval);
     }
 
     /**
@@ -553,7 +551,7 @@ public String convertStreamToString(InputStream is) {
             }
         }
         rval.trimToSize();
-        return rval;
+        return sortSynsets(rval);
     }
 
     /**
@@ -575,6 +573,24 @@ public String convertStreamToString(InputStream is) {
             }
         }
         rval.trimToSize();
+        return rval;
+    }
+
+    /**
+     * Sorts the input <code>List</code> of <code>Synsets</code> by ID and returns it
+     * @param rval the <code>List</code> of <code>Synsets</code> to sort
+     * @return the <code>List</code> of <code>Synsets</code> sorted by ID
+     */
+    private List<Synset> sortSynsets(ArrayList<Synset> rval) {
+        for (int i = 0; i < rval.size(); i++) {
+            for (int j = i; j > 0; j--) {
+                if (rval.get(j - 1).getId() > rval.get(j).getId()) {
+                    Synset bu = rval.get(j - 1);
+                    rval.set(j - 1, rval.get(j));
+                    rval.set(j, bu);
+                }
+            }
+        }
         return rval;
     }
 
@@ -782,19 +798,20 @@ public String convertStreamToString(InputStream is) {
             }
         }
     }
-    
+
     /**
      * Checks whether the <code>File</code> is a <code>ZipFile</code>.
      * @param file the <code>File</code> to check
      * @return true if this <code>File</code> is a <code>ZipFile</code>
      */
     protected static boolean isZipFile(File file) throws IOException {
-        RandomAccessFile raf = new RandomAccessFile(file, "r");  
+        RandomAccessFile raf = new RandomAccessFile(file, "r");
         long n = raf.readInt();
-        raf.close();  
+        raf.close();
         if (n == 0x504B0304) {
             return true;
+        } else {
+            return false;
         }
-        else return false;
     }
 }
