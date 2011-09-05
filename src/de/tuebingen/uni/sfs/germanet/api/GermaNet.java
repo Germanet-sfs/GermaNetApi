@@ -946,9 +946,10 @@ public class GermaNet {
         for (WiktionaryParaphrase wiki : wiktionaryParaphrases) {
             int id = wiki.getLexUnitId();
             LexUnit lu = getLexUnitByID(id);
-            lu.addWiktionaryParaphrase(wiki);
-            lexUnitID.put(id, lu);
+            if (lu != null) { // TODO: this if might get obsolete once we do a proper Wiktionary XML release
+                lu.addWiktionaryParaphrase(wiki);
             }
+            lexUnitID.put(id, lu);
+        }
     }
-
 }
