@@ -28,7 +28,8 @@ public class HypernymGraph {
             depth = keyboard.nextInt();
             destName = keyboard.nextLine().trim();
 
-            gnetDir = new File("/Users/vhenrich/NetBeansProjects/GN_V60");
+            gnetDir = new File("/space/abrskva/GermaNet/GN_V60/GN_V60_sub.zip");
+  //          gnetDir = new File("/space/abrskva/GermaNet/GN_V60/GN_V60");
             GermaNet gnet = new GermaNet(gnetDir);
 
             synsets = gnet.getSynsets(word);
@@ -73,6 +74,7 @@ public class HypernymGraph {
         visited.add(synset);
 
         lexUnits = synset.getLexUnits();
+        
         // use just the first orthForm in the first LexUnit
         orthForm = lexUnits.get(0).getOrthForm();
         rval += "\"" + orthForm + "\" [fontname=Helvetica,fontsize=10]\n";

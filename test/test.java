@@ -20,7 +20,7 @@ public class test {
      */
     public static void main(String[] args) {
         try {
-            File gnetDir = new File("K:/from Agnia/GN_V60");
+            File gnetDir = new File("/space/abrskva/GermaNet/GN_V60/GN_V60_sub.zip");
 //            File iliFile = new File("/afs/sfs/home/abrskva/NetBeansProjects/ili.xml");
  //           String fileName = "/space/abrskva/NetBeansProjects/ConvertToXML/ili_with_syn.xml";
             GermaNet gnet = new GermaNet(gnetDir);
@@ -28,7 +28,7 @@ public class test {
  //           gnet.loadWictionaryParaphrase(new File ("/space/abrskva/GermaNet/GN_V60"));
 
             
-            for (Synset syn : gnet.getSynsets("Haus"))
+            for (LexUnit syn : gnet.getLexUnits("Haus"))
                 System.out.println(syn);
 /*            //test whether or not 1 synset has several LexUnits with corresponding ILI Records
             List<Synset> synsets = gnet.getSynsets();

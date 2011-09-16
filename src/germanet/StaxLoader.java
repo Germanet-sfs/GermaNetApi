@@ -31,8 +31,9 @@ import javax.xml.stream.XMLStreamException;
  * 
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
  * @version 6.0
-*/
+ */
 class StaxLoader {
+
     private File germaNetDir;
     private List<InputStream> germaNetStreams;
     private SynsetLoader synLoader;  // loader for synsets
@@ -58,7 +59,6 @@ class StaxLoader {
 //                    gnetDir + "\"");
 //        }
 //    }
-
     /**
      * Constructs a <code>StaxLoader</code> for data files in directory
      * <code>germanetDirectory</code> and existing <code>GermaNet</code> object
@@ -76,8 +76,8 @@ class StaxLoader {
         this.xmlNames = null;
 
         if (!germaNetDir.isDirectory()) {
-            throw new FileNotFoundException("Unable to load GermaNet from \"" +
-                    germaNetDir + "\"");
+            throw new FileNotFoundException("Unable to load GermaNet from \""
+                    + germaNetDir + "\"");
         }
     }
 
@@ -88,7 +88,7 @@ class StaxLoader {
         this.relLoader = new RelationLoader(germaNet);
         this.xmlNames = null;
     }
-    
+
     /**
      * Constructs a <code>StaxLoader</code> for data streams in
      * <code>germanetStreams</code> and existing <code>GermaNet</code> object
@@ -106,8 +106,8 @@ class StaxLoader {
         this.xmlNames = xmlNames;
 
         if (germaNetStreams.size() == 0) {
-            throw new StreamCorruptedException("Unable to load GermaNet from \"" +
-                    germaNetStreams + "\"");
+            throw new StreamCorruptedException("Unable to load GermaNet from \""
+                    + germaNetStreams + "\"");
         }
     }
 
@@ -117,7 +117,7 @@ class StaxLoader {
      * @throws javax.xml.stream.XMLStreamException
      */
     protected void load() throws XMLStreamException, FileNotFoundException {
-        
+
         if (this.germaNetDir != null) { // load GermaNet from file
             FilenameFilter filter = new SynsetFilter(); //get only synset files
 
@@ -130,8 +130,8 @@ class StaxLoader {
 
                 // load all synset files first with a SynsetLoader
                 for (int i = 0; i < germaNetFiles.length; i++) {
-                    System.out.println("Loading " +
-                            germaNetFiles[i].getName() + "...");
+                    System.out.println("Loading "
+                            + germaNetFiles[i].getName() + "...");
                     synLoader.loadSynsets(germaNetFiles[i]);
                 }
 
@@ -141,8 +141,8 @@ class StaxLoader {
 
                 // load relations with a RelationLoader
                 for (int i = 0; i < germaNetFiles.length; i++) {
-                    System.out.println("Loading " +
-                            germaNetFiles[i].getName() + "...");
+                    System.out.println("Loading "
+                            + germaNetFiles[i].getName() + "...");
                     relLoader.loadRelations(germaNetFiles[i]);
                 }
                 System.out.println("Done.");
@@ -159,43 +159,41 @@ class StaxLoader {
             }
 
             // load all synset input streams first with a SynsetLoader
-            for (int i = 0; i < germaNetStreams.size() - 1; i++) {
+            for (int i = 0; i < germaNetStreams.size(); i++) {
 
-                if (xmlNames.get(i).endsWith("xml") &&
-                    (xmlNames.get(i).startsWith("nomen") ||
-                    xmlNames.get(i).startsWith("verben") ||
-                    xmlNames.get(i).startsWith("adj"))) {
-                System.out.println("Loading input stream " +
-                        xmlNames.get(i) + "...");
-                synLoader.loadSynsets(germaNetStreams.get(i), xmlNames.get(i));
+                if (xmlNames.get(i).endsWith("xml")
+                        && (xmlNames.get(i).startsWith("nomen")
+                        || xmlNames.get(i).startsWith("verben")
+                        || xmlNames.get(i).startsWith("adj"))) {
+                    System.out.println("Loading input stream "
+                            + xmlNames.get(i) + "...");
+                    synLoader.loadSynsets(germaNetStreams.get(i), xmlNames.get(i));
                 }
             }
 
             // load relations with a RelationLoader
-            for (int i = 0; i < germaNetStreams.size() - 1; i++) {
-                if(xmlNames.get(i).equals("gn_relations.xml")) {
-              System.out.println("Loading input stream " +
-                        xmlNames.get(i) + "...");
-            relLoader.loadRelations(germaNetStreams.get(germaNetStreams.size() - 1));
-            }
+            for (int i = 0; i < germaNetStreams.size(); i++) {
+                if (xmlNames.get(i).equals("gn_relations.xml")) {
+                    System.out.println("Loading input stream "
+                            + xmlNames.get(i) + "...");
+                    relLoader.loadRelations(germaNetStreams.get(i));
+                }
             }
             System.out.println("Done.");
         }
     }
 
-    
-    
-    
     /**
      * Filters out synset files by name.
      */
     private class SynsetFilter implements FilenameFilter {
+
         @Override
         public boolean accept(File directory, String name) {
-            return (name.endsWith("xml") &&
-                    (name.startsWith("nomen") ||
-                    name.startsWith("verben") ||
-                    name.startsWith("adj")));
+            return (name.endsWith("xml")
+                    && (name.startsWith("nomen")
+                    || name.startsWith("verben")
+                    || name.startsWith("adj")));
         }
     }
 
@@ -203,6 +201,7 @@ class StaxLoader {
      * Filters out relation files by name.
      */
     private class RelationFilter implements FilenameFilter {
+
         @Override
         public boolean accept(File directory, String name) {
             return (name.equals("gn_relations.xml"));
