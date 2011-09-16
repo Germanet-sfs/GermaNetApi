@@ -225,11 +225,21 @@ public class Synset {
     }
 
     /**
-     * Returns this <code>Synset</code>'s paraphrase (can be empty).
-     * @return this <code>Synset</code>'s paraphrase
+     * Returns this <code>Synset</code>'s paraphrases (can be empty).
+     * @return this <code>Synset</code>'s paraphrases
      */
-    public String getParaphrase() {
-        return this.paraphrase;
+    public List<String> getParaphrases() {
+        List<String> rval = new ArrayList<String>();
+        if (this.paraphrase.length() != 0) {
+            rval.add(this.paraphrase);
+        }
+        for (LexUnit lu : lexUnits) {
+            List<WiktionaryParaphrase> wphrases = lu.getWiktionaryParaphrases();
+            for (WiktionaryParaphrase wp : wphrases) {
+                rval.add(wp.getWiktionarySense());
+            }
+        }
+        return rval;
     }
 
     /**
@@ -326,8 +336,12 @@ public class Synset {
     @Override
     public String toString() {
         String synsetAsString = "id: " + getId() + ", orth forms: " + getAllOrthForms().toString();
-        if (getParaphrase() != null) {
-            synsetAsString += ", paraphrase: " + getParaphrase();
+        if (!getParaphrases().isEmpty()) {
+            synsetAsString += ", paraphrases: ";
+            for (String para : getParaphrases()) {
+                synsetAsString += para + "; ";
+            }
+            synsetAsString = synsetAsString.substring(0, synsetAsString.length()-2);
         }
 
         return synsetAsString;
