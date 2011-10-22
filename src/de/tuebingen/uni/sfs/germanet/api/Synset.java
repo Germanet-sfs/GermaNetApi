@@ -225,7 +225,19 @@ public class Synset {
     }
 
     /**
-     * Returns this <code>Synset</code>'s paraphrases (can be empty).
+     * Returns this <code>Synset</code>'s paraphrase (can be empty). This is the
+     * paraphrase that was manually added to GermaNet.
+     * @return this <code>Synset</code>'s paraphrase
+     */
+    public String getParaphrase() {
+        return this.paraphrase;
+    }
+
+    /**
+     * Returns this <code>Synset</code>'s paraphrases (can be empty). This list
+     * contains all paraphrases that were harvested from Wiktionary (this
+     * requires a call of <code>GermaNet.loadWiktionaryParaphrases</code>
+     * before) as well as GermaNet's manually added paraphrase.
      * @return this <code>Synset</code>'s paraphrases
      */
     public List<String> getParaphrases() {

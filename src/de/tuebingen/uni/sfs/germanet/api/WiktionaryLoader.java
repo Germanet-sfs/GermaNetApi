@@ -88,7 +88,7 @@ public class WiktionaryLoader {
                         nodeName = parser.getLocalName();
                         if (nodeName.equals(GermaNet.XML_WIKTONARY_PARAPHRASE)) {
                             WiktionaryParaphrase wiki = processWictionaryParaphrase(parser);
-                            germaNet.addWictionaryParaphrase(wiki);
+                            germaNet.addWiktionaryParaphrase(wiki);
                         }
                         break;
                 }

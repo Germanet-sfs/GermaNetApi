@@ -521,6 +521,10 @@ public class GermaNet {
         HashMap<String, ArrayList<LexUnit>> map;
         List<LexUnit> tmpList;
 
+        if (ignoreCase) {
+            orthForm = orthForm.toLowerCase();
+        }
+
         if (considerMainOrthFormOnly) {
             map = wordCategoryMap.get(wordCategory);
         } else {
@@ -883,12 +887,12 @@ public class GermaNet {
 
     /**
      * Loads the Wiktionary data files into this <code>GermaNet</code> object
-     * from the specified directory String
+     * from the specified directory <code>path</code>.
      * @param path location of the Wiktionary data files
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public void loadWictionaryParaphrase(String path) throws XMLStreamException {
+    public void loadWiktionaryParaphrases(String path) throws XMLStreamException {
         loadWictionaryParaphrase(new File(path));
     }
 
@@ -897,7 +901,7 @@ public class GermaNet {
      * object when WiktionaryLoader is called
      * @param wiki the <code>WiktionaryParaphrase</code> to add
      */
-    protected void addWictionaryParaphrase(WiktionaryParaphrase wiki) {
+    protected void addWiktionaryParaphrase(WiktionaryParaphrase wiki) {
         wiktionaryParaphrases.add(wiki);
     }
 
@@ -905,7 +909,7 @@ public class GermaNet {
      * Returns a <code>List</code> of all <code>WiktionaryParaphrases</code>.
      * @return a <code>List</code> of all <code>WiktionaryParaphrases</code>
      */
-    public List<WiktionaryParaphrase> getWictionaryParaphrases() {
+    public List<WiktionaryParaphrase> getWiktionaryParaphrases() {
         return (List<WiktionaryParaphrase>) wiktionaryParaphrases.clone();
     }
 
