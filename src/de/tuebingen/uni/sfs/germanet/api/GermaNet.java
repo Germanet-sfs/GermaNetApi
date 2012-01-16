@@ -141,7 +141,7 @@ public class GermaNet {
     public static final String XML_WIKTONARY_POS = "pos";
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
-    private ArrayList<Synset> synsets;
+    private TreeSet<Synset> synsets;
     private ArrayList<IliRecord> iliRecords;
     private ArrayList<WiktionaryParaphrase> wiktionaryParaphrases;
     private HashMap<Integer, LexUnit> lexUnitID;
@@ -199,7 +199,7 @@ public class GermaNet {
         this.ignoreCase = ignoreCase;
         this.dir = dir;
 //        this.inputStreams = null;
-        this.synsets = new ArrayList<Synset>();
+        this.synsets = new TreeSet<Synset>();
         this.iliRecords = new ArrayList<IliRecord>();
         this.wiktionaryParaphrases = new ArrayList<WiktionaryParaphrase>();
         this.synsetID = new HashMap<Integer, Synset>();
@@ -406,8 +406,8 @@ public class GermaNet {
      * Returns a <code>List</code> of all <code>Synsets</code>.
      * @return a <code>list</code> of all <code>Synsets</code>
      */
-    public List<Synset> getSynsets() {
-        return (List<Synset>) synsets.clone();
+    public Set<Synset> getSynsets() {
+        return (Set<Synset>) synsets.clone();
     }
 
     /**

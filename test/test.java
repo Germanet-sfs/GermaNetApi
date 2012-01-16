@@ -19,15 +19,15 @@ public class test {
      */
     public static void main(String[] args) {
         try {
-            File gnetDir = new File("/space/abrskva/GermaNet/GN_V60/GN_V60");
+            File gnetDir = new File("/Users/abrskva/abrskva/GermaNet/GN_V60/GN_V60");
 //            File iliFile = new File("/afs/sfs/home/abrskva/NetBeansProjects/ili.xml");
  //           String fileName = "/space/abrskva/NetBeansProjects/ConvertToXML/ili_with_syn.xml";
             GermaNet gnet = new GermaNet(gnetDir);
  //           gnet.loadIli(fileName);
-            gnet.loadWictionaryParaphrase(new File ("/space/abrskva/GermaNet/GN_V60"));
+ //           gnet.loadWictionaryParaphrase(new File ("/space/abrskva/GermaNet/GN_V60"));
 
             //test synset.getParaphrases() with wiki paraphrases included
-            for (Synset syn : gnet.getSynsets("Arbeit"))
+            for (Synset syn : gnet.getSynsets())
                 System.out.println(syn.toString());
 
 /*            //test whether or not 1 synset has several LexUnits with corresponding ILI Records

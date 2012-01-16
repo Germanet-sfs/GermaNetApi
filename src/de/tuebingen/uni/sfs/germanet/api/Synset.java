@@ -63,7 +63,7 @@ import java.util.*;
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
  * @version 7.0
  */
-public class Synset {
+public class Synset implements Comparable {
     private int id;
     private WordCategory wordCategory;
     private WordClass wordClass;
@@ -385,5 +385,16 @@ public class Synset {
             return true;
         }
         return false;
+    }
+
+     /**
+     * Return 1 if this <code>Synset</code> has a larger id than another <code>Synset</code>,
+      * -1 if it has a smaller one.
+     * @param other the <code>Synset</code> to compare to
+     * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
+     */
+    @Override
+    public int compareTo(Object otherSynset) {
+        return ((Integer) this.getId()).compareTo((Integer) ((Synset) otherSynset).getId());
     }
 }
