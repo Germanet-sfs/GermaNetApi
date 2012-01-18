@@ -63,7 +63,6 @@ class SynsetLoader {
         XMLStreamReader parser = factory.createXMLStreamReader(in);
         int event;
         String nodeName;
-        WordClass wordClass = WordClass.valueOf(synsetFile.getName().split("\\.")[1].toString());
 
         //Parse entire file, looking for synset start elements
         while (parser.hasNext()) {
@@ -76,7 +75,6 @@ class SynsetLoader {
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_SYNSET)) {
                         Synset syn = processSynset(parser);
-                        syn.setWordClass(wordClass);
                         germaNet.addSynset(syn);
                     }
                     break;
@@ -91,35 +89,33 @@ class SynsetLoader {
      * @param synsetFile the file containing <code>GermaNet Synset<code> data
      * @throws javax.xml.stream.XMLStreamException
      */
-//    protected void loadSynsets(InputStream inputStream) throws XMLStreamException {
-////        InputStream in = new FileInputStream(synsetFile);
-//        XMLInputFactory factory = XMLInputFactory.newInstance();
-//        System.out.println("loadSynsets...");
-//        XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
-//        int event;
-//        String nodeName;
-//
-//        /*
-//         * Parse entire file, looking for synset start elements
-//         */
-//        while (parser.hasNext()) {
-//            event = parser.next();
-//            switch (event) {
-//                case XMLStreamConstants.START_DOCUMENT:
-//                    namespace = parser.getNamespaceURI();
-//                    break;
-//                case XMLStreamConstants.START_ELEMENT:
-//                    nodeName = parser.getLocalName();
-//                    if (nodeName.equals(GermaNet.XML_SYNSET)) {
-//                        Synset syn = processSynset(parser);
-////                        syn.setWordClass(wordClass); TODO
-//                        germaNet.addSynset(syn);
-//                    }
-//                    break;
-//            }
-//        }
-//        parser.close();
-//    }
+    protected void loadSynsets(InputStream inputStream) throws XMLStreamException {
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
+        int event;
+        String nodeName;
+
+        /*
+         * Parse entire file, looking for synset start elements
+         */
+        while (parser.hasNext()) {
+            event = parser.next();
+            switch (event) {
+                case XMLStreamConstants.START_DOCUMENT:
+                    namespace = parser.getNamespaceURI();
+                    break;
+                case XMLStreamConstants.START_ELEMENT:
+                    nodeName = parser.getLocalName();
+                    if (nodeName.equals(GermaNet.XML_SYNSET)) {
+                        Synset syn = processSynset(parser);
+//                        syn.setWordClass(wordClass); TODO
+                        germaNet.addSynset(syn);
+                    }
+                    break;
+            }
+        }
+        parser.close();
+    }
 
     /**
      * Returns the <code>Synset</code> for which the start tag was just encountered.
@@ -130,6 +126,7 @@ class SynsetLoader {
     private Synset processSynset(XMLStreamReader parser) throws XMLStreamException {
         int sID;
         WordCategory wordCategory;
+        WordClass wordClass;
         int event = -1;
         String nodeName;
         boolean done = false;
@@ -143,9 +140,11 @@ class SynsetLoader {
         sID = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
         wordCategory = WordCategory.valueOf(parser.getAttributeValue(namespace,
                 GermaNet.XML_WORD_CATEGORY));
+        wordClass = WordClass.valueOf(parser.getAttributeValue(namespace,
+                GermaNet.XML_WORD_CLASS));
         
         // create a new Synset with those attributes
-        curSynset = new Synset(sID, wordCategory);
+        curSynset = new Synset(sID, wordCategory, wordClass);
 
         // process this synset
         while (parser.hasNext() && !done) {

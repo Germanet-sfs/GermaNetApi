@@ -42,7 +42,7 @@ import java.util.*;
  *
  * Methods are provided to get the <code>WordCategory</code>, paraphrase, and
  * the <code>LexUnit</code>s.<br><br>
- * 
+* 
  * Conceptual relations can be retrieved:<br>
  * <code>
  * &nbsp;&nbsp;&nbsp;List&lt;Synset&gt; hypernyms = aSynset.getRelatedLexUnits(ConRel.has_hypernym);<br><br>
@@ -78,9 +78,10 @@ public class Synset implements Comparable {
      * @param id unique identifier
      * @param wordCategory the <code>WordCategory</code> of this <code>Synset</code>
      */
-    protected Synset(int id, WordCategory wordCategory) {
+    protected Synset(int id, WordCategory wordCategory, WordClass wordClass) {
         this.id = id;
         this.wordCategory = wordCategory;
+        this.wordClass = wordClass;
         lexUnits = new ArrayList<LexUnit>(0);
         paraphrase = "";
         relations = new EnumMap<ConRel, ArrayList<Synset>>(ConRel.class);

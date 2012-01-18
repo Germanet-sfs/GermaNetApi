@@ -6,7 +6,6 @@
 
 import de.tuebingen.uni.sfs.germanet.api.*;
 import java.io.*;
-import java.util.*;
 
 /**
  *
@@ -18,8 +17,9 @@ public class test {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+
         try {
-            File gnetDir = new File("/Users/abrskva/abrskva/GermaNet/GN_V60/GN_V60");
+            File gnetDir = new File("/Users/abrskva/abrskva/GermaNet/GN_V60/GN_V70.zip");
 //            File iliFile = new File("/afs/sfs/home/abrskva/NetBeansProjects/ili.xml");
  //           String fileName = "/space/abrskva/NetBeansProjects/ConvertToXML/ili_with_syn.xml";
             GermaNet gnet = new GermaNet(gnetDir);
@@ -28,7 +28,7 @@ public class test {
 
             //test synset.getParaphrases() with wiki paraphrases included
             for (Synset syn : gnet.getSynsets())
-                System.out.println(syn.toString());
+                System.out.println(syn.getWordClass());
 
 /*            //test whether or not 1 synset has several LexUnits with corresponding ILI Records
             List<Synset> synsets = gnet.getSynsets();

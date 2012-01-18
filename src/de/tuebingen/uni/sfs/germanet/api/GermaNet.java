@@ -21,11 +21,15 @@ package de.tuebingen.uni.sfs.germanet.api;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.io.StreamCorruptedException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -96,6 +100,7 @@ public class GermaNet {
     public static final String XML_ID = "id";
     public static final String XML_PARAPHRASE = "paraphrase";
     public static final String XML_WORD_CATEGORY = "category";
+    public static final String XML_WORD_CLASS = "class";
     public static final String XML_LEX_UNIT = "lexUnit";
     public static final String XML_ORTH_FORM = "orthForm";
     public static final String XML_ORTH_VAR = "orthVar";
@@ -147,7 +152,8 @@ public class GermaNet {
     private HashMap<Integer, LexUnit> lexUnitID;
     private HashMap<Integer, Synset> synsetID;
     private File dir = null;
-//    private List<InputStream> inputStreams = null;
+    private List<InputStream> inputStreams = null;
+    private List<String> xmlNames = null;
     private boolean ignoreCase = false;
 
     /**
@@ -157,7 +163,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException 
      */
-    public GermaNet(String dirName) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(String dirName) throws FileNotFoundException, XMLStreamException, IOException {
         this(new File(dirName), false);
     }
 
@@ -170,7 +176,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public GermaNet(String dirName, boolean ignoreCase) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(String dirName, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, IOException {
         this(new File(dirName), ignoreCase);
     }
 
@@ -181,7 +187,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException 
      */
-    public GermaNet(File dir) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(File dir) throws FileNotFoundException, XMLStreamException, IOException {
         this(dir, false);
     }
 
@@ -194,11 +200,10 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public GermaNet(File dir, boolean ignoreCase) throws FileNotFoundException, XMLStreamException {
+    public GermaNet(File dir, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, IOException {
         checkMemory();
         this.ignoreCase = ignoreCase;
-        this.dir = dir;
-//        this.inputStreams = null;
+        this.inputStreams = null;
         this.synsets = new TreeSet<Synset>();
         this.iliRecords = new ArrayList<IliRecord>();
         this.wiktionaryParaphrases = new ArrayList<WiktionaryParaphrase>();
@@ -206,6 +211,29 @@ public class GermaNet {
         this.lexUnitID = new HashMap<Integer, LexUnit>();
         this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
         this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
+
+        if (!dir.isDirectory() && isZipFile(dir)) {
+            ZipFile zipFile = new ZipFile(dir);
+            Enumeration entries = zipFile.entries();
+
+            List<InputStream> inputStreamList = new ArrayList<InputStream>();
+            List<String> nameList = new ArrayList<String>();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = (ZipEntry) entries.nextElement();
+                String entryName = entry.getName();
+                if (entryName.split(File.separator).length > 1) {
+                    entryName = entryName.split(File.separator)[entryName.split(File.separator).length - 1];
+                }
+                nameList.add(entryName);
+                InputStream stream = (zipFile.getInputStream(entry));
+                inputStreamList.add(stream);
+            }
+            inputStreams = inputStreamList;
+            xmlNames = nameList;
+
+        } else {
+            this.dir = dir;
+        }
 
         load();
     }
@@ -266,21 +294,21 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-//        if (this.dir != null) {
+        if (this.dir != null) {
         try {
             loader = new StaxLoader(dir, this);
             loader.load();
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
         }
-//        } else {
-//            try {
-//                loader = new StaxLoader(inputStreams, this);
-//                loader.load();
-//            } catch (StreamCorruptedException ex) {
-//                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//        }
+        } else {
+            try {
+                loader = new StaxLoader(inputStreams, xmlNames, this);
+                loader.load();
+            } catch (StreamCorruptedException ex) {
+                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 
         trimAll();
 
@@ -954,6 +982,22 @@ public class GermaNet {
                 lu.addWiktionaryParaphrase(wiki);
             }
             lexUnitID.put(id, lu);
+        }
+    }
+
+    /**
+     * Checks whether the <code>File</code> is a <code>ZipFile</code>.
+     * @param file the <code>File</code> to check
+     * @return true if this <code>File</code> is a <code>ZipFile</code>
+     */
+    protected static boolean isZipFile(File file) throws IOException {
+        RandomAccessFile raf = new RandomAccessFile(file, "r");
+        long n = raf.readInt();
+        raf.close();
+        if (n == 0x504B0304) {
+            return true;
+        } else {
+            return false;
         }
     }
 }
