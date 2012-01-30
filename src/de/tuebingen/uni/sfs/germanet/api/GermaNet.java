@@ -133,6 +133,7 @@ public class GermaNet {
     public static final String XML_PWN20_SENSE = "pwn20Sense";
     public static final String XML_PWN20_ID = "pwn20Id";
     public static final String XML_PWN30_ID = "pwn30Id";
+    public static final String XML_PWN20_PARAPHRASE = "pwn20paraphrase";
     public static final String XML_PWN20_SYNONYMS = "pwn20Synonyms";
     public static final String XML_PWN20_SYNONYM = "pwn20Synonym";
     public static final String YES = "yes";
@@ -870,10 +871,11 @@ public class GermaNet {
     protected void updateLexUnitsWithIli() {
         for (IliRecord ili : iliRecords) {
             int id = ili.getLexUnitId();
+            if (getLexUnitByID(id) != null) {
             LexUnit lu = getLexUnitByID(id);
             lu.addIliRecord(ili);
-            lexUnitID.put(id, lu);
-            }
+            lexUnitID.put(id, lu);}
+        }
     }
 
 

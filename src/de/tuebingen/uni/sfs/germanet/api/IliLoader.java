@@ -93,7 +93,6 @@ public class IliLoader {
      * @throws javax.xml.stream.XMLStreamException
      */
     private IliRecord processIliRecord(XMLStreamReader parser) throws XMLStreamException {
-        int iliId;
         int lexUnitId;
         String gnWord;
         String ewnRelation;
@@ -101,14 +100,13 @@ public class IliLoader {
         int pwn20Sense;
         String pwn20Id;
         String pwn30Id;
+        String pwn20paraphrase = "";
         String source;
         IliRecord curIli;
         List<String> englishSynonyms = new ArrayList<String>();
         boolean done = false;
         int event;
         String nodeName;
-
-        iliId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
         lexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
         gnWord = parser.getAttributeValue(namespace, GermaNet.XML_GN_WORD);
         ewnRelation = parser.getAttributeValue(namespace, GermaNet.XML_EWN_RELATION);
@@ -116,6 +114,9 @@ public class IliLoader {
         pwn20Sense = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_PWN20_SENSE));
         pwn20Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_ID);
         pwn30Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN30_ID);
+        if (parser.getAttributeLocalName(7).equals(GermaNet.XML_PWN20_PARAPHRASE)) {
+            pwn20paraphrase = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_PARAPHRASE);
+        }
         source = parser.getAttributeValue(namespace, GermaNet.XML_SOURCE);
 
         // process this lexUnit
@@ -137,7 +138,7 @@ public class IliLoader {
             }
         }
 
-        curIli = new IliRecord(iliId, lexUnitId, gnWord, ewnRelation, pwnWord, pwn20Sense, pwn20Id, pwn30Id, source);
+        curIli = new IliRecord(lexUnitId, gnWord, ewnRelation, pwnWord, pwn20Sense, pwn20Id, pwn30Id, pwn20paraphrase, source);
 
         for (String synonym : englishSynonyms) {
             curIli.addEnglishSynonym(synonym);

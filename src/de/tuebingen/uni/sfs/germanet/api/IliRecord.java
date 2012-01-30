@@ -37,7 +37,6 @@ import java.util.*;
  */
 public class IliRecord {
 
-    private int id;
     private int lexUnitId;
     private String gnWord;
     private String ewnRelation;
@@ -45,6 +44,7 @@ public class IliRecord {
     private int pwn20Sense;
     private String pwn20Id;
     private String pwn30Id;
+    private String pwn20paraphrase;
     private String source;
     private ArrayList<String> englishSynonyms;
 
@@ -60,9 +60,8 @@ public class IliRecord {
      * @param pwn30Id the identifier of the corresponding English word from Princeton WordNet 3.0
      * @param source the source of this <code>IliRecord</code>
      */
-    IliRecord(int iliId, int lexUnitId, String gnWord, String ewnRelation,
-            String pwnWord, int pwn20Sense, String pwn20Id, String pwn30Id, String source) {
-        this.id = iliId;
+    IliRecord(int lexUnitId, String gnWord, String ewnRelation,
+            String pwnWord, int pwn20Sense, String pwn20Id, String pwn30Id, String pwn20paraphrase, String source) {
         this.lexUnitId = lexUnitId;
         this.gnWord = gnWord;
         this.ewnRelation = ewnRelation;
@@ -70,18 +69,12 @@ public class IliRecord {
         this.pwn20Sense = pwn20Sense;
         this.pwn20Id = pwn30Id;
         this.pwn30Id = pwn30Id;
+        this.pwn20paraphrase = pwn20paraphrase;
         this.source = source;
         this.englishSynonyms = new ArrayList<String>();
     }
 
-    /**
-     * Returns the unique identifier of this <code>IliRecord</code>.
-     * @return the unique identifier of this <code>IliRecord</code>
-     */
-    public int getId() {
-        return id;
-    }
-
+    
     /**
      * Returns the identifier of the <code>LexUnit</code>
      * corresponding to this <code>IliRecord</code>.
@@ -140,6 +133,14 @@ public class IliRecord {
     }
 
     /**
+     * Returns the paraphrase for this word from Princeton WordNet 2.0.
+     * @return the paraphrase for this word from Princeton WordNet 2.0
+     */
+    public String getPwn20paraphrase() {
+        return pwn20paraphrase;
+    }
+
+    /**
      * Returns the source of the <code>IliRecord</code>.
      * @return the source of the <code>IliRecord</code>
      */
@@ -153,8 +154,7 @@ public class IliRecord {
      */
     @Override
     public String toString() {
-        String stringIli = "ILI ID: " + this.id +
-                ", LexUnit ID: " + this.lexUnitId +
+        String stringIli = "LexUnit ID: " + this.lexUnitId +
                 ", gnWord: " + this.gnWord +
                 ", EWN relation: " + this.ewnRelation +
                 ", PWN word: " + this.pwnWord +
@@ -168,6 +168,8 @@ public class IliRecord {
                 stringIli += synonym + ", ";
             stringIli = stringIli.substring(0, stringIli.length() - 2);
         }
+        if (pwn20paraphrase.length() > 0)
+            stringIli += "\nEnglish paraphrase from PWN 2.0: " + pwn20paraphrase;
         return stringIli;
     }
 
