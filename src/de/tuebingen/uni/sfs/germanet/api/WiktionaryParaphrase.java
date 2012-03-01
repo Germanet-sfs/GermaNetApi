@@ -21,7 +21,7 @@ package de.tuebingen.uni.sfs.germanet.api;
 
 /**
  * A <code>WiktionaryParaphrase</code> consists of wiktionarySense (represented as a String),
- * sense id, as well as an attribute Edited (boolean).
+ * wiktionary id, sense id, and attribute Edited (boolean).
  *
  * Methods are provided to get each of the attributes.<br><br>
  *

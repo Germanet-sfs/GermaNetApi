@@ -32,14 +32,14 @@ import javax.xml.stream.XMLStreamReader;
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
  * @version 7.0
  */
-public class WiktionaryLoader {
+class WiktionaryLoader {
 
     private GermaNet germaNet;
     private String namespace;
     private File wikiDir;
 
     /**
-     * Constructs an <code>WiktionaryLoader</code> for the specified
+     * Constructs a <code>WiktionaryLoader</code> for the specified
      * <code>GermaNet</code> object.
      * @param germaNet the <code>GermaNet</code> object to load the
      * <code>WiktionaryParaphrases</code> into
@@ -86,7 +86,7 @@ public class WiktionaryLoader {
                         break;
                     case XMLStreamConstants.START_ELEMENT:
                         nodeName = parser.getLocalName();
-                        if (nodeName.equals(GermaNet.XML_WIKTONARY_PARAPHRASE)) {
+                        if (nodeName.equals(GermaNet.XML_WIKTIONARY_PARAPHRASE)) {
                             WiktionaryParaphrase wiki = processWictionaryParaphrase(parser);
                             germaNet.addWiktionaryParaphrase(wiki);
                         }
@@ -116,11 +116,11 @@ public class WiktionaryLoader {
         WiktionaryParaphrase curWiki;
 
         lexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
-        wiktionaryId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_ID).substring(1));
-        wiktionarySenseId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_SENSE_ID));
-        wiktionarySense = parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_SENSE);
+        wiktionaryId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_ID).substring(1));
+        wiktionarySenseId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_SENSE_ID));
+        wiktionarySense = parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_SENSE);
 
-        String edit = parser.getAttributeValue(namespace, GermaNet.XML_WIKTONARY_EDITED);
+        String edit = parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_EDITED);
         if (edit.equals(GermaNet.YES)) {
             edited = true;
         }
@@ -131,6 +131,9 @@ public class WiktionaryLoader {
         return curWiki;
     }
 
+    /**
+     * Filters out all the files which do not contain <code>WiktionaryParaphrases</code>
+     */
     private class WikiFilter implements FilenameFilter {
 
         @Override

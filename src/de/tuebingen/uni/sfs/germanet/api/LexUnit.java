@@ -24,7 +24,8 @@ import java.util.*;
 /**
  * A <code>LexUnit</code> consists of an orthForm (represented as a String),
  * an orthVar (can be empty), an oldOrthForm (can be empty), and an oldOrthVar
- * (can be empty). <code>Examples</code> and <code>Frames</code> can belong to a
+ * (can be empty). <code>Examples</code>, <code>Frames</code>, <code>IliRecords</code>,
+ * and <code>WiktionaryParaphrases</code> can belong to a
  * <code>LexUnit</code> as well as the following
  * attributes: styleMarking (boolean), sense (int), styleMarking (boolean),
  * artificial (boolean), namedEntity (boolean), and source (String).<br>
@@ -454,8 +455,8 @@ public class LexUnit {
     }
 
     /**
-     * Add an <code>WiktionaryParaphrase</code> to this <code>LexUnit</code>.
-     * @param record <code>WiktionaryParaphrase</code> to add to this <code>LexUnit</code>
+     * Add a <code>WiktionaryParaphrase</code> to this <code>LexUnit</code>.
+     * @param paraphrase <code>WiktionaryParaphrase</code> to add to this <code>LexUnit</code>
      */
     public void addWiktionaryParaphrase(WiktionaryParaphrase paraphrase) {
         wiktionaryParaphrases.add(paraphrase);

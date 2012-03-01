@@ -77,6 +77,7 @@ public class Synset implements Comparable {
      * Constructs a <code>Synset</code> with the specified attributes.
      * @param id unique identifier
      * @param wordCategory the <code>WordCategory</code> of this <code>Synset</code>
+     * @param wordClass the <code>WordClass</code> of this <code>Synset</code>
      */
     protected Synset(int id, WordCategory wordCategory, WordClass wordClass) {
         this.id = id;
@@ -114,7 +115,7 @@ public class Synset implements Comparable {
 
     /**
      * Return true if this <code>Synset</code> is in <code>wordClass</code>.
-     * @param wordClass the <code>WordClass</code> (eg. nomen, verben, adj)
+     * @param wordClass the <code>WordClass</code>
      * @return true if this <code>Synset</code> is in <code>wordClass</code>
      */
     public boolean inWordClass(WordClass wordClass) {
@@ -391,7 +392,7 @@ public class Synset implements Comparable {
      /**
      * Return 1 if this <code>Synset</code> has a larger id than another <code>Synset</code>,
       * -1 if it has a smaller one.
-     * @param other the <code>Synset</code> to compare to
+     * @param otherSynset the <code>Synset</code> to compare to
      * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
      */
     @Override

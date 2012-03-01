@@ -44,7 +44,8 @@ import javax.xml.stream.XMLStreamException;
  * never empty.<br>
  * A <code>LexUnit</code> consists of an orthForm (represented as a Strings),
  * an orthVar (can be empty), an oldOrthForm (can be empty), and an oldOrthVar
- * (can be empty). <code>Examples</code> and <code>Frames</code> can belong to a
+ * (can be empty). <code>Examples</code>, <code>Frames</code>, <code>IliRecords</code>,
+ * and <code>WiktionaryParaphrases</code> can belong to a
  * <code>LexUnit</code> as well as the following
  * attributes: styleMarking (boolean), sense (int), styleMarking (boolean),
  * artificial (boolean), namedEntity (boolean), and source (String).<br>
@@ -139,12 +140,12 @@ public class GermaNet {
     public static final String YES = "yes";
     public static final String NO = "no";
     //for Wiktionary
-    public static final String XML_WIKTONARY_PARAPHRASE = "wiktionaryParaphrase";
-    public static final String XML_WIKTONARY_ID = "wiktionaryId";
-    public static final String XML_WIKTONARY_SENSE_ID = "wiktionarySenseId";
-    public static final String XML_WIKTONARY_SENSE = "wiktionarySense";
-    public static final String XML_WIKTONARY_EDITED = "edited";
-    public static final String XML_WIKTONARY_POS = "pos";
+    public static final String XML_WIKTIONARY_PARAPHRASE = "wiktionaryParaphrase";
+    public static final String XML_WIKTIONARY_ID = "wiktionaryId";
+    public static final String XML_WIKTIONARY_SENSE_ID = "wiktionarySenseId";
+    public static final String XML_WIKTIONARY_SENSE = "wiktionarySense";
+    public static final String XML_WIKTIONARY_EDITED = "edited";
+    public static final String XML_WIKTIONARY_POS = "pos";
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
     private TreeSet<Synset> synsets;
@@ -159,10 +160,11 @@ public class GermaNet {
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
-     * files in the specified directory path name - searches are case sensitive.
+     * files in the specified directory/archive path name - searches are case sensitive.
      * @param dirName the directory where the GermaNet data files are located
      * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException 
+     * @throws javax.xml.stream.XMLStreamException
+     * @throws javax.xml.stream.IOException
      */
     public GermaNet(String dirName) throws FileNotFoundException, XMLStreamException, IOException {
         this(new File(dirName), false);
@@ -170,12 +172,13 @@ public class GermaNet {
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
-     * files in the specified directory path name.
+     * files in the specified directory/archive path name.
      * @param dirName the directory where the GermaNet data files are located
      * @param ignoreCase if true ignore case on lookups, otherwise do case
      * sensitive searches
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
+     * @throws javax.xml.stream.IOException
      */
     public GermaNet(String dirName, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, IOException {
         this(new File(dirName), ignoreCase);
@@ -183,10 +186,11 @@ public class GermaNet {
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
-     * files in the specified directory File - searches are case sensitive.
+     * files in the specified directory/archive File - searches are case sensitive.
      * @param dir location of the GermaNet data files
      * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException 
+     * @throws javax.xml.stream.XMLStreamException
+     * @throws javax.xml.stream.IOException
      */
     public GermaNet(File dir) throws FileNotFoundException, XMLStreamException, IOException {
         this(dir, false);
@@ -194,12 +198,13 @@ public class GermaNet {
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
-     * files in the specified directory File.
+     * files in the specified directory/archive File.
      * @param dir location of the GermaNet data files
      * @param ignoreCase if true ignore case on lookups, otherwise do case
      * sensitive searches
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
+     * @throws javax.xml.stream.IOException
      */
     public GermaNet(File dir, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, IOException {
         checkMemory();
@@ -850,7 +855,7 @@ public class GermaNet {
     /**
      * Adds <code>IliRecords</code> to this <code>GermaNet</code>
      * object when IliLoader is called
-     * @param ili the <code>IliRecord</code> to add
+     * @param ili the <code>IliRecord</code> to be added
      */
     protected void addIliRecord(IliRecord ili) {
         iliRecords.add(ili);
@@ -929,7 +934,7 @@ public class GermaNet {
     /**
      * Adds <code>WiktionaryParaphrases</code> to this <code>GermaNet</code>
      * object when WiktionaryLoader is called
-     * @param wiki the <code>WiktionaryParaphrase</code> to add
+     * @param wiki the <code>WiktionaryParaphrase</code> to be added
      */
     protected void addWiktionaryParaphrase(WiktionaryParaphrase wiki) {
         wiktionaryParaphrases.add(wiki);
@@ -948,39 +953,10 @@ public class GermaNet {
      * to <code>LexUnits</code>
      */
     protected void updateLexUnitsWithWiktionary() {
- /*       ArrayList<Integer> errors = new ArrayList<Integer>();
-        List<LexUnit> allLu = this.getLexUnits();
-        for (WiktionaryParaphrase wiki : wiktionaryParaphrases) {
-            int id = wiki.getLexUnitId();
-            boolean found = false;
-            
-            for (LexUnit unit : allLu) {
-                if (unit.getId() == id) {
-                    unit.addWiktionaryParaphrase(wiki);
-                    lexUnitID.put(id, unit);
-                    found = true;
-                    break;
-                }
-                            }
-            if (!found) errors.add(id);
-            }
-        PrintWriter outputStream = null;
-        try {
-            outputStream = new PrintWriter("no_ids_in_gn.txt");
-
-        } catch (FileNotFoundException e) {
-            System.out.println("Error opening the file");
-            System.exit(0);
-        }
-
-        for (Integer problem : errors)
-            outputStream.println(problem);
-        outputStream.close();*/
-
         for (WiktionaryParaphrase wiki : wiktionaryParaphrases) {
             int id = wiki.getLexUnitId();
             LexUnit lu = getLexUnitByID(id);
-            if (lu != null) { // TODO: this if might get obsolete once we do a proper Wiktionary XML release
+            if (lu != null) { // TODO: this might get obsolete once we do a proper Wiktionary XML release
                 lu.addWiktionaryParaphrase(wiki);
             }
             lexUnitID.put(id, lu);
@@ -991,6 +967,7 @@ public class GermaNet {
      * Checks whether the <code>File</code> is a <code>ZipFile</code>.
      * @param file the <code>File</code> to check
      * @return true if this <code>File</code> is a <code>ZipFile</code>
+     * @throws javax.xml.stream.IOException
      */
     protected static boolean isZipFile(File file) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(file, "r");

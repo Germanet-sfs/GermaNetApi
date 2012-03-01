@@ -22,15 +22,13 @@ package de.tuebingen.uni.sfs.germanet.api;
 import java.util.*;
 
 /**
- * An <code>IliRecord</code> consists of a gnWord (represented as a String),
- * an ewnRelation, a pwnWord, a pwnReading and a pwnId.
+ * An <code>IliRecord</code> consists of a German word, corresponding English word
+ * (or words), and a relation connecting them.
  *
  * Methods are provided to get each of the attributes.<br><br>
  *
- * The orthographic form (gnWord) can be retrieved:<br>
- * <code>
- * &nbsp;&nbsp;&nbsp;String orthForm = anIliRecord.getGnWord();<br><br>
- * </code>
+ * Other variables include ids from Princeton WordNet (PWN) 2.0 and 3.0, as well as
+ * English paraphrases from PWN 2.0.
  *
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
  * @version 7.0
@@ -50,14 +48,14 @@ public class IliRecord {
 
     /**
      * Constructs an <code>IliRecord</code> with the specified attributes.
-     * @param iliId unique identifier
      * @param lexUnitId the identifier of the <code>LexUnit</code>
      * @param gnWord the orthographic form of this <code>IliRecord</code>
      * @param ewnRelation the EuroWordNet cross-language relation
      * @param pwnWord the corresponding English word
-     * @param pwn20Sense the sense of the corresponding English word from Princeton WordNet 2.0
-     * @param pwn20Id the identifier of the corresponding English word from Princeton WordNet 2.0
-     * @param pwn30Id the identifier of the corresponding English word from Princeton WordNet 3.0
+     * @param pwn20Sense the sense of the corresponding English word from PWN 2.0
+     * @param pwn20Id the identifier of the corresponding English word from PWN 2.0
+     * @param pwn30Id the identifier of the corresponding English word from PWN 3.0
+     * @param pwn20paraphrase the paraphrase for the corresponding English word from PWN 2.0
      * @param source the source of this <code>IliRecord</code>
      */
     IliRecord(int lexUnitId, String gnWord, String ewnRelation,
@@ -72,6 +70,14 @@ public class IliRecord {
         this.pwn20paraphrase = pwn20paraphrase;
         this.source = source;
         this.englishSynonyms = new ArrayList<String>();
+    }
+
+    /**
+     * Adds an English synonym to this <code>IliRecord</code>.
+     * @param synonym the English synonym to add
+     */
+    protected void addEnglishSynonym(String synonym) {
+        this.englishSynonyms.add(synonym);
     }
 
     
@@ -101,40 +107,40 @@ public class IliRecord {
     }
 
     /**
-     * Returns the corresponding English word from Princeton WordNet.
-     * @return the corresponding English word from Princeton WordNet
+     * Returns the corresponding English word from PWN 2.0.
+     * @return the corresponding English word from PWN 2.0
      */
     public String getPwnWord() {
         return pwnWord;
     }
 
     /**
-     * Returns the sense of the corresponding English word from Princeton WordNet 2.0.
-     * @return the sense of the corresponding English word from Princeton WordNet 2.0
+     * Returns the sense of the corresponding English word from PWN 2.0.
+     * @return the sense of the corresponding English word from PWN 2.0
      */
     public int getPwn20Sense() {
         return pwn20Sense;
     }
 
     /**
-     * Returns the identifier of the corresponding English word from Princeton WordNet 2.0.
-     * @return the identifier of the corresponding English word from Princeton WordNet 2.0
+     * Returns the identifier of the corresponding English word from PWN 2.0.
+     * @return the identifier of the corresponding English word from PWN 2.0
      */
     public String getPwn20Id() {
         return pwn20Id;
     }
 
     /**
-     * Returns the identifier of the corresponding English word from Princeton WordNet 3.0.
-     * @return the identifier of the corresponding English word from Princeton WordNet 3.0
+     * Returns the identifier of the corresponding English word from PWN 3.0.
+     * @return the identifier of the corresponding English word from PWN 3.0
      */
     public String getPwn30Id() {
         return pwn30Id;
     }
 
     /**
-     * Returns the paraphrase for this word from Princeton WordNet 2.0.
-     * @return the paraphrase for this word from Princeton WordNet 2.0
+     * Returns the paraphrase for this word from PWN 2.0.
+     * @return the paraphrase for this word from PWN 2.0
      */
     public String getPwn20paraphrase() {
         return pwn20paraphrase;
@@ -148,6 +154,15 @@ public class IliRecord {
         return source;
     }
 
+    /**
+     * Returns a <code>List</code> of this <code>IliRecord</code>'s
+     * English synonyms from PWN 2.0.
+     * @return a <code>List</code> of this <code>IliRecord</code>'s
+     * English synonyms from PWN 2.0
+     */
+    public List<String> getEnglishSynonyms() {
+        return (List<String>) this.englishSynonyms.clone();
+    }
     /**
      * Returns a <code>String</code> representation of this <code>IliRecord</code>.
      * @return a <code>String</code> representation of this <code>IliRecord</code>
@@ -171,24 +186,6 @@ public class IliRecord {
         if (pwn20paraphrase.length() > 0)
             stringIli += "\nEnglish paraphrase from PWN 2.0: " + pwn20paraphrase;
         return stringIli;
-    }
-
-    /**
-     * Adds an English synonym to this <code>IliRecord</code>.
-     * @param synonym the English synonym to add
-     */
-    protected void addEnglishSynonym(String synonym) {
-        this.englishSynonyms.add(synonym);
-    }
-
-    /**
-     * Returns a <code>List</code> of this <code>IliRecord</code>'s
-     * English synonyms.
-     * @return a <code>List</code> of this <code>IliRecord</code>'s
-     * English synonyms
-     */
-    public List<String> getEnglishSynonyms() {
-        return (List<String>) this.englishSynonyms.clone();
     }
 }
 

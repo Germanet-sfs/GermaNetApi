@@ -35,7 +35,7 @@ import javax.xml.stream.XMLStreamReader;
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
  * @version 7.0
  */
-public class IliLoader {
+class IliLoader {
 
     private GermaNet germaNet;
     private String namespace;
@@ -126,7 +126,7 @@ public class IliLoader {
                 case XMLStreamConstants.START_ELEMENT:
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_PWN20_SYNONYM)) {
-                        englishSynonyms.add(processEnglishExamples(parser));
+                        englishSynonyms.add(processEnglishSynonyms(parser));
                     }
                 case XMLStreamConstants.END_ELEMENT:
                     nodeName = parser.getLocalName();
@@ -147,7 +147,13 @@ public class IliLoader {
         return curIli;
     }
 
-    private String processEnglishExamples (XMLStreamReader parser) throws XMLStreamException {
+    /**
+     * Returns an English synonym for the currently processed <code>IliRecord</code>
+     * @param parser the <code>parser</code> being used on the current file
+     * @return <code>String</code> representation of an English synonym
+     * @throws javax.xml.stream.XMLStreamException
+     */
+    private String processEnglishSynonyms (XMLStreamReader parser) throws XMLStreamException {
         String englishSynonym = parser.getElementText();
         return englishSynonym;
     }
