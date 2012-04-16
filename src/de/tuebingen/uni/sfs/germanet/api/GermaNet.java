@@ -128,7 +128,6 @@ public class GermaNet {
     //for ILI
     public static final String XML_ILI_RECORD = "iliRecord";
     public static final String XML_LEX_UNIT_ID = "lexUnitId";
-    public static final String XML_GN_WORD = "gnWord";
     public static final String XML_EWN_RELATION = "ewnRelation";
     public static final String XML_PWN_WORD = "pwnWord";
     public static final String XML_PWN20_SENSE = "pwn20Sense";

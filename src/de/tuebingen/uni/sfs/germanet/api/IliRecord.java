@@ -36,7 +36,6 @@ import java.util.*;
 public class IliRecord {
 
     private int lexUnitId;
-    private String gnWord;
     private String ewnRelation;
     private String pwnWord;
     private int pwn20Sense;
@@ -58,10 +57,9 @@ public class IliRecord {
      * @param pwn20paraphrase the paraphrase for the corresponding English word from PWN 2.0
      * @param source the source of this <code>IliRecord</code>
      */
-    IliRecord(int lexUnitId, String gnWord, String ewnRelation,
+    IliRecord(int lexUnitId, String ewnRelation,
             String pwnWord, int pwn20Sense, String pwn20Id, String pwn30Id, String pwn20paraphrase, String source) {
         this.lexUnitId = lexUnitId;
-        this.gnWord = gnWord;
         this.ewnRelation = ewnRelation;
         this.pwnWord = pwnWord;
         this.pwn20Sense = pwn20Sense;
@@ -90,15 +88,7 @@ public class IliRecord {
         return lexUnitId;
     }
 
-    /**
-     * Returns the orthographic form of this <code>IliRecord</code>.
-     * @return the orthographic form of this <code>IliRecord</code>
-     */
-    public String getGnWord() {
-        return gnWord;
-    }
-
-    /**
+        /**
      * Returns the EuroWordNet cross-language relation of this <code>IliRecord</code>.
      * @return the EuroWordNet cross-language relation of this <code>IliRecord</code>
      */
@@ -170,7 +160,6 @@ public class IliRecord {
     @Override
     public String toString() {
         String stringIli = "LexUnit ID: " + this.lexUnitId +
-                ", gnWord: " + this.gnWord +
                 ", EWN relation: " + this.ewnRelation +
                 ", PWN word: " + this.pwnWord +
                 ", PWN 2.0 sense: " + this.pwn20Sense +
