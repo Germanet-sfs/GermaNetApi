@@ -6,6 +6,7 @@
 
 import de.tuebingen.uni.sfs.germanet.api.*;
 import java.io.*;
+import java.util.List;
 
 /**
  *
@@ -19,19 +20,22 @@ public class test {
     public static void main(String[] args) {
 
         try {
-            File gnetDir = new File("/Users/abrskva/NetBeansProjects/GermaNetTools/complete_xml_output");
+            File gnetDir = new File("/Users/abrskva/abrskva/GermaNet/GN_V60/GN_V70");
             File iliFile = new File("/Users/abrskva/NetBeansProjects/GermaNetTools/ili_output.xml");
  //           String fileName = "/space/abrskva/NetBeansProjects/ConvertToXML/ili_with_syn.xml";
             GermaNet gnet = new GermaNet(gnetDir);
-            gnet.loadIli(iliFile);
+//            gnet.loadIli(iliFile);
  //           gnet.loadWictionaryParaphrase(new File ("/space/abrskva/GermaNet/GN_V60"));
 
             //test synset.getParaphrases() with wiki paraphrases included
-            System.out.println(gnet.getLexUnitByID(11007).getIliRecords().get(0));
+//            System.out.println(gnet.getLexUnitByID(11007).getIliRecords().get(0));
 
-/*            //test whether or not 1 synset has several LexUnits with corresponding ILI Records
+            //test whether or not 1 synset has several LexUnits with corresponding ILI Records
             List<Synset> synsets = gnet.getSynsets();
-            for (Synset ss : synsets) {
+            for (Synset s : synsets)
+                System.out.println(s);
+            System.out.println(gnet.getIliRecords());
+ /*           for (Synset ss : synsets) {
                 List<LexUnit> units = ss.getLexUnits();
                 int counter = 0;
                 for (LexUnit lu : units) {

@@ -241,6 +241,7 @@ public class GermaNet {
         }
 
         load();
+        loadIli();
     }
 
     /**
@@ -439,8 +440,12 @@ public class GermaNet {
      * Returns a <code>List</code> of all <code>Synsets</code>.
      * @return a <code>list</code> of all <code>Synsets</code>
      */
-    public Set<Synset> getSynsets() {
-        return (Set<Synset>) synsets.clone();
+    public List<Synset> getSynsets() {
+        List<Synset> rval = new ArrayList<Synset>(synsets.size());
+        Iterator iter = synsets.iterator();
+        while (iter.hasNext())
+            rval.add((Synset) iter.next());
+        return rval;
     }
 
     /**
@@ -811,7 +816,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public void loadIli(File path) throws XMLStreamException {
+    private void loadIli() throws XMLStreamException {
         IliLoader loader;
         String oldVal = null;
 
@@ -824,7 +829,7 @@ public class GermaNet {
 //        if (this.dir != null) {
         try {
             loader = new IliLoader(this);
-            loader.loadILI(path);
+            loader.loadILI(new File(dir + "/interlingualIndex_DE-EN.xml"));
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -838,17 +843,6 @@ public class GermaNet {
 
         //add the information about corresponding IliRecords to LexUnits
         updateLexUnitsWithIli();
-    }
-
-    /**
-     * Loads the ILI data files into this <code>GermaNet</code> object
-     * from the specified directory String
-     * @param path location of the ILI data files
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    public void loadIli(String path) throws XMLStreamException {
-        loadIli(new File(path));
     }
 
     /**
