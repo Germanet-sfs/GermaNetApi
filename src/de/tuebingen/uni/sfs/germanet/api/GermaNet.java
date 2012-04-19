@@ -242,6 +242,7 @@ public class GermaNet {
 
         load();
         loadIli();
+        loadWictionaryParaphrases();
     }
 
     /**
@@ -884,7 +885,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    public void loadWictionaryParaphrase(File path) throws XMLStreamException {
+    private void loadWictionaryParaphrases() throws XMLStreamException {
         WiktionaryLoader loader;
         String oldVal = null;
 
@@ -897,7 +898,7 @@ public class GermaNet {
 //        if (this.dir != null) {
         try {
             loader = new WiktionaryLoader(this);
-            loader.loadWiktionary(path);
+            loader.loadWiktionary(dir);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -911,17 +912,6 @@ public class GermaNet {
 
         //add the information about corresponding WiktionaryParaphrases to LexUnits
         updateLexUnitsWithWiktionary();
-    }
-
-    /**
-     * Loads the Wiktionary data files into this <code>GermaNet</code> object
-     * from the specified directory <code>path</code>.
-     * @param path location of the Wiktionary data files
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    public void loadWiktionaryParaphrases(String path) throws XMLStreamException {
-        loadWictionaryParaphrase(new File(path));
     }
 
     /**

@@ -20,52 +20,13 @@ public class test {
     public static void main(String[] args) {
 
         try {
-            File gnetDir = new File("/Users/abrskva/abrskva/GermaNet/GN_V60/GN_V70");
-            File iliFile = new File("/Users/abrskva/NetBeansProjects/GermaNetTools/ili_output.xml");
- //           String fileName = "/space/abrskva/NetBeansProjects/ConvertToXML/ili_with_syn.xml";
-            GermaNet gnet = new GermaNet(gnetDir);
-//            gnet.loadIli(iliFile);
- //           gnet.loadWictionaryParaphrase(new File ("/space/abrskva/GermaNet/GN_V60"));
+             File gnetDir = new File("/Users/abrskva/NetBeansProjects/GermaNetTools/xml_output_no_null_inverse");
+             GermaNet gnet = new GermaNet(gnetDir);
 
-            //test synset.getParaphrases() with wiki paraphrases included
-//            System.out.println(gnet.getLexUnitByID(11007).getIliRecords().get(0));
+//             System.out.println(gnet.getIliRecords());
+             for (LexUnit lu : gnet.getLexUnits())
+                 System.out.println(lu.getWiktionaryParaphrases());
 
-            //test whether or not 1 synset has several LexUnits with corresponding ILI Records
-            List<Synset> synsets = gnet.getSynsets();
-            for (Synset s : synsets)
-                System.out.println(s);
-            System.out.println(gnet.getIliRecords());
- /*           for (Synset ss : synsets) {
-                List<LexUnit> units = ss.getLexUnits();
-                int counter = 0;
-                for (LexUnit lu : units) {
-                    if (lu.hasIli())
-                        counter++;
-                }
-                if ((ss.numLexUnits() > 1) && (counter == ss.numLexUnits()))
-                    System.out.println(ss.toString());
-                    
-            }
-
-
-            //test how wiktionary paraphrases load
-            LexUnit unit = gnet.getLexUnitByID(3533);
-            List<WiktionaryParaphrase> wikis = unit.getWiktionaryParaphrases();
-            for (WiktionaryParaphrase wiki : wikis)
-                System.out.println(wiki.toString());
-            System.out.println();*/
-            //test how ILI records load
- /*           List<LexUnit> units = gnet.getLexUnits("abblocken");
-            for (LexUnit unit1 : units) {
-                List<IliRecord> ili = unit1.getIliRecords();
-                for (IliRecord i : ili)
-                    System.out.println(i.toString());
-            }
-            System.out.println();
-            Synset ss = gnet.getSynsetByID(5711);
-            List<IliRecord> ili2 = ss.getIliRecords();
-            for (IliRecord i : ili2)
-                    System.out.println(i.toString());*/
 
         } catch (Exception ex) {
             ex.printStackTrace();
