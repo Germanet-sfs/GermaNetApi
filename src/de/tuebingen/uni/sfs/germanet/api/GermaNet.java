@@ -242,7 +242,7 @@ public class GermaNet {
 
         load();
         loadIli();
-        loadWictionaryParaphrases();
+        loadWiktionaryParaphrases();
     }
 
     /**
@@ -885,7 +885,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadWictionaryParaphrases() throws XMLStreamException {
+    private void loadWiktionaryParaphrases() throws XMLStreamException {
         WiktionaryLoader loader;
         String oldVal = null;
 

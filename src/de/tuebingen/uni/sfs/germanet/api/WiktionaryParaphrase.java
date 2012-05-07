@@ -20,12 +20,13 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 /**
- * A <code>WiktionaryParaphrase</code> consists of wiktionarySense (represented as a String),
- * wiktionary id, sense id, and attribute Edited (boolean).
+ * A <code>WiktionaryParaphrase</code> consists of the Wiktionary sense
+ * definition (represented as a String), Wiktionary id, sense id, and attribute
+ * edited (boolean).
  *
  * Methods are provided to get each of the attributes.<br><br>
  *
- * The Wiktionary Sense can be retrieved:<br>
+ * The Wiktionary sense definition can be retrieved:<br>
  * <code>
  * &nbsp;&nbsp;&nbsp;String sense = aWiktionaryParaphrase.getWiktionarySense();<br><br>
  * </code>
@@ -45,8 +46,8 @@ public class WiktionaryParaphrase {
      * Constructs a <code>WiktionaryParaphrase</code> with the specified attributes.
      * @param lexUnitId the identifier of the <code>LexUnit</code>
      * @param wiktionaryId unique identifier
-     * @param wiktionarySenseId the identifier of the wiktionary sense
-     * @param wiktionarySense the wiktionary sense itself
+     * @param wiktionarySenseId the identifier of the Wiktionary sense
+     * @param wiktionarySense the Wiktionary sense definition
      * @param edited boolean attribute
      */
     WiktionaryParaphrase(int lexUnitId, int wiktionaryId, int wiktionarySenseId,
@@ -76,16 +77,16 @@ public class WiktionaryParaphrase {
     }
 
     /**
-     * Returns the unique identifier of the wiktionary sense.
-     * @return the unique identifier of the wiktionary sense
+     * Returns the unique identifier of the Wiktionary sense.
+     * @return the unique identifier of the Wiktionary sense
      */
     public int getWiktionarySenseId() {
         return wiktionarySenseId;
     }
 
     /**
-     * Returns the wiktionary sense.
-     * @return the wiktionary sense
+     * Returns the Wiktionary sense definition.
+     * @return the Wiktionary sense definition
      */
     public String getWiktionarySense() {
         return wiktionarySense;
@@ -97,7 +98,7 @@ public class WiktionaryParaphrase {
      * @return true if the <code>WiktionaryParaphrase</code> was edited,
      * false otherwise
      */
-    public boolean getEdited() {
+    public boolean hasBeenEdited() {
         return edited;
     }
 
@@ -112,7 +113,7 @@ public class WiktionaryParaphrase {
         sense = sense.replaceAll("&gt;", ">");
         sense = sense.replaceAll("&amp;", "&");
         String stringIli = "LexUnit ID: " + this.lexUnitId + ", Wiktionary ID: " +
-                this.wiktionaryId + ", Wiktionary Sense: " + sense +
+                this.wiktionaryId + ", Wiktionary sense definition: " + sense +
                 ", edited: " + this.edited;
         return stringIli;
     }

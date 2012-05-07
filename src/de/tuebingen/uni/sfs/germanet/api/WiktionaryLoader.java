@@ -77,7 +77,7 @@ class WiktionaryLoader {
             String nodeName;
 
 
-            //Parse entire file, looking for wictionary paraphrase start elements
+            //Parse entire file, looking for Wiktionary paraphrase start elements
             while (parser.hasNext()) {
                 event = parser.next();
                 switch (event) {
@@ -87,7 +87,7 @@ class WiktionaryLoader {
                     case XMLStreamConstants.START_ELEMENT:
                         nodeName = parser.getLocalName();
                         if (nodeName.equals(GermaNet.XML_WIKTIONARY_PARAPHRASE)) {
-                            WiktionaryParaphrase wiki = processWictionaryParaphrase(parser);
+                            WiktionaryParaphrase wiki = processWiktionaryParaphrase(parser);
                             germaNet.addWiktionaryParaphrase(wiki);
                         }
                         break;
@@ -107,7 +107,7 @@ class WiktionaryLoader {
      * @return a <code>WiktionaryParaphrase</code> representing the data parsed
      * @throws javax.xml.stream.XMLStreamException
      */
-    private WiktionaryParaphrase processWictionaryParaphrase(XMLStreamReader parser) throws XMLStreamException {
+    private WiktionaryParaphrase processWiktionaryParaphrase(XMLStreamReader parser) throws XMLStreamException {
         int lexUnitId;
         int wiktionaryId;
         int wiktionarySenseId;

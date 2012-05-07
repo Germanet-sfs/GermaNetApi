@@ -27,7 +27,7 @@ import java.util.*;
  *
  * Methods are provided to get each of the attributes.<br><br>
  *
- * Other variables include ids from Princeton WordNet (PWN) 2.0 and 3.0, as well as
+ * Other variables include IDs from Princeton WordNet (PWN) 2.0 and 3.0, as well as
  * English paraphrases from PWN 2.0.
  *
  * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
@@ -51,7 +51,7 @@ public class IliRecord {
      * @param gnWord the orthographic form of this <code>IliRecord</code>
      * @param ewnRelation the EuroWordNet cross-language relation
      * @param pwnWord the corresponding English word
-     * @param pwn20Sense the sense of the corresponding English word from PWN 2.0
+     * @param pwn20Sense the sense number of the corresponding English word from PWN 2.0
      * @param pwn20Id the identifier of the corresponding English word from PWN 2.0
      * @param pwn30Id the identifier of the corresponding English word from PWN 3.0
      * @param pwn20paraphrase the paraphrase for the corresponding English word from PWN 2.0
@@ -88,7 +88,7 @@ public class IliRecord {
         return lexUnitId;
     }
 
-        /**
+    /**
      * Returns the EuroWordNet cross-language relation of this <code>IliRecord</code>.
      * @return the EuroWordNet cross-language relation of this <code>IliRecord</code>
      */
@@ -153,6 +153,7 @@ public class IliRecord {
     public List<String> getEnglishSynonyms() {
         return (List<String>) this.englishSynonyms.clone();
     }
+    
     /**
      * Returns a <code>String</code> representation of this <code>IliRecord</code>.
      * @return a <code>String</code> representation of this <code>IliRecord</code>
