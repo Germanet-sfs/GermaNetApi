@@ -830,7 +830,7 @@ public class GermaNet {
 //        if (this.dir != null) {
         try {
             loader = new IliLoader(this);
-            loader.loadILI(new File(dir + "/interlingualIndex_DE-EN.xml"));
+            loader.loadILI(new File(dir + "/interLingualIndex_DE-EN.xml"));
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
         }
