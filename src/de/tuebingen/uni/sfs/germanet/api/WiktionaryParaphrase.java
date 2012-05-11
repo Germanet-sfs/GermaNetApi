@@ -21,8 +21,8 @@ package de.tuebingen.uni.sfs.germanet.api;
 
 /**
  * A <code>WiktionaryParaphrase</code> consists of the Wiktionary sense
- * definition (represented as a String), Wiktionary id, sense id, and attribute
- * edited (boolean).
+ * definition (represented as a String), the Wiktionary word and sense ids,
+ * the corresponding GermaNet LexUnit id, and an attribute edited (boolean).
  *
  * Methods are provided to get each of the attributes.<br><br>
  *
