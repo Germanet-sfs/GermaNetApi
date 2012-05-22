@@ -606,6 +606,28 @@ public class GermaNet {
     }
 
     /**
+     * Returns a <code>List</code> of all <code>Synsets</code> in the specified
+     * <code>wordClass</code>.
+     * @param wordClass the <code>WordClass</code>, for example
+     * <code>WordCategory.Menge</code>
+     * @return a <code>List</code> of all <code>Synsets</code> in the specified
+     * <code>wordClass</code>. If no <code>Synsets</code> were found, this is
+     * a <code>List</code> containing no <code>Synsets</code>.
+     */
+    public List<Synset> getSynsets(WordClass wordClass) {
+
+        ArrayList<Synset> rval = new ArrayList<Synset>();
+
+        for (Synset syn : synsets) {
+            if (syn.getWordClass() == wordClass) {
+                rval.add(syn);
+            }
+        }
+        rval.trimToSize();
+        return rval;
+    }
+
+    /**
      * Returns the <code>Synset</code> with <code>id</code>, or
      * <code>null</code> if it is not found.
      * @param id the ID of the <code>Synset</code> to be found.
