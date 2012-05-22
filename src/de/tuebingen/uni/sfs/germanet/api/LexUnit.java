@@ -412,6 +412,25 @@ public class LexUnit {
         return wordCategory == this.synset.getWordCategory();
     }
 
+
+    /**
+     * Return the <code>WordClass</code> of this <code>LexUnit</code>.
+     * @return the <code>WordClass</code> of this <code>LexUnit</code>
+     * (eg. Menge, Allgemein).
+     */
+    public WordClass getWordClass() {
+        return this.synset.getWordClass();
+    }
+
+    /**
+     * Return true if this <code>LexUnit</code> is in <code>wordClass</code>.
+     * @param wordClass the <code>WordClass</code> (eg.Menge, Allgemein)
+     * @return true if this <code>LexUnit</code> is in <code>wordClass</code>
+     */
+    public boolean inWordClass(WordClass wordClass) {
+        return wordClass == this.synset.getWordClass();
+    }
+
     /**
      * Return the number of <code>Frames</code> in this <code>Synset</code>.
      * @return the number of <code>Frames</code> in this <code>Synset</code>
