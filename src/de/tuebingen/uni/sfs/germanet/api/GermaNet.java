@@ -241,8 +241,6 @@ public class GermaNet {
         }
 
         load();
-        loadIli();
-        loadWiktionaryParaphrases();
     }
 
     /**
@@ -305,6 +303,8 @@ public class GermaNet {
         try {
             loader = new StaxLoader(dir, this);
             loader.load();
+            loadIli(false);
+            loadWiktionaryParaphrases(false);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -312,6 +312,8 @@ public class GermaNet {
             try {
                 loader = new StaxLoader(inputStreams, xmlNames, this);
                 loader.load();
+                loadIli(true);
+                loadWiktionaryParaphrases(true);
             } catch (StreamCorruptedException ex) {
                 Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -839,7 +841,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadIli() throws XMLStreamException {
+    private void loadIli(boolean zip) throws XMLStreamException {
         IliLoader loader;
         String oldVal = null;
 
@@ -852,7 +854,16 @@ public class GermaNet {
 //        if (this.dir != null) {
         try {
             loader = new IliLoader(this);
-            loader.loadILI(new File(dir + "/interLingualIndex_DE-EN.xml"));
+            if (zip) {
+                InputStream iliStream = null;
+                for (int i = 0; i < inputStreams.size(); i++) {
+                    if (xmlNames.get(i).equals("interLingualIndex_DE-EN.xml")) {
+                        iliStream = inputStreams.get(i);
+                        break;
+                    }
+                }
+                loader.loadILI(iliStream);
+            } else loader.loadILI(new File(dir + "/interLingualIndex_DE-EN.xml"));
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -907,7 +918,7 @@ public class GermaNet {
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadWiktionaryParaphrases() throws XMLStreamException {
+    private void loadWiktionaryParaphrases(boolean zip) throws XMLStreamException {
         WiktionaryLoader loader;
         String oldVal = null;
 
@@ -920,7 +931,9 @@ public class GermaNet {
 //        if (this.dir != null) {
         try {
             loader = new WiktionaryLoader(this);
-            loader.loadWiktionary(dir);
+            if (zip) {
+                loader.loadWiktionary(inputStreams, xmlNames);
+            } else loader.loadWiktionary(dir);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
         }

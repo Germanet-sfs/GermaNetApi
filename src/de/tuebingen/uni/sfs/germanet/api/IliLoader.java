@@ -87,6 +87,39 @@ class IliLoader {
     }
 
     /**
+     * Loads <code>IliRecords</code> from the specified stream into this
+     * <code>IliLoader</code>'s <code>GermaNet</code> object.
+     * @param inputStream the stream containing <code>IliRecords</code> data
+     * @throws javax.xml.stream.XMLStreamException
+     */
+    protected void loadILI(InputStream inputStream) throws XMLStreamException {
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
+        int event;
+        String nodeName;
+        System.out.println("Loading input stream interLingualIndex_DE-EN.xml...");
+
+        //Parse entire file, looking for ili record start elements
+        while (parser.hasNext()) {
+            event = parser.next();
+            switch (event) {
+                case XMLStreamConstants.START_DOCUMENT:
+                    namespace = parser.getNamespaceURI();
+                    break;
+                case XMLStreamConstants.START_ELEMENT:
+                    nodeName = parser.getLocalName();
+                    if (nodeName.equals(GermaNet.XML_ILI_RECORD)) {
+                        IliRecord ili = processIliRecord(parser);
+                        germaNet.addIliRecord(ili);
+                    }
+                    break;
+            }
+        }
+        parser.close();
+        System.out.println("Done.");
+    }
+
+    /**
      * Returns the <code>IliRecord</code> for which the start tag was just encountered.
      * @param parser the <code>parser</code> being used on the current file
      * @return a <code>IliRecord</code> representing the data parsed

@@ -20,12 +20,12 @@ public class test {
     public static void main(String[] args) {
 
         try {
-             File gnetDir = new File("/Users/abrskva/NetBeansProjects/GermaNetTools/xml_output_no_null_inverse");
+             File gnetDir = new File("/Users/abrskva/NetBeansProjects/GN_V70_XML.zip");
              GermaNet gnet = new GermaNet(gnetDir);
 
 //             System.out.println(gnet.getIliRecords());
-             for (LexUnit lu : gnet.getLexUnits())
-                 System.out.println(lu.getWiktionaryParaphrases());
+             for (Synset s : gnet.getSynsets(WordClass.Menge))
+                 System.out.println(s);
 
 
         } catch (Exception ex) {

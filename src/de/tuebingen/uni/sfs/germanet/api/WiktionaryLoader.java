@@ -21,6 +21,7 @@ package de.tuebingen.uni.sfs.germanet.api;
 
 import java.io.*;
 import java.io.InputStream;
+import java.util.List;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -66,7 +67,6 @@ class WiktionaryLoader {
                     + this.wikiDir.getPath() + "\"");
         }
 
-        // load all synset files first with a SynsetLoader
         for (int i = 0; i < wikiFiles.length; i++) {
             System.out.println("Loading "
                     + wikiFiles[i].getName() + "...");
@@ -94,6 +94,52 @@ class WiktionaryLoader {
                 }
             }
             parser.close();
+        }
+
+        System.out.println("Done.");
+
+
+    }
+
+    /**
+     * Loads <code>WiktionaryParaphrases</code> from the given streams into this
+     * <code>WiktionaryLoader</code>'s <code>GermaNet</code> object.
+     * @param inputStreams the list of streams containing <code>WiktionaryParaphrases</code> data
+     * @param xmlNames the names of the streams
+     * @throws javax.xml.stream.XMLStreamException
+     */
+    protected void loadWiktionary(List<InputStream> inputStreams,
+            List<String> xmlNames) throws XMLStreamException {
+
+
+        for (int i = 0; i < inputStreams.size(); i++) {
+            if (xmlNames.get(i).startsWith("wiktionary")) {
+                System.out.println("Loading input stream "
+                        + xmlNames.get(i) + "...");
+                XMLInputFactory factory = XMLInputFactory.newInstance();
+                XMLStreamReader parser = factory.createXMLStreamReader(inputStreams.get(i));
+                int event;
+                String nodeName;
+
+
+                //Parse entire file, looking for Wiktionary paraphrase start elements
+                while (parser.hasNext()) {
+                    event = parser.next();
+                    switch (event) {
+                        case XMLStreamConstants.START_DOCUMENT:
+                            namespace = parser.getNamespaceURI();
+                            break;
+                        case XMLStreamConstants.START_ELEMENT:
+                            nodeName = parser.getLocalName();
+                            if (nodeName.equals(GermaNet.XML_WIKTIONARY_PARAPHRASE)) {
+                                WiktionaryParaphrase wiki = processWiktionaryParaphrase(parser);
+                                germaNet.addWiktionaryParaphrase(wiki);
+                            }
+                            break;
+                    }
+                }
+                parser.close();
+            }
         }
 
         System.out.println("Done.");
