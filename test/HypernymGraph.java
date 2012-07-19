@@ -4,7 +4,7 @@ import java.io.*;
 
 /**
  *
- * @author vhenrich
+ * @author University of Tuebingen, Department of Linguistics (germanetinfo at sfs.uni-tuebingen.de)
  */
 public class HypernymGraph {
     public static void main(String[] args) {
@@ -29,7 +29,7 @@ public class HypernymGraph {
             destName = keyboard.nextLine().trim();
 
 //            gnetDir = new File("/germanet/GN_V70/GN_V70_XML");
-            gnetDir = new File("/Users/vhenrich/NetBeansProjects/GN_V60");
+            gnetDir = new File("/Users/vhenrich/NetBeansProjects/data/GN_V70.zip");
             GermaNet gnet = new GermaNet(gnetDir);
 
             synsets = gnet.getSynsets(word);
