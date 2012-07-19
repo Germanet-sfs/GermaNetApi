@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2011 Verena Henrich, Department of General and Computational
- * Linguistics, University of Tuebingen
+ * Copyright (C) 2012 Department of General and Computational Linguistics,
+ * University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
  *
@@ -23,7 +23,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * An <code>Example</code> consists of a text <code>String</code> and an
  * optional <code>Frame</code>.
  * 
- * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
+ * @author University of Tuebingen, Department of Linguistics (germanetinfo at sfs.uni-tuebingen.de)
  * @version 7.0
  */
 public class Example {

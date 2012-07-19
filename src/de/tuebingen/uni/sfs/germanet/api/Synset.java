@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2011 Verena Henrich, Department of General and Computational
- * Linguistics, University of Tuebingen
+ * Copyright (C) 2012 Department of General and Computational Linguistics,
+ * University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
  *
@@ -60,7 +60,7 @@ import java.util.*;
  * Unless otherwise stated, methods will return an empty List rather than null
  * to indicate that no objects exist for the given request. 
 
- * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
+ * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 7.0
  */
 public class Synset implements Comparable {

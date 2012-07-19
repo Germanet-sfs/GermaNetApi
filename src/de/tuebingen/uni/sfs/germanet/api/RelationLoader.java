@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2011 Verena Henrich, Department of General and Computational
- * Linguistics, University of Tuebingen
+ * Copyright (C) 2012 Department of General and Computational Linguistics,
+ * University of Tuebingen
  *
  * This file is part of the Java API to GermaNet.
  *
@@ -31,7 +31,7 @@ import javax.xml.stream.XMLStreamReader;
 /**
  * Load lex and con relations into a specified GermaNet object.
  * 
- * @author Verena Henrich (verena.henrich at uni-tuebingen.de)
+ * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 7.0
  */
 class RelationLoader {
