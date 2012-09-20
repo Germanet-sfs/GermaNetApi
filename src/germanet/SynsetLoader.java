@@ -29,8 +29,6 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipFile;
 
 /**
  * Load <code>Synsets</code> into a specified <code>GermaNet</code> object.
