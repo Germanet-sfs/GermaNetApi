@@ -63,7 +63,7 @@ public class IliRecord {
         this.ewnRelation = ewnRelation;
         this.pwnWord = pwnWord;
         this.pwn20Sense = pwn20Sense;
-        this.pwn20Id = pwn30Id;
+        this.pwn20Id = pwn20Id;
         this.pwn30Id = pwn30Id;
         this.pwn20paraphrase = pwn20paraphrase;
         this.source = source;
