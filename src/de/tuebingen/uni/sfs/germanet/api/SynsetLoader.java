@@ -37,6 +37,7 @@ import javax.xml.stream.XMLStreamReader;
  * @version 7.0
  */
 class SynsetLoader {
+
     private GermaNet germaNet;
     private String namespace;
 
@@ -142,7 +143,7 @@ class SynsetLoader {
                 GermaNet.XML_WORD_CATEGORY));
         wordClass = WordClass.valueOf(parser.getAttributeValue(namespace,
                 GermaNet.XML_WORD_CLASS));
-        
+
         // create a new Synset with those attributes
         curSynset = new Synset(sID, wordCategory, wordClass);
 
@@ -207,7 +208,8 @@ class SynsetLoader {
         String oldOrthVar = null;
         List<Example> examples = new ArrayList<Example>();
         List<Frame> frames = new ArrayList<Frame>();
-        
+        Compound compound = null;
+
         // get all the attributes
         id = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
 //             Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_ID))
@@ -251,6 +253,8 @@ class SynsetLoader {
                         frames.add(new Frame(parser.getElementText()));
                     } else if (nodeName.equals(GermaNet.XML_EXAMPLE)) {
                         examples.add(processExample(parser));
+                    } else if (nodeName.equals(GermaNet.XML_COMPOUND)) {
+                        compound = processCompound(parser);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
@@ -274,6 +278,8 @@ class SynsetLoader {
         for (Example example : examples) {
             curLexUnit.addExample(example);
         }
+
+        curLexUnit.setComound(compound);
 
         return curLexUnit;
     }
@@ -313,5 +319,64 @@ class SynsetLoader {
             }
         }
         return curExample;
+    }
+
+    private Compound processCompound(XMLStreamReader parser) throws XMLStreamException {
+        String modifier1 = null;
+        CompoundProperty modAttr = null;
+        CompoundCategory mod1Cat = null;
+        String modifier2 = null;
+        CompoundCategory mod2Cat = null;
+        String head = null;
+        CompoundProperty headAttr = null;
+        int event = -1;
+        String nodeName;
+        boolean done = false;
+        String attrVal;
+
+        while (parser.hasNext() && !done) {
+            event = parser.next();
+            switch (event) {
+                case XMLStreamConstants.START_ELEMENT:
+                    nodeName = parser.getLocalName();
+                    // process subtrees
+                    if (nodeName.equals(GermaNet.XML_COMPOUND_MODIFIER)) {
+                        if (modifier1 == null) { // we are dealing with the 1st modifier
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_PROPERTY);
+                            if (attrVal != null) {
+                                modAttr = CompoundProperty.valueOf(attrVal);
+                            }
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_CATEGORY);
+                            if (attrVal != null) {
+                                mod1Cat = CompoundCategory.valueOf(attrVal);
+                            }
+                            modifier1 = parser.getElementText();
+                        } else { // we are dealing with the 2nd modifier
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_CATEGORY);
+                            if (attrVal != null) {
+                                mod2Cat = CompoundCategory.valueOf(attrVal);
+                            }
+                            modifier2 = parser.getElementText();
+                        }
+                    } else if (nodeName.equals(GermaNet.XML_COMPOUND_HEAD)) {
+                        attrVal = parser.getAttributeValue(namespace, GermaNet.XML_PROPERTY);
+                        if (attrVal != null) {
+                            headAttr = CompoundProperty.valueOf(attrVal);
+                        }
+                        head = parser.getElementText();
+                    }
+                    break;
+                case XMLStreamConstants.END_ELEMENT:
+                    nodeName = parser.getLocalName();
+                    // quit when we reach the end compound tag
+                    if (nodeName.equals(GermaNet.XML_COMPOUND)) {
+                        done = true;
+                    }
+                    break;
+            }
+        }
+
+        Compound curCompound = new Compound(modAttr, modifier1, mod1Cat, modifier2, mod2Cat, head, headAttr);
+        return curCompound;
     }
 }

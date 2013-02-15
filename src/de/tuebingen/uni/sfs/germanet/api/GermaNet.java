@@ -145,6 +145,12 @@ public class GermaNet {
     public static final String XML_WIKTIONARY_SENSE = "wiktionarySense";
     public static final String XML_WIKTIONARY_EDITED = "edited";
     public static final String XML_WIKTIONARY_POS = "pos";
+    //for Compounds
+    public static final String XML_COMPOUND = "compound";
+    public static final String XML_PROPERTY = "property";
+    public static final String XML_CATEGORY = "category";
+    public static final String XML_COMPOUND_MODIFIER = "modifier";
+    public static final String XML_COMPOUND_HEAD = "head";
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
     private TreeSet<Synset> synsets;
@@ -964,6 +970,16 @@ public class GermaNet {
      */
     public List<WiktionaryParaphrase> getWiktionaryParaphrases() {
         return (List<WiktionaryParaphrase>) wiktionaryParaphrases.clone();
+    }
+
+    public HashMap<LexUnit, Compound> getLexUnitsWithCompounds() {
+        HashMap<LexUnit, Compound> lexUnitsWithCimpounds = new HashMap<LexUnit, Compound>();
+        for (LexUnit lu : getLexUnits()) {
+            if (lu.getCompound() != null) {
+                lexUnitsWithCimpounds.put(lu, lu.getCompound());
+            }
+        }
+        return lexUnitsWithCimpounds;
     }
 
     /**

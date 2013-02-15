@@ -20,12 +20,22 @@ public class test {
     public static void main(String[] args) {
 
         try {
-             File gnetDir = new File("/Users/abrskva/NetBeansProjects/GN_V70_XML.zip");
+             File gnetDir = new File("/Users/abrskva/xml_output_new");
+//            File gnetDir = new File("/Users/abrskva/Resources/GN_V70/GN_V70_XML");
              GermaNet gnet = new GermaNet(gnetDir);
 
 //             System.out.println(gnet.getIliRecords());
-             for (Synset s : gnet.getSynsets(WordClass.Menge))
-                 System.out.println(s);
+             for (LexUnit lu : gnet.getLexUnits()) {
+                 if (lu.getCompound() != null) {
+                     if (lu.getWordCategory().equals(WordCategory.adj) ||
+                             lu.getWordCategory().equals(WordCategory.verben)) System.out.print("!!! ");
+                     System.out.println(lu.getOrthForm() + " = " + lu.getCompound());
+                 }
+                 //System.out.println(s.getLexUnits().get(0).getWiktionaryParaphrases());
+             }
+//             for (LexUnit lu : gnet.getLexUnitsWithCompounds().keySet()) {
+//                 System.out.println(gnet.getLexUnitsWithCompounds().get(lu));
+//             }
 
 
         } catch (Exception ex) {

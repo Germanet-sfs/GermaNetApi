@@ -77,6 +77,7 @@ public class LexUnit {
     private ArrayList<WiktionaryParaphrase> wiktionaryParaphrases;
     // Relations of this LexUnit
     private EnumMap<LexRel, ArrayList<LexUnit>> relations;
+    private Compound compound;
 
     /**
      * Constructs a <code>LexUnit</code> with the specified attributes.
@@ -461,6 +462,22 @@ public class LexUnit {
      */
     protected void addIliRecord(IliRecord record) {
         iliRecords.add(record);
+    }
+
+    /**
+     * Return the <code>Compound</code> for this <code>LexUnit</code>, if it exists.
+     * @return the <code>Compound</code> for this <code>LexUnit</code>
+     */
+    public Compound getCompound() {
+        return this.compound;
+    }
+
+    /**
+     * Set the <code>Compound</code> for this <code>LexUnit</code>.
+     * @param the <code>Compound</code> for this <code>LexUnit</code>
+     */
+    protected void setComound(Compound comp) {
+        this.compound = comp;
     }
 
     /**
