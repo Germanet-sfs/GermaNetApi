@@ -92,7 +92,7 @@ import javax.xml.stream.XMLStreamException;
  * need to be changed to 256's or higher.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 public class GermaNet {
 
@@ -975,8 +975,8 @@ public class GermaNet {
     public HashMap<LexUnit, CompoundInfo> getLexUnitsWithCompoundInfo() {
         HashMap<LexUnit, CompoundInfo> lexUnitsWithCimpounds = new HashMap<LexUnit, CompoundInfo>();
         for (LexUnit lu : getLexUnits()) {
-            if (lu.getCompound() != null) {
-                lexUnitsWithCimpounds.put(lu, lu.getCompound());
+            if (lu.getCompoundInfo() != null) {
+                lexUnitsWithCimpounds.put(lu, lu.getCompoundInfo());
             }
         }
         return lexUnitsWithCimpounds;

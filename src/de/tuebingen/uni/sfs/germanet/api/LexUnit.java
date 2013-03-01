@@ -61,7 +61,7 @@ import java.util.*;
  * to indicate that no objects exist for the given request. 
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 public class LexUnit {
 
@@ -468,7 +468,7 @@ public class LexUnit {
      * Return the <code>CompoundInfo</code> for this <code>LexUnit</code>, if it exists.
      * @return the <code>CompoundInfo</code> for this <code>LexUnit</code>
      */
-    public CompoundInfo getCompound() {
+    public CompoundInfo getCompoundInfo() {
         return this.compoundInfo;
     }
 
@@ -476,7 +476,7 @@ public class LexUnit {
      * Set the <code>CompoundInfo</code> for this <code>LexUnit</code>.
      * @param the <code>CompoundInfo</code> for this <code>LexUnit</code>
      */
-    protected void setComound(CompoundInfo comp) {
+    protected void setComoundInfo(CompoundInfo comp) {
         this.compoundInfo = comp;
     }
 

@@ -26,7 +26,7 @@ import java.util.*;
  * word categories and attributes.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 public class CompoundInfo {
     private CompoundProperty modProp;

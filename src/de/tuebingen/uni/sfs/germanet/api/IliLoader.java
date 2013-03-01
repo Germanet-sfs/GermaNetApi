@@ -33,7 +33,7 @@ import javax.xml.stream.XMLStreamReader;
  * Load <code>IliRecords</code> into a specified <code>GermaNet</code> object.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 class IliLoader {
 
@@ -169,7 +169,7 @@ class IliLoader {
             }
         }
 
-        curIli = new IliRecord(lexUnitId, ewnRelation, pwnWord, pwn20Sense, pwn20Id, pwn30Id, pwn20paraphrase, source);
+        curIli = new IliRecord(lexUnitId, EwnRel.valueOf(ewnRelation), pwnWord, pwn20Sense, pwn20Id, pwn30Id, pwn20paraphrase, source);
 
         for (String synonym : englishSynonyms) {
             curIli.addEnglishSynonym(synonym);

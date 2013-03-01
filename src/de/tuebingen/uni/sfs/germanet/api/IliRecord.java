@@ -31,12 +31,12 @@ import java.util.*;
  * English paraphrases from PWN 2.0.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 public class IliRecord {
 
     private int lexUnitId;
-    private String ewnRelation;
+    private EwnRel ewnRelation;
     private String pwnWord;
     private int pwn20Sense;
     private String pwn20Id;
@@ -57,7 +57,7 @@ public class IliRecord {
      * @param pwn20paraphrase the paraphrase for the corresponding English word from PWN 2.0
      * @param source the source of this <code>IliRecord</code>
      */
-    IliRecord(int lexUnitId, String ewnRelation,
+    IliRecord(int lexUnitId, EwnRel ewnRelation,
             String pwnWord, int pwn20Sense, String pwn20Id, String pwn30Id, String pwn20paraphrase, String source) {
         this.lexUnitId = lexUnitId;
         this.ewnRelation = ewnRelation;
@@ -92,7 +92,7 @@ public class IliRecord {
      * Returns the EuroWordNet cross-language relation of this <code>IliRecord</code>.
      * @return the EuroWordNet cross-language relation of this <code>IliRecord</code>
      */
-    public String getEwnRelation() {
+    public EwnRel getEwnRelation() {
         return ewnRelation;
     }
 

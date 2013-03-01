@@ -20,11 +20,25 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 /**
- * Enumeration of possible compound attributes.
- * 
+ * Enumeration of all lexical relations.
+ *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 8.0
  */
-public enum CompoundProperty {
-    Abkürzung, Affixoid, Fremdwort, Konfix, Wortgruppe, Konversion, Eigenname, opaquesMorphem, virtuelleBildung;
+public enum EwnRel {
+
+    synonym,
+    causes,
+    near_synonym,
+    role,
+    involved,
+    xpos_near_synonym,
+    is_caused_by,
+    has_hyponym,
+    has_holonym,
+    has_hyperonym,
+    has_meronym,
+    be_in_state,
+    has_subevent,
+    is_subevent_of
 }

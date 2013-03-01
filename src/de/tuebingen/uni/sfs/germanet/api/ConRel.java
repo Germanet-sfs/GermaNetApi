@@ -23,7 +23,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * Enumeration of all conceptual relations.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 public enum ConRel {
     has_hypernym(true), has_hyponym(true),

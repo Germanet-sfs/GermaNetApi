@@ -32,7 +32,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * </code>
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 public class WiktionaryParaphrase {
 

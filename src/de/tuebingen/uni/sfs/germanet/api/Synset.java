@@ -61,7 +61,7 @@ import java.util.*;
  * to indicate that no objects exist for the given request. 
 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 7.0
+ * @version 8.0
  */
 public class Synset implements Comparable {
     private int id;
