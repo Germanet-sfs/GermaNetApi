@@ -129,7 +129,7 @@ class IliLoader {
         int lexUnitId;
         String ewnRelation;
         String pwnWord;
-        int pwn20Sense;
+        Integer pwn20Sense = null;
         String pwn20Id;
         String pwn30Id;
         String pwn20paraphrase = "";
@@ -142,12 +142,12 @@ class IliLoader {
         lexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
         ewnRelation = parser.getAttributeValue(namespace, GermaNet.XML_EWN_RELATION);
         pwnWord = parser.getAttributeValue(namespace, GermaNet.XML_PWN_WORD);
-        pwn20Sense = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_PWN20_SENSE));
+        String pwn20SenseString = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_SENSE);
+        if (pwn20SenseString != null) pwn20Sense = Integer.valueOf(pwn20SenseString);
         pwn20Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_ID);
         pwn30Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN30_ID);
-        if (parser.getAttributeLocalName(6).equals(GermaNet.XML_PWN20_PARAPHRASE)) {
-            pwn20paraphrase = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_PARAPHRASE);
-        }
+        pwn20paraphrase = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_PARAPHRASE);
+        
         source = parser.getAttributeValue(namespace, GermaNet.XML_SOURCE);
 
         // process this lexUnit
