@@ -38,7 +38,6 @@ public class IliRecord {
     private int lexUnitId;
     private EwnRel ewnRelation;
     private String pwnWord;
-    private Integer pwn20Sense;
     private String pwn20Id;
     private String pwn30Id;
     private String pwn20paraphrase = "";
@@ -58,11 +57,10 @@ public class IliRecord {
      * @param source the source of this <code>IliRecord</code>
      */
     IliRecord(int lexUnitId, EwnRel ewnRelation,
-            String pwnWord, Integer pwn20Sense, String pwn20Id, String pwn30Id, String pwn20paraphrase, String source) {
+            String pwnWord, String pwn20Id, String pwn30Id, String pwn20paraphrase, String source) {
         this.lexUnitId = lexUnitId;
         this.ewnRelation = ewnRelation;
         this.pwnWord = pwnWord;
-        this.pwn20Sense = pwn20Sense;
         this.pwn20Id = pwn20Id;
         this.pwn30Id = pwn30Id;
         if (pwn20paraphrase != null) this.pwn20paraphrase = pwn20paraphrase;
@@ -97,19 +95,12 @@ public class IliRecord {
     }
 
     /**
-     * Returns the corresponding English word from PWN 2.0.
+     * Returns the corresponding English word from PWN 2.0 (can be null,
+     * in which case see<code>getEnglishSynonyms()</code>).
      * @return the corresponding English word from PWN 2.0
      */
     public String getPwnWord() {
         return pwnWord;
-    }
-
-    /**
-     * Returns the sense of the corresponding English word from PWN 2.0.
-     * @return the sense of the corresponding English word from PWN 2.0
-     */
-    public Integer getPwn20Sense() {
-        return pwn20Sense;
     }
 
     /**
@@ -164,9 +155,6 @@ public class IliRecord {
                 ", EWN relation: " + this.ewnRelation;
         if (this.pwnWord != null) {
             stringIli += ", PWN word: " + this.pwnWord;
-        }
-        if (this.pwn20Sense != null) {
-            stringIli += ", PWN 2.0 sense: " + this.pwn20Sense;
         }
         stringIli += ", PWN 2.0 ID: " + this.pwn20Id +
                 ", PWN 3.0 ID: " + this.pwn30Id +

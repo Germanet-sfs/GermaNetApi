@@ -129,7 +129,6 @@ class IliLoader {
         int lexUnitId;
         String ewnRelation;
         String pwnWord;
-        Integer pwn20Sense = null;
         String pwn20Id;
         String pwn30Id;
         String pwn20paraphrase = "";
@@ -142,8 +141,6 @@ class IliLoader {
         lexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
         ewnRelation = parser.getAttributeValue(namespace, GermaNet.XML_EWN_RELATION);
         pwnWord = parser.getAttributeValue(namespace, GermaNet.XML_PWN_WORD);
-        String pwn20SenseString = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_SENSE);
-        if (pwn20SenseString != null) pwn20Sense = Integer.valueOf(pwn20SenseString);
         pwn20Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_ID);
         pwn30Id = parser.getAttributeValue(namespace, GermaNet.XML_PWN30_ID);
         pwn20paraphrase = parser.getAttributeValue(namespace, GermaNet.XML_PWN20_PARAPHRASE);
@@ -169,7 +166,7 @@ class IliLoader {
             }
         }
 
-        curIli = new IliRecord(lexUnitId, EwnRel.valueOf(ewnRelation), pwnWord, pwn20Sense, pwn20Id, pwn30Id, pwn20paraphrase, source);
+        curIli = new IliRecord(lexUnitId, EwnRel.valueOf(ewnRelation), pwnWord, pwn20Id, pwn30Id, pwn20paraphrase, source);
 
         for (String synonym : englishSynonyms) {
             curIli.addEnglishSynonym(synonym);

@@ -20,26 +20,22 @@ public class test {
     public static void main(String[] args) {
 
         try {
-             File gnetDir = new File("/Users/abrskva/xml_output_new");
-//            File gnetDir = new File("/Users/abrskva/Resources/GN_V70/GN_V70_XML");
+//             File gnetDir = new File("/Users/abrskva/xml_output");
+            File gnetDir = new File("/Users/abrskva/xml_out");
              GermaNet gnet = new GermaNet(gnetDir);
 
-//             System.out.println(gnet.getIliRecords());
+             
              for (LexUnit lu : gnet.getLexUnits()) {
-                 if (lu.getCompound() != null) {
-                     if (lu.getWordCategory().equals(WordCategory.adj) ||
-                             lu.getWordCategory().equals(WordCategory.verben)) System.out.print("!!! ");
-                     System.out.println(lu.getOrthForm() + " = " + lu.getCompound());
+                 for (IliRecord ili : lu.getIliRecords()) {
+                     if (ili.getPwnWord() == null) {
+                         System.out.println(ili);
+                     }
                  }
-                 //System.out.println(s.getLexUnits().get(0).getWiktionaryParaphrases());
              }
-//             for (LexUnit lu : gnet.getLexUnitsWithCompoundInfo().keySet()) {
-//                 System.out.println(gnet.getLexUnitsWithCompoundInfo().get(lu));
-//             }
+
 
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             System.exit(0);
         }
     }
