@@ -24,14 +24,14 @@ public class test {
             File gnetDir = new File("/Users/abrskva/xml_out");
              GermaNet gnet = new GermaNet(gnetDir);
 
-             
+             int count = 0;
              for (LexUnit lu : gnet.getLexUnits()) {
-                 for (IliRecord ili : lu.getIliRecords()) {
-                     if (ili.getPwnWord() == null) {
-                         System.out.println(ili);
-                     }
+                 
+                 if (!lu.getExamples().isEmpty()) {
+                     count++;
                  }
              }
+             System.out.println(count);
 
 
 

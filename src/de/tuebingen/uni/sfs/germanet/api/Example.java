@@ -91,6 +91,8 @@ public class Example {
      */
     @Override
     public String toString() {
-        return text + ", frame: " + frame.getData();
+        String out = text;
+        if (frame != null) text += ", frame: " + frame.getData();
+        return out;
     }
 }
