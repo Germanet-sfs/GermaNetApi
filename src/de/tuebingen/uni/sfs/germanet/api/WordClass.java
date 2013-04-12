@@ -63,5 +63,5 @@ public enum WordClass {
     Lokation,
     Schoepfung,
     Veraenderung,
-    Verbrauch
+    Verbrauch;
 }

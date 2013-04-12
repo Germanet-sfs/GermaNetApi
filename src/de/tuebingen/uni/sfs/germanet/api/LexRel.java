@@ -26,8 +26,10 @@ package de.tuebingen.uni.sfs.germanet.api;
  * @version 8.0
  */
 public enum LexRel {
-    has_synonym, has_antonym,
-    has_pertainym, has_participle;
+    has_synonym,
+    has_antonym,
+    has_pertainym,
+    has_participle;
 
     /**
      * Return true if the <code>String</code> <code>relName</code> represents a

@@ -26,5 +26,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * @version 8.0
  */
 public enum WordCategory {
-    adj, nomen, verben;
+    adj,
+    nomen,
+    verben;
 }

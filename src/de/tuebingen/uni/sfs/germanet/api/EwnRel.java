@@ -26,7 +26,6 @@ package de.tuebingen.uni.sfs.germanet.api;
  * @version 8.0
  */
 public enum EwnRel {
-
     synonym,
     causes,
     near_synonym,
@@ -40,5 +39,5 @@ public enum EwnRel {
     has_meronym,
     be_in_state,
     has_subevent,
-    is_subevent_of
+    is_subevent_of;
 }

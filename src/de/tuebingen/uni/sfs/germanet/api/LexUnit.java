@@ -211,7 +211,6 @@ public class LexUnit {
      * @return the old orthographic form of this <code>LexUnit</code>
      */
     public String getOldOrthForm() {
-//        System.out.println(orthForm + " " + oldOrthForm);
         return this.oldOrthForm;
     }
 
@@ -239,9 +238,7 @@ public class LexUnit {
             allOrthForms.add(this.orthVar);
         }
 
-//        System.out.println((getOldOrthForm() != null) + " " + !allOrthForms.contains(this.oldOrthForm));
         if (getOldOrthForm() != null && !allOrthForms.contains(this.oldOrthForm)) {
-//            System.out.println("if");
             allOrthForms.add(this.oldOrthForm);
         }
 

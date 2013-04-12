@@ -26,5 +26,11 @@ package de.tuebingen.uni.sfs.germanet.api;
  * @version 8.0
  */
 public enum CompoundCategory {
-    Adjektiv, Nomen, Verb, Adverb, Präposition, Partikel, Pronomen;
+    Adjektiv,
+    Nomen,
+    Verb,
+    Adverb,
+    Präposition,
+    Partikel,
+    Pronomen;
 }

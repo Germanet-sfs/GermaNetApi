@@ -331,16 +331,6 @@ public class GermaNet {
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
         }
-//
-//        System.out.println(wordCategoryMap.get(WordCategory.adj).size() + " "
-//                + wordCategoryMap.get(WordCategory.nomen).size() + " "
-//                + wordCategoryMap.get(WordCategory.verben).size() + " ");
-//        System.out.println(wordCategoryMapAllOrthForms.get(WordCategory.adj).size() + " "
-//                + wordCategoryMapAllOrthForms.get(WordCategory.nomen).size() + " "
-//                + wordCategoryMapAllOrthForms.get(WordCategory.verben).size() + " ");
-//        System.out.println(synsets.size());
-//        System.out.println(synsetID.size());
-//        System.out.println(lexUnitID.size());
     }
 
     /**
@@ -857,7 +847,6 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-//        if (this.dir != null) {
         try {
             loader = new IliLoader(this);
             if (zip) {
@@ -934,7 +923,6 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-//        if (this.dir != null) {
         try {
             loader = new WiktionaryLoader(this);
             if (zip) {

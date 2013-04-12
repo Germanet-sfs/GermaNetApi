@@ -194,21 +194,6 @@ public class Synset implements Comparable {
         return (List<LexUnit>) lexUnits.clone();
     }
 
-//    /**
-//     * Returns a <code>List</code> of all orthographic forms contained in all
-//     * <code>LexUnits</code> of this <code>Synset</code>.
-//     * @return a <code>List</code> of all orthographic forms contained in all
-//     * <code>LexUnits</code> of this <code>Synset</code>
-//     */
-//    public List<String> getAllOrthForms() {
-//        List<String> rval = new ArrayList<String>();
-//        List<LexUnit> luList = getLexUnits();
-//        for (LexUnit lu : luList) {
-//            rval.add(lu.getOrthForm());
-//        }
-//        return rval;
-//    }
-
     /**
      * Returns a <code>List</code> of all (old) orthographic forms and variants
      * contained in all <code>LexUnits</code> of this <code>Synset</code>.

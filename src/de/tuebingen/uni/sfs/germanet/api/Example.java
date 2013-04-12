@@ -92,7 +92,9 @@ public class Example {
     @Override
     public String toString() {
         String out = text;
-        if (frame != null) text += ", frame: " + frame.getData();
+        if (frame != null) {
+            out += ", frame: " + frame.getData();
+        }
         return out;
     }
 }

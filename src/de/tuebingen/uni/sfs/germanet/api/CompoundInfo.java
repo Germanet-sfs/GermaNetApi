@@ -19,8 +19,6 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import java.util.*;
-
 /**
  * A <code>CompoundInfo</code> shows constituent parts of a German word, their
  * word categories and attributes.
@@ -29,34 +27,35 @@ import java.util.*;
  * @version 8.0
  */
 public class CompoundInfo {
-    private CompoundProperty modProp;
+    private CompoundProperty modifierProperty;
     private String modifier1;
-    private CompoundCategory mod1Cat;
+    private CompoundCategory modifier1Category;
     private String modifier2;
-    private CompoundCategory mod2Cat;
+    private CompoundCategory modifier2Category;
     private String head;
-    private CompoundProperty headProp;
+    private CompoundProperty headProperty;
 
     /**
      * Constructs a <code>CompoundInfo</code> with the specified attributes.
-     * @param modProp
+     * @param modifierProperty
      * @param modifier1
-     * @param mod1Cat
+     * @param modifier1Category
      * @param modifier2
-     * @param mod2Cat
+     * @param modifier2Category
      * @param head
-     * @param headProp
+     * @param headProperty
      */
-    public CompoundInfo (CompoundProperty modProp, String modifier1,
-            CompoundCategory mod1Cat, String modifier2, CompoundCategory mod2Cat,
-            String head, CompoundProperty headProp) {
-        this.modProp = modProp;
+    public CompoundInfo (CompoundProperty modifierProperty,
+            String modifier1, CompoundCategory modifier1Category,
+            String modifier2, CompoundCategory modifier2Category,
+            String head, CompoundProperty headProperty) {
+        this.modifierProperty = modifierProperty;
         this.modifier1 = modifier1;
-        this.mod1Cat = mod1Cat;
+        this.modifier1Category = modifier1Category;
         this.modifier2 = modifier2;
-        this.mod2Cat = mod2Cat;
+        this.modifier2Category = modifier2Category;
         this.head = head;
-        this.headProp = headProp;
+        this.headProperty = headProperty;
     }
 
     /**
@@ -65,7 +64,7 @@ public class CompoundInfo {
      * @return the <code>CompoundProperty</code> of the modifier
      */
     public CompoundProperty getModifierProperty() {
-        return this.modProp;
+        return this.modifierProperty;
     }
 
     /**
@@ -82,7 +81,7 @@ public class CompoundInfo {
      * @return the <code>CompoundCategory</code> of the 1st modifier
      */
     public CompoundCategory getModifier1Category() {
-        return this.mod1Cat;
+        return this.modifier1Category;
     }
 
     /**
@@ -100,7 +99,7 @@ public class CompoundInfo {
      * @return the <code>CompoundCategory</code> of the 2nd modifier
      */
     public CompoundCategory getModifier2Category() {
-        return this.mod2Cat;
+        return this.modifier2Category;
     }
 
     /**
@@ -117,24 +116,24 @@ public class CompoundInfo {
      * @return the <code>CompoundProperty</code> of the head
      */
     public CompoundProperty getHeadProperty() {
-        return this.headProp;
+        return this.headProperty;
     }
 
     @Override
     public String toString() {
         String compAsString = "";
 
-        if (this.modProp != null) compAsString += "<" + this.modProp + "> ";
+        if (this.modifierProperty != null) compAsString += "<" + this.modifierProperty + "> ";
         compAsString += this.modifier1;
-        if (this.mod1Cat != null) compAsString += " (" + this.mod1Cat + ")";
+        if (this.modifier1Category != null) compAsString += " (" + this.modifier1Category + ")";
 
         if (this.modifier2 != null) {
             compAsString += " / " + this.modifier2;
-            if (this.mod2Cat != null) compAsString += " (" + this.mod2Cat + ")";
+            if (this.modifier2Category != null) compAsString += " (" + this.modifier2Category + ")";
         }
 
         compAsString += " + ";
-        if (this.headProp != null) compAsString += "<" + this.headProp + "> ";
+        if (this.headProperty != null) compAsString += "<" + this.headProperty + "> ";
         compAsString += this.head;
 
         return compAsString;

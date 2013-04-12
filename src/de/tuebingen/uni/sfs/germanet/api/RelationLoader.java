@@ -96,7 +96,6 @@ class RelationLoader {
      * @throws javax.xml.stream.XMLStreamException
      */
     void loadRelations(InputStream inputStream) throws XMLStreamException {
-//        InputStream in = new FileInputStream(relationFile);
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
         int event;
@@ -143,8 +142,6 @@ class RelationLoader {
         fromLexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
         toLexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
 
-//        System.out.println("from: " + from + " to: " + to);
-
         // look up the LexUnits
         fromLexUnit = germaNet.getLexUnitByID(fromLexUnitId);
         toLexUnit = germaNet.getLexUnitByID(toLexUnitId);
@@ -176,7 +173,6 @@ class RelationLoader {
         name = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_NAME);
         direction = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_DIR);
         fromSynsetId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
-//        System.out.println("fsi=" + fromSynsetId);
         toSynsetId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
 
         // look up the Synsets

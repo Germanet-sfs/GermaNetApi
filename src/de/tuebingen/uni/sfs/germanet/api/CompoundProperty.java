@@ -26,5 +26,13 @@ package de.tuebingen.uni.sfs.germanet.api;
  * @version 8.0
  */
 public enum CompoundProperty {
-    Abkürzung, Affixoid, Fremdwort, Konfix, Wortgruppe, Konversion, Eigenname, opaquesMorphem, virtuelleBildung;
+    Abkürzung,
+    Affixoid,
+    Fremdwort,
+    Konfix,
+    Wortgruppe,
+    Konversion,
+    Eigenname,
+    opaquesMorphem,
+    virtuelleBildung;
 }

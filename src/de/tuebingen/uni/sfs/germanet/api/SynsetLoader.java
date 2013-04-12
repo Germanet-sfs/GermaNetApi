@@ -134,8 +134,6 @@ class SynsetLoader {
         LexUnit curLexUnit = null;
         Synset curSynset;
         String aParaphrase;
-//        Example anExample;
-//        Frame aFrame;
 
         // get the synset attributes
         sID = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
@@ -157,18 +155,9 @@ class SynsetLoader {
                     if (nodeName.equals(GermaNet.XML_LEX_UNIT)) {
                         curLexUnit = processLexUnit(parser, curSynset);
                         curSynset.addLexUnit(curLexUnit);
-//                        if (wordCategory.equals(WordCategory.nomen)) {
-//                            System.out.println(curLexUnit.getOrthForm());
-//                        }
-//                    } else if (nodeName.equals(GermaNet.XML_FRAME)) {
-//                        aFrame = new Frame(parser.getElementText());
-//                        curLexUnit.addFrame(aFrame);
                     } else if (nodeName.equals(GermaNet.XML_PARAPHRASE)) {
                         aParaphrase = parser.getElementText();
                         curSynset.setParaphrase(aParaphrase);
-//                    } else if (nodeName.equals(GermaNet.XML_EXAMPLE)) {
-//                        anExample = processExample(parser);
-//                        curLexUnit.addExample(anExample);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
@@ -212,7 +201,6 @@ class SynsetLoader {
 
         // get all the attributes
         id = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
-//             Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_ID))
 
         styleMarking = artificial = namedEntity = false;
         attVal = parser.getAttributeValue(namespace, GermaNet.XML_STYLE_MARKING);

@@ -117,6 +117,4 @@ public class WiktionaryParaphrase {
                 ", edited: " + this.edited;
         return stringIli;
     }
-
-
 }
