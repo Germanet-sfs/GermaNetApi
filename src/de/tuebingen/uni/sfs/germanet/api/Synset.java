@@ -49,7 +49,7 @@ import java.util.*;
  * </code>
  * Transitive relations can be retrieved:<br>
  * <code>
- * &nbsp;&nbsp;&nbsp;List&lt;List&lt;Synset&gt;&gt; meronyms = aSynset.getTransRelations(ConRel.meronymy);<br>
+ * &nbsp;&nbsp;&nbsp;List&lt;List&lt;Synset&gt;&gt; meronyms = aSynset.getTransRelatedSynsets(ConRel.meronymy);<br>
  * </code>
  *    which returns a List of Lists, each representing the Synsets found at a depth.<br><br>
  * Neighbors (all Synsets that are related to this one) can be retrieved:<br>
@@ -289,7 +289,7 @@ public class Synset implements Comparable {
      * @return the transitive closure of all relations of type <code>type</code>
      * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
      */
-    public List<List<Synset>> getTransRelations(ConRel type) {
+    public List<List<Synset>> getTransRelatedSynsets(ConRel type) {
         List<List<Synset>> result = new ArrayList<List<Synset>>();
         List<Synset> resultPrevDepth = new ArrayList<Synset>(1);
         List<Synset> resultCurDepth;
