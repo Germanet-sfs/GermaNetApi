@@ -456,10 +456,10 @@ public class LexUnit {
 
     /**
      * Set the <code>CompoundInfo</code> for this <code>LexUnit</code>.
-     * @param the <code>CompoundInfo</code> for this <code>LexUnit</code>
+     * @param compoundInfo the <code>CompoundInfo</code> for this <code>LexUnit</code>
      */
-    protected void setComoundInfo(CompoundInfo comp) {
-        this.compoundInfo = comp;
+    protected void setComoundInfo(CompoundInfo compoundInfo) {
+        this.compoundInfo = compoundInfo;
     }
 
     /**
