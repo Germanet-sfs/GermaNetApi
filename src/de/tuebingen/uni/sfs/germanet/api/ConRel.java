@@ -26,13 +26,20 @@ package de.tuebingen.uni.sfs.germanet.api;
  * @version 8.0
  */
 public enum ConRel {
-    has_hypernym(true), has_hyponym(true),
-    has_component_meronym(true), has_component_holonym(true),
-    has_member_meronym(true), has_member_holonym(true),
-    has_substance_meronym(true), has_substance_holonym(true),
-    has_portion_meronym(true), has_portion_holonym(true),
-    entails(false), is_entailed_by(false),
-    is_related_to(false), causes(false);
+    has_hypernym(true),
+    has_hyponym(true),
+    has_component_meronym(true),
+    has_component_holonym(true),
+    has_member_meronym(true),
+    has_member_holonym(true),
+    has_substance_meronym(true),
+    has_substance_holonym(true),
+    has_portion_meronym(true),
+    has_portion_holonym(true),
+    entails(false),
+    is_entailed_by(false),
+    is_related_to(false),
+    causes(false);
     private boolean transitive;
 
     private ConRel(boolean transitive) {

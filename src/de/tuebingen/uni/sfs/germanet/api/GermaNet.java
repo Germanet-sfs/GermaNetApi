@@ -250,34 +250,6 @@ public class GermaNet {
     }
 
     /**
-     * Constructs a new <code>GermaNet</code> object by loading the the data
-     * from the specified list of input stream. Please make sure that all
-     * synset files (*.*.xml) are added to the list of input streams before the
-     * relations file (gn_relations.xml).
-     * @param inputStreams the GermaNet data streams
-     * @param ignoreCase if true ignore case on lookups, otherwise do case
-     * sensitive searches
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     */
-// TODO: cannot handle word class yet
-//    public GermaNet(List<InputStream> inputStreams, boolean ignoreCase) throws FileNotFoundException, XMLStreamException {
-//        checkMemory();
-//        this.ignoreCase = ignoreCase;
-//        this.inputStreams = inputStreams;
-//        this.dir = null;
-//        this.synsets = new ArrayList<Synset>();
-//        this.synsetID = new HashMap<Integer, Synset>();
-//        this.lexUnitID = new HashMap<Integer, LexUnit>();
-//        this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String,
-//                ArrayList<LexUnit>>>(WordCategory.class);
-//
-//        load();
-//    }
-//    public void setIgnoreCase(boolean ignoreCase) {
-//        this.ignoreCase = ignoreCase;
-//    }
-    /**
      * Prints warning if available memory is low.
      */
     private void checkMemory() {

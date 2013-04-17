@@ -162,21 +162,6 @@ public class LexUnit {
         return this.namedEntity;
     }
 
-//    protected void setOrthForm(String orthForm) {
-//        this.orthForm = orthForm;
-//    }
-//
-//    protected void setOrthVar(String orthVar) {
-//        this.orthVar = orthVar;
-//    }
-//
-//    protected void setOldOrthForm(String oldOrthForm) {
-//        this.oldOrthForm = oldOrthForm;
-//    }
-//
-//    protected void setOldOrthVar(String oldOrthVar) {
-//        this.oldOrthVar = oldOrthVar;
-//    }
     /**
      * Trims all <code>ArrayLists</code>
      */

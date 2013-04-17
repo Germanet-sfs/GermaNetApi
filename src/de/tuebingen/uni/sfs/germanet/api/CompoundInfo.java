@@ -59,7 +59,7 @@ public class CompoundInfo {
     }
 
     /**
-     * Returns the <code>CompoundProperty</code> of the modifier(s)
+     * Returns the <code>CompoundProperty</code> of the modifier
      * or null if it has not been set
      * @return the <code>CompoundProperty</code> of the modifier
      */
@@ -68,43 +68,43 @@ public class CompoundInfo {
     }
 
     /**
-     * Returns the first modifier of this <code>CompoundInfo</code>
-     * @return the first modifier of this <code>CompoundInfo</code>
+     * Returns the first modifier of the compound
+     * @return the first modifier of the compound
      */
     public String getModifier1() {
         return this.modifier1;
     }
 
     /**
-     * Returns the <code>CompoundCategory</code> of the 1st modifier
+     * Returns the <code>CompoundCategory</code> of the first modifier
      * or null if it has not been set
-     * @return the <code>CompoundCategory</code> of the 1st modifier
+     * @return the <code>CompoundCategory</code> of the first modifier
      */
     public CompoundCategory getModifier1Category() {
         return this.modifier1Category;
     }
 
     /**
-     * Returns the second modifier of this <code>CompoundInfo</code>
+     * Returns the second, alternative modifier of the compound
      * or null if it has not been set
-     * @return the second modifier of this <code>CompoundInfo</code>
+     * @return the second modifier of the compound
      */
     public String getModifier2() {
         return this.modifier2;
     }
 
     /**
-     * Returns the <code>CompoundCategory</code> of the 2nd modifier
+     * Returns the <code>CompoundCategory</code> of the second modifier
      * or null if it has not been set
-     * @return the <code>CompoundCategory</code> of the 2nd modifier
+     * @return the <code>CompoundCategory</code> of the second modifier
      */
     public CompoundCategory getModifier2Category() {
         return this.modifier2Category;
     }
 
     /**
-     * Returns the head of this <code>CompoundInfo</code>
-     * @return the head of this <code>CompoundInfo</code>
+     * Returns the head of the compound
+     * @return the head of the compound
      */
     public String getHead() {
         return this.head;
@@ -119,6 +119,10 @@ public class CompoundInfo {
         return this.headProperty;
     }
 
+    /**
+     * Return a String representation of the compound.
+     * @return a String representation of the compound.
+     */
     @Override
     public String toString() {
         String compAsString = "";

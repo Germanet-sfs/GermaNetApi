@@ -39,26 +39,6 @@ class StaxLoader {
     private RelationLoader relLoader; // loader for relations
     private List<String> xmlNames;
 
-//    /**
-//     * Constructs a StaxLoader for data files in directory <tt>germanetDirectory</tt>
-//     * and existing GermaNet object <tt>germaNet</tt>.
-//     * @param germanetDirectory full path of location of GermaNet data files
-//     * @param germaNet GermaNet object to load into
-//     * @throws java.io.FileNotFoundException
-//     */
-//    StaxLoader(String germanetDirectory, GermaNet gnet) throws
-//            FileNotFoundException {
-//        this.gnetDir = new File(germanetDirectory);
-//        this.germaNet = gnet;
-//        this.synLoader = new SynsetLoader(gnet);
-//        this.relLoader = new RelationLoader(gnet);
-//
-//        if (!gnetDir.isDirectory()) {
-//            throw new FileNotFoundException("Unable to load GermaNet from \"" +
-//                    gnetDir + "\"");
-//        }
-//    }
-
     /**
      * Constructs a <code>StaxLoader</code> for data files in directory
      * <code>germanetDirectory</code> and existing <code>GermaNet</code> object
