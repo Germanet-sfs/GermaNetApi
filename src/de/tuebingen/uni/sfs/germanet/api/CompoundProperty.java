@@ -31,7 +31,6 @@ public enum CompoundProperty {
     Fremdwort,
     Konfix,
     Wortgruppe,
-    Konversion,
     Eigenname,
     opaquesMorphem,
     virtuelleBildung;
