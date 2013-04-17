@@ -913,7 +913,7 @@ for (Synset syn : synList) {
 
 
 \section{Working with Interlingual Index (ILI) Data}
-GermaNet-API 8.0 allows for working with the Interlingual Index data, distributed with the GermaNet XML files. ILI links GermaNet synsets to English ones (originally, to Princeton WordNet 2.0) via several types of relations, such as synonymy, holonymy, meronymy etc. 
+GermaNet-API 8.0 allows for working with the Interlingual Index data \footnote{\url{http://www.sfs.uni-tuebingen.de/lsd/ili.shtml}}, distributed with the GermaNet XML files. ILI links GermaNet synsets to English ones (originally, to Princeton WordNet 2.0) via several types of relations, such as synonymy, holonymy, meronymy etc. 
 
 ILI data is automatically loaded along with the GermaNet XML data. You can then load \texttt{IliRecords} into a \texttt{List} by calling \texttt{getIliRecords()} metod on either a \texttt{LexUnit} or a \texttt{Synset}. 
 
@@ -978,7 +978,7 @@ String source = anIliRecord.getSource();
 
 \section{Working with Wiktionary Paraphrases}
 \label{snippetsEnd}
-Another extention to GermaNet data (distributed alongside with the GermaNet XMLs), contains paraphrases, or definitions, for a part of the GermaNet \texttt{LexUnits} extracted from the German version of the free online lexicographical resource Wiktionary\footnote{See \href{http://de.wiktionary.org}{http://de.wiktionary.org}}.
+Another extention\footnote{\url{http://www.sfs.uni-tuebingen.de/lsd/wiktionary.shtml}} to GermaNet data (distributed alongside with the GermaNet XMLs), contains paraphrases, or definitions, for a part of the GermaNet \texttt{LexUnits} extracted from the German version of the free online lexicographical resource Wiktionary\footnote{See \href{http://de.wiktionary.org}{http://de.wiktionary.org}}.
 
 You can retrieve a \texttt{List} of all the \texttt{WiktionaryParaphrases} for your \texttt{LexUnit} object:
 
@@ -1023,7 +1023,7 @@ if (aWikiParaphrase.hasBeenEdited()) {
 
 \section{Working with Compounds}
 
-GermaNet contains information about nominal compound splitting. Compounds are represented as modifier-head pairs, and some additional information can accompany the constituent parts. 
+GermaNet contains information about nominal compound splitting \footnote{\url{http://www.sfs.uni-tuebingen.de/lsd/compounds.shtml}}. Compounds are represented as modifier-head pairs, and some additional information can accompany the constituent parts. 
 
 To access the available information on splitting of a compound, you can call \texttt{getCompoundInfo()} method on a \texttt{LexUnit}:
 
@@ -1032,7 +1032,7 @@ LexUnit unit = gnet.getLexUnitByID(9559);
 CompoundInfo compoundInfo =  unit.getCompoundInfo();
 \end{lstlisting}
 
-If the \texttt{LexUnit} in question is not a compound, or GermaNet has no information on the splitting, the method will return \texttt{null}.
+If the \texttt{LexUnit} in question is not a compound, or GermaNet has no information on the splitting, the \texttt{getCompoundInfo()} method will return \texttt{null}.
 
 The \texttt{CompoundInfo} object gives you access to the information about compound modifier(s) and head. A compound has either one or two modifiers, the second option coming into play when it is unclear from which of the two words the compound has been derived.
 
@@ -1042,7 +1042,7 @@ String modifier2 = compoundInfo.getModifier2();
 String head = compoundInfo.getHead();
 \end{lstlisting}
 
-Whereas heads of nominal compounds are always nouns, the is a great variation in modifier categories: adjectives (\texttt{CompoundCategory.Adjektiv}), nouns (\texttt{CompoundCategory.Nomen}), verbs (\texttt{CompoundCategory.Verb}), adverbs (\texttt{CompoundCategory.Adverb}), pronouns (\texttt{CompoundCategory.Pronomen}), particles (\texttt{CompoundCategory.Partikel}), and finally, prepositions \\ (\texttt{CompoundCategory.Präposition}) can all be compound modifiers. You may choose to work only with compounds which have adjectival modifiers:
+Whereas heads of nominal compounds are always nouns, there is a great variation in modifier categories: adjectives (\texttt{CompoundCategory.Adjektiv}), nouns (\texttt{CompoundCategory.Nomen}), verbs (\texttt{CompoundCategory.Verb}), adverbs (\texttt{CompoundCategory.Adverb}), pronouns (\texttt{CompoundCategory.Pronomen}), particles (\texttt{CompoundCategory.Partikel}), and finally, prepositions \\ (\texttt{CompoundCategory.Präposition}) can all be compound modifiers. You may choose to work only with compounds which have adjectival modifiers:
 
 \begin{lstlisting}
 CompoundCategory modifier1Category = compoundInfo.getModifier1Category();
@@ -1054,7 +1054,7 @@ if (modifier1Category == CompoundCategory.Adjektiv ||
 \end{lstlisting}
 
 %\begin{sloppypar}
-Both modifiers and heads can have certain properties associated with them. Modifier can be an abbreviation (\texttt{CompoundProperty.Abkürzung}), an affixoid (\texttt{CompoundProperty.Affixoid}), a konfix (\texttt{CompoundProperty.Konfix}, a foreign word (\texttt{CompoundProperty.Fremdwort})), an opaque morpheme \\ (\texttt{CompoundProperty.opaquesMorphem}), a personal name (\texttt{CompoundProperty.\\Eigenname}), or a word group (\texttt{CompoundProperty.Wortgruppe}). When a compound has two alternative modifiers, modifier property is \texttt{null}. Head can be an abbreviation, an affixoid, a foreign word, a konfix, an opaque morpheme, or a result of virtual formation (\texttt{CompoundProperty.virtuelleBildung}). To only work with compounds which include foreign words as modifiers or heads, you can use the following code:
+Both modifiers and heads can have certain properties associated with them. Modifier can be an abbreviation (\texttt{CompoundProperty.Abkürzung}), an affixoid (\texttt{CompoundProperty.Affixoid}), a konfix (\texttt{CompoundProperty.Konfix}), a foreign word (\texttt{CompoundProperty.Fremdwort}), an opaque morpheme \\ (\texttt{CompoundProperty.opaquesMorphem}), a personal name (\texttt{CompoundProperty.\\Eigenname}), or a word group (\texttt{CompoundProperty.Wortgruppe}). When a compound has two alternative modifiers, modifier property is \texttt{null}. Head can be an abbreviation, an affixoid, a foreign word, a konfix, an opaque morpheme, or a result of virtual formation (\texttt{CompoundProperty.virtuelleBildung}). To only work with compounds which include foreign words as modifiers or heads, you can use the following code:
 %\end{sloppypar}
 
 \begin{lstlisting}
