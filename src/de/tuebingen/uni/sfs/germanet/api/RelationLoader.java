@@ -32,7 +32,7 @@ import javax.xml.stream.XMLStreamReader;
  * Load lex and con relations into a specified GermaNet object.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 8.0
+ * @version 9.0
  */
 class RelationLoader {
     static final String DIR_BOTH = "both";

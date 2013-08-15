@@ -24,47 +24,44 @@ package de.tuebingen.uni.sfs.germanet.api;
  * word categories and attributes.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 8.0
+ * @version 9.0
  */
 public class CompoundInfo {
-    private CompoundProperty modifierProperty;
     private String modifier1;
+    private CompoundProperty modifier1Property;
     private CompoundCategory modifier1Category;
     private String modifier2;
+    private CompoundProperty modifier2Property;
     private CompoundCategory modifier2Category;
     private String head;
     private CompoundProperty headProperty;
 
     /**
      * Constructs a <code>CompoundInfo</code> with the specified attributes.
-     * @param modifierProperty
      * @param modifier1
+     * @param modifier1Property
      * @param modifier1Category
      * @param modifier2
+     * @param modifier2Property
      * @param modifier2Category
      * @param head
      * @param headProperty
      */
-    public CompoundInfo (CompoundProperty modifierProperty,
-            String modifier1, CompoundCategory modifier1Category,
-            String modifier2, CompoundCategory modifier2Category,
+    public CompoundInfo (String modifier1,
+            CompoundProperty modifier1Property,
+            CompoundCategory modifier1Category,
+            String modifier2,
+            CompoundProperty modifier2Property,
+            CompoundCategory modifier2Category,
             String head, CompoundProperty headProperty) {
-        this.modifierProperty = modifierProperty;
         this.modifier1 = modifier1;
+        this.modifier1Property = modifier1Property;
         this.modifier1Category = modifier1Category;
         this.modifier2 = modifier2;
+        this.modifier2Property = modifier2Property;
         this.modifier2Category = modifier2Category;
         this.head = head;
         this.headProperty = headProperty;
-    }
-
-    /**
-     * Returns the <code>CompoundProperty</code> of the modifier
-     * or null if it has not been set
-     * @return the <code>CompoundProperty</code> of the modifier
-     */
-    public CompoundProperty getModifierProperty() {
-        return this.modifierProperty;
     }
 
     /**
@@ -73,6 +70,15 @@ public class CompoundInfo {
      */
     public String getModifier1() {
         return this.modifier1;
+    }
+
+    /**
+     * Returns the <code>CompoundProperty</code> of the first modifier
+     * or null if it has not been set
+     * @return the <code>CompoundProperty</code> of the first modifier
+     */
+    public CompoundProperty getModifier1Property() {
+        return this.modifier1Property;
     }
 
     /**
@@ -91,6 +97,15 @@ public class CompoundInfo {
      */
     public String getModifier2() {
         return this.modifier2;
+    }
+
+    /**
+     * Returns the <code>CompoundProperty</code> of the second modifier
+     * or null if it has not been set
+     * @return the <code>CompoundProperty</code> of the second modifier
+     */
+    public CompoundProperty getModifier2Property() {
+        return this.modifier2Property;
     }
 
     /**
@@ -127,12 +142,14 @@ public class CompoundInfo {
     public String toString() {
         String compAsString = "";
 
-        if (this.modifierProperty != null) compAsString += "<" + this.modifierProperty + "> ";
+        if (this.modifier1Property != null) compAsString += "<" + this.modifier1Property + "> ";
         compAsString += this.modifier1;
         if (this.modifier1Category != null) compAsString += " (" + this.modifier1Category + ")";
 
         if (this.modifier2 != null) {
-            compAsString += " / " + this.modifier2;
+            compAsString += " / ";
+            if (this.modifier2Property != null) compAsString += "<" + this.modifier2Property + "> ";
+            compAsString += this.modifier2;
             if (this.modifier2Category != null) compAsString += " (" + this.modifier2Category + ")";
         }
 

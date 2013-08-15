@@ -31,7 +31,7 @@ import java.util.*;
  * English paraphrases from PWN 2.0.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 8.0
+ * @version 9.0
  */
 public class IliRecord {
 

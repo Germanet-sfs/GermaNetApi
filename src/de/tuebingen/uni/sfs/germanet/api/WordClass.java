@@ -23,7 +23,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * Enumeration of possible word classes.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 8.0
+ * @version 9.0
  */
 public enum WordClass {
     Allgemein,

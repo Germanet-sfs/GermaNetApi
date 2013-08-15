@@ -34,7 +34,7 @@ import javax.xml.stream.XMLStreamReader;
  * Load <code>Synsets</code> into a specified <code>GermaNet</code> object.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 8.0
+ * @version 9.0
  */
 class SynsetLoader {
 
@@ -311,9 +311,10 @@ class SynsetLoader {
 
     private CompoundInfo processCompound(XMLStreamReader parser) throws XMLStreamException {
         String modifier1 = null;
-        CompoundProperty modAttr = null;
+        CompoundProperty mod1Attr = null;
         CompoundCategory mod1Cat = null;
         String modifier2 = null;
+        CompoundProperty mod2Attr = null;
         CompoundCategory mod2Cat = null;
         String head = null;
         CompoundProperty headAttr = null;
@@ -332,7 +333,7 @@ class SynsetLoader {
                         if (modifier1 == null) { // we are dealing with the 1st modifier
                             attrVal = parser.getAttributeValue(namespace, GermaNet.XML_PROPERTY);
                             if (attrVal != null) {
-                                modAttr = CompoundProperty.valueOf(attrVal);
+                                mod1Attr = CompoundProperty.valueOf(attrVal);
                             }
                             attrVal = parser.getAttributeValue(namespace, GermaNet.XML_CATEGORY);
                             if (attrVal != null) {
@@ -340,6 +341,10 @@ class SynsetLoader {
                             }
                             modifier1 = parser.getElementText();
                         } else { // we are dealing with the 2nd modifier
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_PROPERTY);
+                            if (attrVal != null) {
+                                mod2Attr = CompoundProperty.valueOf(attrVal);
+                            }
                             attrVal = parser.getAttributeValue(namespace, GermaNet.XML_CATEGORY);
                             if (attrVal != null) {
                                 mod2Cat = CompoundCategory.valueOf(attrVal);
@@ -364,7 +369,8 @@ class SynsetLoader {
             }
         }
 
-        CompoundInfo curCompound = new CompoundInfo(modAttr, modifier1, mod1Cat, modifier2, mod2Cat, head, headAttr);
+        CompoundInfo curCompound = new CompoundInfo(modifier1, mod1Attr,
+                mod1Cat, modifier2, mod2Attr, mod2Cat, head, headAttr);
         return curCompound;
     }
 }
