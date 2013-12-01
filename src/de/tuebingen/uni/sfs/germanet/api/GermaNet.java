@@ -125,6 +125,7 @@ public class GermaNet {
     public static final String XML_RELATION_INV = "inv";
     public static final String XML_RELATION_TO = "to";
     public static final String XML_RELATION_FROM = "from";
+    
     //for ILI
     public static final String XML_ILI_RECORD = "iliRecord";
     public static final String XML_LEX_UNIT_ID = "lexUnitId";
@@ -138,6 +139,7 @@ public class GermaNet {
     public static final String XML_PWN20_SYNONYM = "pwn20Synonym";
     public static final String YES = "yes";
     public static final String NO = "no";
+    
     //for Wiktionary
     public static final String XML_WIKTIONARY_PARAPHRASE = "wiktionaryParaphrase";
     public static final String XML_WIKTIONARY_ID = "wiktionaryId";
@@ -145,12 +147,14 @@ public class GermaNet {
     public static final String XML_WIKTIONARY_SENSE = "wiktionarySense";
     public static final String XML_WIKTIONARY_EDITED = "edited";
     public static final String XML_WIKTIONARY_POS = "pos";
+    
     //for Compounds
     public static final String XML_COMPOUND = "compound";
     public static final String XML_PROPERTY = "property";
     public static final String XML_CATEGORY = "category";
     public static final String XML_COMPOUND_MODIFIER = "modifier";
     public static final String XML_COMPOUND_HEAD = "head";
+    
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
     private TreeSet<Synset> synsets;
@@ -278,14 +282,14 @@ public class GermaNet {
 
         // load data
         if (this.dir != null) {
-        try {
-            loader = new StaxLoader(dir, this);
-            loader.load();
-            loadIli(false);
-            loadWiktionaryParaphrases(false);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-        }
+            try {
+                loader = new StaxLoader(dir, this);
+                loader.load();
+                loadIli(false);
+                loadWiktionaryParaphrases(false);
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } else {
             try {
                 loader = new StaxLoader(inputStreams, xmlNames, this);
