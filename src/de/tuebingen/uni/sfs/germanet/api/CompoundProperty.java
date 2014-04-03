@@ -33,5 +33,7 @@ public enum CompoundProperty {
     Wortgruppe,
     Eigenname,
     opaquesMorphem,
-    virtuelleBildung;
+    virtuelleBildung,
+    GebundenesMorphem,
+    FreiesMorphem;
 }

@@ -35,7 +35,7 @@ public enum EwnRel {
     is_caused_by,
     has_hyponym,
     has_holonym,
-    has_hyperonym,
+    has_hypernym,
     has_meronym,
     be_in_state,
     has_subevent,
