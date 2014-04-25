@@ -34,6 +34,6 @@ public enum CompoundProperty {
     Eigenname,
     opaquesMorphem,
     virtuelleBildung,
-    GebundenesMorphem,
-    FreiesMorphem;
+    gebundenesMorphem,
+    freiesMorphem;
 }
