@@ -28,8 +28,7 @@ public class HypernymGraph {
             depth = keyboard.nextInt();
             destName = keyboard.nextLine().trim();
 
-//            gnetDir = new File("/germanet/GN_V70/GN_V70_XML");
-            gnetDir = new File("/Users/vhenrich/NetBeansProjects/data/GN_V70.zip");
+            gnetDir = new File("/germanet/GN_V90/GN_V90_XML");
             GermaNet gnet = new GermaNet(gnetDir);
 
             synsets = gnet.getSynsets(word);
