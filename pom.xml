@@ -2,10 +2,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
     <groupId>de.tuebingen.uni.sfs.germanet</groupId>
     <artifactId>germanet-api</artifactId>
     <version>9.0</version>
     <packaging>jar</packaging>
+
+    <name>germanet-api</name>
+     <url>http://www.sfs.uni-tuebingen.de/GermaNet/</url>
+    <inceptionYear>2013</inceptionYear>
+    <description>A library for easy access to GermaNet.</description>
 
     <developers>
         <developer>
@@ -14,8 +25,18 @@
         </developer>
     </developers>
 
-    <name>germanet-api</name>
-    <url>http://maven.apache.org</url>
+    <organization>
+        <name>Department of Linguistics, Tübingen University</name>
+        <url>http://www.sfs.uni-tuebingen.de/</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>GNU Lesser General Public License, Version 3</name>
+            <url>http://www.gnu.org/licenses/lgpl.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,6 +50,23 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <scm>
+        <url>git@github.com:germanet-sfs/GermaNetApi.git</url>
+        <connection>scm:git:git@github.com:germanet-sfs/GermaNetApi.git</connection>
+        <developerConnection>scm:git:git@github.com:germanet-sfs/GermaNetApi.git</developerConnection>
+    </scm>
+
+     <distributionManagement>
+      <snapshotRepository>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </snapshotRepository>
+      <repository>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
