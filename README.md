@@ -3,13 +3,13 @@ Introduction
 
 This tutorial is about the Java-API[^1] to GermaNet. After an
 introduction of GermaNet and the API, there is a short overview of the
-GermaNet XML files (all in subsections of this chapter). In sections
-[tutorialStarts] through [tutorialEnds], the Java-API to GermaNet is
-introduced by an example tutorial. In sections [snippetsStart] through
-[snippetsEnd], further methods are explained to finally give a complete
+GermaNet XML files (all in subsections of this chapter). The Java-API to GermaNet is
+ firstly introduced by an example tutorial. Afterwards further methods are explained to finally give a complete
 overview of the API.
 
 You can download the pdf version of this tutorial [here](https://github.com/Germanet-sfs/GermaNetApi/raw/master/documentation/tutorial/GermaNetTutorial9.0.pdf).
+
+The code snippet is [here](https://github.com/Germanet-sfs/GermaNetApi/blob/master/src/test/java/HypernymGraph.java).
 
 Basics About GermaNet
 ---------------------
