@@ -203,7 +203,7 @@ Loading GermaNet requires more memory than the JVM allocates by default.
 Any application that loads GermaNet will most likely need to be run with
 JVM options that increase the memory allocated, like this:
 
-`java -Xms128m -Xmx128m MyApplication`
+`java -Xms256m -Xmx256m MyApplication`
 
 These options can be added to your IDE’s VM options so that they will be
 used automatically when your application is run from within the IDE.
