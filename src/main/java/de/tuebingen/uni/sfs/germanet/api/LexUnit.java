@@ -29,10 +29,10 @@ import java.util.*;
  * <code>LexUnit</code> as well as the following
  * attributes: styleMarking (boolean), sense (int), styleMarking (boolean),
  * artificial (boolean), namedEntity (boolean), and source (String).<br>
- * A <code>LexUnit</code> also has the lexical relations: <br><br>
+ * A <code>LexUnit</code> also has lexical relations such as: <br><br>
  * 
  * <code>LexRel.has_antonym</code>, <code>LexRel.has_synonym</code>,
- * <code>LexRel.has_pertainym</code>, <code>LexRel.has_participle</code><br><br>
+ * <code>LexRel.has_pertainym</code>, <code>LexRel.has_participle</code>, etc.<br><br>
  * 
  * Methods are provided to get each of the attributes.<br><br>
  * 
