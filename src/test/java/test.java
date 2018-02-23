@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  *
- * @author abrskva
+ * @author Sfs-University of Tübingen
  */
 public class test {
 

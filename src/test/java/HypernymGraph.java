@@ -4,7 +4,7 @@ import java.io.*;
 
 /**
  *
- * @author University of Tuebingen, Department of Linguistics (germanetinfo at sfs.uni-tuebingen.de)
+ * @author Sfs-University of Tübingen
  */
 public class HypernymGraph {
     public static void main(String[] args) {
