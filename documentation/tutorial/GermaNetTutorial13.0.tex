@@ -59,7 +59,7 @@ Wilhelmstr. 19, 72074 Tübingen, Germany}\\[4.5cm]
 \begin{center}
 {\huge \bfseries Tutorial:\\[0.4cm]
 Java-API to GermaNet}\\[1.0cm]
-{\large Version 9.0 (April, 2014)}\\[10.0cm]
+{\large Version 13.0 (April, 2018)}\\[10.0cm]
 \end{center}
 
 \begin{flushleft} \small
@@ -110,16 +110,17 @@ A \texttt{ConRel} is a set of possible conceptual relations between \texttt{Syns
 
 \renewcommand{\labelenumi}{•}
 \begin{enumerate}
-	\item transitive relations: hypernymy, hyponymy, meronymy, holonymy;
+	\item transitive relations: hypernymy, hyponymy, meronymy (substance, portion, component, and member), holonymy (substance, portion, component, and member);
 	\item non-transitive relations:	entailment, entailed, causation, caused, association.
 \end{enumerate}
 
-A \texttt{LexRel} is a set of possible lexical relations between \texttt{LexUnits} (represented as an enum type). A \texttt{LexRel} object provides a method for checking if a particular String is a valid lexical relation. Since there is only one transitive lexical relation (synonymy), and no special processing is required by the API to retrieve synonyms, there is no distinction made between transitive and non-transitive lexical relations. The set consists of the following relations:
+A \texttt{LexRel} is a set of possible lexical relations between \texttt{LexUnits} (represented as an enum type). A \texttt{LexRel} object provides a method for checking if a particular String is a valid lexical relation. Since there is only one transitive lexical relation (synonymy), and no special processing is required by the API to retrieve synonyms, there is no distinction made between transitive and non-transitive lexical relations. The set consists of relations such as:
 
 \begin{enumerate}
 	\item synonymy;
 	\item antonymy;
-	\item pertainymy.
+	\item pertainymy;
+	\item and so on ...
 \end{enumerate}
 
 A \texttt{WordCategory} is a set of possible word categories (represented as an enum type) and contains the values: adj, nomen, verben.
@@ -165,7 +166,7 @@ The relations are stored within a separate XML file. Both kinds of relations are
        name="{has_hypernym|has_component_meronym|causes|is_related_to...}"
        inv="{has_hyponym|is_entailed_by|has_member_meronym...}"/>
   <lex_rel dir="{one|both|revert}" from="l[0-9]" to="l[0-9]"
-       name="{has_antonym|has_pertainym|has_participle}"/>
+       name="{has_antonym|has_pertainym|has_participle...}"/>
   ...
 </relations>
 \end{lstlisting}
@@ -194,29 +195,29 @@ If you haven't done so already, you will need to obtain:
 \renewcommand{\labelenumi}{\arabic{enumi}}
 \begin{enumerate}
 	\item The GermaNet data (either archived or unpacked to a directory typically named \emph{GN\_Vxx/GN\_Vxx\_XML}).
-	\item The GermaNet Java library, called \emph{GermaNetApi9.0.jar}.
+	\item The GermaNet Java library, called \emph{GermaNetApi13.0.jar}.
 	\item In order to turn the graph description into an actual image, you will need the GraphViz Tools\footnote{The GraphViz Tools are freely available from \href{www.graphviz.org}{www.graphviz.org}}. Now would be a good time to download and install them.
 \end{enumerate}
 
-All of the classes described previously are defined in the package \\ \texttt{de.tuebingen.uni.sfs.germanet.api} within the \emph{GermaNetApi9.0.jar} file. You do not need to unpack the jar file.
+All of the classes described previously are defined in the package \\ \texttt{de.tuebingen.uni.sfs.germanet.api} within the \emph{GermaNetApi13.0.jar} file. You do not need to unpack the jar file.
 
 
 
 \subsection{Classpath}
-If you are working from the command line, you will need to add \\ \emph{GermaNetApi9.0.jar} to your CLASSPATH environment variable\footnote{See \href{http://faq.javaranch.com/java/HowToSetTheClasspath}{http://faq.javaranch.com/java/HowToSetTheClasspath} for help with setting your classpath on various operating systems.}.
+If you are working from the command line, you will need to add \\ \emph{GermaNetApi13.0.jar} to your CLASSPATH environment variable\footnote{See \href{http://faq.javaranch.com/java/HowToSetTheClasspath}{http://faq.javaranch.com/java/HowToSetTheClasspath} for help with setting your classpath on various operating systems.}.
 
-If you are working within an IDE (such as NetBeans or Eclipse), add \emph{GermaNetApi9.0.jar} to the classpath for any project which uses GermaNet.
+If you are working within an IDE (such as NetBeans or Eclipse), add \emph{GermaNetApi13.0.jar} to the classpath for any project which uses GermaNet.
 
 
 
 \subsection{Important Note on Memory}
 Loading GermaNet requires more memory than the JVM allocates by default. Any application that loads GermaNet will most likely need to be run with JVM options that increase the memory allocated, like this:
 
-\texttt{java -Xms128m -Xmx128m MyApplication}
+\texttt{java -Xms1g -Xmx1g MyApplication}
 
 These options can be added to your IDE's VM options so that they will be used automatically when your application is run from within the IDE.
 
-Depending on the memory needs of the application itself, the 128's may need to be changed to a higher number. Be careful not to allocate too much memory for the JVM, though, as this may cause other running programs (like your windowing environment) to crash.
+Depending on the memory needs of the application itself, the 1g's may need to be changed to a higher number. Be careful not to allocate too much memory for the JVM, though, as this may cause other running programs (like your windowing environment) to crash.
 
 
 
@@ -276,10 +277,10 @@ public class HypernymGraph {
 
 
 \section{Step 3: Creating a GermaNet Object}
-To construct a \texttt{GermaNet} object, provide the location of the GermaNet data. This can be done with a \texttt{String} representing the path to the directory containing the data, or with a \texttt{File} object. Generally speaking, file locations should never be hardcoded, but for the sake of simplicity, this code assumes that the GermaNet data files are in a directory called \\ \emph{/germanet/GN\_V80/GN\_V80\_XML}. Please change the line:
+To construct a \texttt{GermaNet} object, provide the location of the GermaNet data. This can be done with a \texttt{String} representing the path to the directory containing the data, or with a \texttt{File} object. Generally speaking, file locations should never be hardcoded, but for the sake of simplicity, this code assumes that the GermaNet data files are in a directory called \\ \emph{/germanet/GN\_V130/GN\_V130\_XML}. Please change the line:
 
 \begin{lstlisting}
-gnetDir = new File("/germanet/GN_V80/GN_V80_XML");}
+gnetDir = new File("/germanet/GN_V130/GN_V130_XML");}
 \end{lstlisting}
 
 to reflect the actual location of the GermaNet data files on your computer.
@@ -304,7 +305,7 @@ public class HypernymGraph {
       word = keyboard.next();
       depth = keyboard.nextInt();
       destName = keyboard.nextLine().trim();
-      gnetDir = new File("/germanet/GN_V80/GN_V80_XML");
+      gnetDir = new File("/germanet/GN_V130/GN_V130_XML");
       GermaNet gnet = new GermaNet(gnetDir);
 	// to be continued...
     } catch (Exception ex) {
@@ -480,7 +481,7 @@ This is it! We are now ready to test our program. Compile the source code using 
 
 Then run the program:
 
-\texttt{java -Xms256m -Xmx256m HypernymGraph}
+\texttt{java -Xms1g -Xmx1g HypernymGraph}
 
 Let's create a graph that shows the concept \emph{Automobil} in the center and the hypernyms and hyponyms up to a distance of two. When asked to enter the data, type: \texttt{Automobil 2 auto.dot}
 
@@ -525,7 +526,7 @@ This chapter contains code snippets and samples that demonstrate how to use the 
 
 \section{Creating a GermaNet Object}
 \label{snippetsStart}
-Before you can construct a \texttt{GermaNet} object, you need to make sure that the \emph{GermaNetApi9.0.jar} file is on your classpath, then import the library:
+Before you can construct a \texttt{GermaNet} object, you need to make sure that the \emph{GermaNetApi13.0.jar} file is on your classpath, then import the library:
 
 \begin{lstlisting}
 import de.tuebingen.uni.sfs.germanet.api.*;
@@ -534,27 +535,27 @@ import de.tuebingen.uni.sfs.germanet.api.*;
 When a \texttt{GermaNet} object is created, it needs to know where to find the XML-formatted GermaNet data files. The location of the directory (or a .zip/.jar archive) containing the data files is sent as a parameter to the \texttt{GermaNet} constructor either as a \texttt{String} object:
 
 \begin{lstlisting}
-GermaNet gnet = new GermaNet("/germanet/GN_V80/GN_V80_XML/");
-GermaNet gnet = new GermaNet("/germanet/GN_V80/GN_V80_XML.zip");
+GermaNet gnet = new GermaNet("/germanet/GN_V130/GN_V130_XML/");
+GermaNet gnet = new GermaNet("/germanet/GN_V130/GN_V130_XML.zip");
 \end{lstlisting}
 
 or a \texttt{File} object:
 
 \begin{lstlisting}
-File gnetDir = new File("/germanet/GN_V80/GN_V80_XML");
+File gnetDir = new File("/germanet/GN_V130/GN_V130_XML");
 GermaNet gnet = new GermaNet(gnetDir);
 \end{lstlisting}
 
 To ignore case when getting \texttt{Synsets} and \texttt{LexUnits}, set the \texttt{ignoreCase} flag in the constructor:
 
 \begin{lstlisting}
-GermaNet gnet = new GermaNet("/germanet/GN_V80/GN_V80_XML/", true);
+GermaNet gnet = new GermaNet("/germanet/GN_V130/GN_V130_XML/", true);
 \end{lstlisting}
 
 or:
 
 \begin{lstlisting}
-File gnetDir = new File("/germanet/GN_V80/GN_V80_XML");
+File gnetDir = new File("/germanet/GN_V130/GN_V130_XML");
 GermaNet gnet = new GermaNet(gnetDir, true);
 \end{lstlisting}
 
@@ -913,7 +914,7 @@ for (Synset syn : synList) {
 
 
 \section{Working with Interlingual Index (ILI) Data}
-GermaNet-API 9.0 allows for working with the Interlingual Index data \footnote{\url{http://www.sfs.uni-tuebingen.de/lsd/ili.shtml}}, distributed with the GermaNet XML files. ILI links GermaNet synsets to English ones (originally, to Princeton WordNet 2.0) via several types of relations, such as synonymy, holonymy, meronymy etc. 
+GermaNet-API 13.0 allows for working with the Interlingual Index data \footnote{\url{http://www.sfs.uni-tuebingen.de/lsd/ili.shtml}}, distributed with the GermaNet XML files. ILI links GermaNet synsets to English ones (originally, to Princeton WordNet 2.0) via several types of relations, such as synonymy, holonymy, meronymy etc. 
 
 ILI data is automatically loaded along with the GermaNet XML data. You can then load \texttt{IliRecords} into a \texttt{List} by calling \texttt{getIliRecords()} metod on either a \texttt{LexUnit} or a \texttt{Synset}. 
 

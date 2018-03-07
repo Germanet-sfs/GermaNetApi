@@ -7,7 +7,7 @@ GermaNet XML files (all in subsections of this chapter). The Java-API to GermaNe
  firstly introduced by an example tutorial. Afterwards further methods are explained to finally give a complete
 overview of the API.
 
-You can download the pdf version of this tutorial [here](https://github.com/Germanet-sfs/GermaNetApi/raw/master/documentation/tutorial/GermaNetTutorial9.0.pdf).
+You can download the pdf version of this tutorial [here](https://github.com/Germanet-sfs/GermaNetApi/raw/master/documentation/tutorial/GermaNetTutorial13.0.pdf).
 
 The code snippet is [here](https://github.com/Germanet-sfs/GermaNetApi/blob/master/src/test/java/HypernymGraph.java).
 
@@ -82,7 +82,7 @@ checking if a particular String is a valid conceptual relation, and for
 determining if a relation is transitive or not. The set consists of the
 following transitive and non-transitive relations:
 
-1.  transitive relations: hypernymy, hyponymy, meronymy, holonymy;
+1.  transitive relations: hypernymy, hyponymy, meronymy (substance, portion, component, and member), holonymy (substance, portion, component, and member);
 
 2.  non-transitive relations: entailment, entailed, causation, caused,
     association.
@@ -93,13 +93,15 @@ checking if a particular String is a valid lexical relation. Since there
 is only one transitive lexical relation (synonymy), and no special
 processing is required by the API to retrieve synonyms, there is no
 distinction made between transitive and non-transitive lexical
-relations. The set consists of the following relations:
+relations. The set consists of relations such as:
 
 1.  synonymy;
 
 2.  antonymy;
 
 3.  pertainymy.
+
+and so on...
 
 A `WordCategory` is a set of possible word categories (represented as an
 enum type) and contains the values: adj, nomen, verben.
@@ -150,7 +152,7 @@ relations are encoded: conceptual (tag `con_rel`) and lexical (tag
            name="{has_hypernym|has_component_meronym|causes|is_related_to...}"
            inv="{has_hyponym|is_entailed_by|has_member_meronym...}"/>
       <lex_rel dir="{one|both|revert}" from="l[0-9]" to="l[0-9]"
-           name="{has_antonym|has_pertainym|has_participle}"/>
+           name="{has_antonym|has_pertainym|has_participle...}"/>
       ...
     </relations>
 
@@ -178,23 +180,23 @@ If you haven’t done so already, you will need to obtain:
 1.  The GermaNet data (either archived or unpacked to a directory
     typically named *GN\_Vxx/GN\_Vxx\_XML*).
 
-2.  The GermaNet Java library, called *GermaNetApi9.0.jar*.
+2.  The GermaNet Java library, called *GermaNetApi13.0.jar*.
 
 3.  In order to turn the graph description into an actual image, you
     will need the GraphViz Tools[^3]. Now would be a good time to
     download and install them.
 
 All of the classes described previously are defined in the package\
-`de.tuebingen.uni.sfs.germanet.api` within the *GermaNetApi9.0.jar*
+`de.tuebingen.uni.sfs.germanet.api` within the *GermaNetApi13.0.jar*
 file. You do not need to unpack the jar file.
 
 ### Classpath
 
 If you are working from the command line, you will need to add\
-*GermaNetApi9.0.jar* to your CLASSPATH environment variable[^4].
+*GermaNetApi13.0.jar* to your CLASSPATH environment variable[^4].
 
 If you are working within an IDE (such as NetBeans or Eclipse), add
-*GermaNetApi9.0.jar* to the classpath for any project which uses
+*GermaNetApi13.0.jar* to the classpath for any project which uses
 GermaNet.
 
 ### Important Note on Memory
@@ -286,9 +288,9 @@ directory containing the data, or with a `File` object. Generally
 speaking, file locations should never be hardcoded, but for the sake of
 simplicity, this code assumes that the GermaNet data files are in a
 directory called\
-*/germanet/GN\_V80/GN\_V80\_XML*. Please change the line:
+*/germanet/GN\_V130/GN\_V130\_XML*. Please change the line:
 
-    gnetDir = new File("/germanet/GN_V80/GN_V80_XML");}
+    gnetDir = new File("/germanet/GN_V130/GN_V130_XML");}
 
 to reflect the actual location of the GermaNet data files on your
 computer.
@@ -312,7 +314,7 @@ computer.
           word = keyboard.next();
           depth = keyboard.nextInt();
           destName = keyboard.nextLine().trim();
-          gnetDir = new File("/germanet/GN_V80/GN_V80_XML");
+          gnetDir = new File("/germanet/GN_V130/GN_V130_XML");
           GermaNet gnet = new GermaNet(gnetDir);
         // to be continued...
         } catch (Exception ex) {
@@ -611,7 +613,7 @@ Creating a GermaNet Object
 --------------------------
 
 Before you can construct a `GermaNet` object, you need to make sure that
-the *GermaNetApi9.0.jar* file is on your classpath, then import the
+the *GermaNetApi13.0.jar* file is on your classpath, then import the
 library:
 
     import de.tuebingen.uni.sfs.germanet.api.*;
@@ -621,22 +623,22 @@ XML-formatted GermaNet data files. The location of the directory (or a
 .zip/.jar archive) containing the data files is sent as a parameter to
 the `GermaNet` constructor either as a `String` object:
 
-    GermaNet gnet = new GermaNet("/germanet/GN_V80/GN_V80_XML/");
-    GermaNet gnet = new GermaNet("/germanet/GN_V80/GN_V80_XML.zip");
+    GermaNet gnet = new GermaNet("/germanet/GN_V130/GN_V130_XML/");
+    GermaNet gnet = new GermaNet("/germanet/GN_V130/GN_V130_XML.zip");
 
 or a `File` object:
 
-    File gnetDir = new File("/germanet/GN_V80/GN_V80_XML");
+    File gnetDir = new File("/germanet/GN_V130/GN_V130_XML");
     GermaNet gnet = new GermaNet(gnetDir);
 
 To ignore case when getting `Synsets` and `LexUnits`, set the
 `ignoreCase` flag in the constructor:
 
-    GermaNet gnet = new GermaNet("/germanet/GN_V80/GN_V80_XML/", true);
+    GermaNet gnet = new GermaNet("/germanet/GN_V130/GN_V130_XML/", true);
 
 or:
 
-    File gnetDir = new File("/germanet/GN_V80/GN_V80_XML");
+    File gnetDir = new File("/germanet/GN_V130/GN_V130_XML");
     GermaNet gnet = new GermaNet(gnetDir, true);
 
 Unless otherwise stated in the javadoc documentation, all methods in all
@@ -990,7 +992,7 @@ GermaNet:
 Working with Interlingual Index (ILI) Data
 ------------------------------------------
 
-GermaNet-API 9.0 allows for working with the Interlingual Index data
+GermaNet-API 13.0 allows for working with the Interlingual Index data
 [^6], distributed with the GermaNet XML files. ILI links GermaNet
 synsets to English ones (originally, to Princeton WordNet 2.0) via
 several types of relations, such as synonymy, holonymy, meronymy etc.
