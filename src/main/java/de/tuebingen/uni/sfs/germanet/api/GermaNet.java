@@ -61,12 +61,12 @@ import javax.xml.stream.XMLStreamException;
  * searching will be performed:<br><br>
  * <code>
  *    // Use case-sensitive searching<br>
- *    GermaNet gnet = new GermaNet("/home/myName/germanet/GN_V60");<br>
+ *    GermaNet gnet = new GermaNet("/home/myName/germanet/GN_V130");<br>
  * </code>
  * or<br>
  * <code>
  *    // Ignore case when searching<br>
- *    File gnetDir = new File("/home/myName/germanet/GN_V60");<br>
+ *    File gnetDir = new File("/home/myName/germanet/GN_V130");<br>
  *    GermaNet gnet = new GermaNet(gnetDir, true);<br><br>
  * </code>
  * The <code>GermaNet</code> class has methods that return <code>Lists</code> of
@@ -86,10 +86,10 @@ import javax.xml.stream.XMLStreamException;
  * application that loads GermaNet will most likely need to be run with JVM
  * options that increase the memory allocated, like this:<br><br>
  * 
- * <code>java -Xms128m -Xmx128m MyApplication</code><br><br>
+ * <code>java -Xms1g -Xmx1g MyApplication</code><br><br>
  * 
- * Depending on the memory needs of the application itself, the 128's may
- * need to be changed to 256's or higher.
+ * Depending on the memory needs of the application itself, the 1g's may
+ * need to be changed to something higher.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
