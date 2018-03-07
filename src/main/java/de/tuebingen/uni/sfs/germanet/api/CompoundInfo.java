@@ -24,7 +24,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * word categories and attributes.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 9.0
+ * @version 13.0
  */
 public class CompoundInfo {
     private String modifier1;

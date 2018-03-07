@@ -92,7 +92,7 @@ import javax.xml.stream.XMLStreamException;
  * need to be changed to 256's or higher.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 9.0
+ * @version 13.0
  */
 public class GermaNet {
 

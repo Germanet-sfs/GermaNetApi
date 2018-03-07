@@ -31,7 +31,7 @@ import javax.xml.stream.XMLStreamReader;
  * Load <code>WiktionaryParaphrases</code> into a specified <code>GermaNet</code> object.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 9.0
+ * @version 13.0
  */
 class WiktionaryLoader {
 

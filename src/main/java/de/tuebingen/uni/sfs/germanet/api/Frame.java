@@ -23,7 +23,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * A class to store <code>Frame</code> data.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 9.0
+ * @version 13.0
  */
 public class Frame {
     private String data;

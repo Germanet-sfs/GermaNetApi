@@ -30,7 +30,7 @@ import javax.xml.stream.XMLStreamException;
  * any relations can be loaded.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 9.0
+ * @version 13.0
 */
 class StaxLoader {
     private File germaNetDir;

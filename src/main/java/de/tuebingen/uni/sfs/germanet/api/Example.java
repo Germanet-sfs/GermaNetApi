@@ -24,7 +24,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * optional <code>Frame</code>.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at sfs.uni-tuebingen.de)
- * @version 9.0
+ * @version 13.0
  */
 public class Example {
     private String text;

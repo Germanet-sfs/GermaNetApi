@@ -23,7 +23,7 @@ package de.tuebingen.uni.sfs.germanet.api;
  * Enumeration of possible word categories, i.e., part-of-speech.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
- * @version 9.0
+ * @version 13.0
  */
 public enum WordCategory {
     adj,
