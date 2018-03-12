@@ -1063,7 +1063,7 @@ try the following:
 Working with Wiktionary Paraphrases 
 -----------------------------------
 
-Another extention[^7] to GermaNet data (distributed alongside with the
+Another extension[^7] to GermaNet data (distributed alongside with the
 GermaNet XMLs), contains paraphrases, or definitions, for a part of the
 GermaNet `LexUnits` extracted from the German version of the free online
 lexicographical resource Wiktionary[^8].
