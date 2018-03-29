@@ -205,7 +205,7 @@ Loading GermaNet requires more memory than the JVM allocates by default.
 Any application that loads GermaNet will most likely need to be run with
 JVM options that increase the memory allocated, like this:
 
-`java -Xms256m -Xmx256m MyApplication`
+`java -Xms512m -Xmx512m MyApplication`
 
 These options can be added to your IDE’s VM options so that they will be
 used automatically when your application is run from within the IDE.
@@ -561,7 +561,7 @@ code using Java JDK 6.0 or above:
 
 Then run the program:
 
-`java -Xms256m -Xmx256m HypernymGraph`
+`java -Xms512m -Xmx512m HypernymGraph`
 
 Let’s create a graph that shows the concept *Automobil* in the center
 and the hypernyms and hyponyms up to a distance of two. When asked to
