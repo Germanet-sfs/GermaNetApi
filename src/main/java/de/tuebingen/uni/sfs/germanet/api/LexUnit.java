@@ -38,7 +38,7 @@ import java.util.*;
  * 
  * The orthographic form can be retrieved:<br>
  * <code>
- * &nbsp;&nbsp;&nbsp;String orthForm = aLexUnit.getOrthForm();<br><br>
+ * &nbsp;&nbsp;&nbsp;String orthForm = aLexUnit.getSearchString();<br><br>
  * </code>
 
  * The orthographic form, and (if existent) the orthographic variant, the old
