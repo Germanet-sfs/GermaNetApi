@@ -19,6 +19,8 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import org.apache.commons.text.similarity.LevenshteinDistance;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -169,6 +171,8 @@ public class GermaNet {
     private List<InputStream> inputStreams = null;
     private List<String> xmlNames = null;
     private boolean ignoreCase = false;
+    private static final int MAX_LEVENSHTEIN_DIST = 30;
+    private LevenshteinDistance levenshteinDistance;
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
@@ -226,6 +230,7 @@ public class GermaNet {
         this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
         this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
         this.lowerToUpperMap = new HashMap<String, Set<String>>();
+        this.levenshteinDistance = new LevenshteinDistance(MAX_LEVENSHTEIN_DIST);
 
         if (!dir.isDirectory() && isZipFile(dir)) {
             ZipFile zipFile = new ZipFile(dir);
@@ -494,7 +499,7 @@ public class GermaNet {
         for (Synset synset : synsets) {
             if (wordCategories.contains(synset.getWordCategory())
                     && wordClasses.contains(synset.getWordClass())) {
-                List<LexUnit> lexUnitList = matchLexUnits(synset.getLexUnits(), filter.getOrthFormVariants(), pattern);
+                List<LexUnit> lexUnitList = matchLexUnits(synset.getLexUnits(), filter, pattern);
                 if (!lexUnitList.isEmpty()) {
                     rval.add(synset);
                 }
@@ -908,7 +913,7 @@ public class GermaNet {
     public List<LexUnit> getLexUnits(WordCategory wordCategory) {
         ArrayList<LexUnit> rval = new ArrayList<LexUnit>();
         HashMap<String, ArrayList<LexUnit>> map;
-        map = (HashMap<String, ArrayList<LexUnit>>) wordCategoryMap.get(wordCategory);
+        map = wordCategoryMap.get(wordCategory);
 
         for (ArrayList<LexUnit> luList : map.values()) {
             rval.addAll((ArrayList<LexUnit>) luList.clone());
@@ -922,6 +927,7 @@ public class GermaNet {
         return getLexUnits(filter, getLexUnits());
     }
 
+    // ToDo: javadoc
     public List<LexUnit> getLexUnits(FilterConfig filter, Collection<LexUnit> lexUnits) {
 
         Pattern pattern;
@@ -951,15 +957,20 @@ public class GermaNet {
         }
 
         pattern = compilePattern(filter);
-        return matchLexUnits(catClassFilteredLexUnits, filter.getOrthFormVariants(), pattern);
+        rval = matchLexUnits(catClassFilteredLexUnits, filter, pattern);
+
+        if (rval == null) {
+            rval = new ArrayList<>();
+        }
+        return rval;
     }
 
     // ToDo: javadoc
-    private List<LexUnit> matchLexUnits(Collection<LexUnit> lexUnits, Set<OrthFormVariant> orthFormVariants, Pattern pattern) {
-        List<LexUnit> rval = new ArrayList<LexUnit>();
+    private List<LexUnit> matchLexUnits(Collection<LexUnit> lexUnits, FilterConfig filter, Pattern pattern) {
+        Set<OrthFormVariant> orthFormVariants = filter.getOrthFormVariants();
+        List<LexUnit> rval = new ArrayList<>();
 
         for (LexUnit lu : lexUnits) {
-
                 boolean hit = false;
                 for (OrthFormVariant variant : orthFormVariants) {
                     String toMatch = null;
@@ -978,8 +989,20 @@ public class GermaNet {
                             break;
                     }
                     if (toMatch != null && pattern.matcher(toMatch).matches()) {
-                        hit = true;
-                        break; // found a match in this LexUnit, stop looking
+                        if (filter.getEditDistance() > 0) {
+                            String searchString = filter.getSearchString();
+                            if (filter.isIgnoreCase()) {
+                                searchString = searchString.toLowerCase();
+                            }
+                            int distance = levenshteinDistance.apply(searchString, toMatch);
+                            if (distance <= filter.getEditDistance()) {
+                                hit = true;
+                                break; // found a match in this LexUnit, stop looking
+                            }
+                        } else {
+                            hit = true;
+                            break; // found a match in this LexUnit, stop looking
+                        }
                     }
                 }
                 if (hit) {
