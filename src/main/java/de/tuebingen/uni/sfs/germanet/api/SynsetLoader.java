@@ -87,7 +87,7 @@ class SynsetLoader {
     /**
      * Loads <code>Synsets</code> from the specified file into this
      * <code>SynsetLoader</code>'s <code>GermaNet</code> object.
-     * @param synsetFile the file containing <code>GermaNet Synset<code> data
+     * @param inputStream the <code>InputStream</code> containing <code>GermaNet Synset<code> data
      * @throws javax.xml.stream.XMLStreamException
      */
     protected void loadSynsets(InputStream inputStream) throws XMLStreamException {
@@ -109,7 +109,6 @@ class SynsetLoader {
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_SYNSET)) {
                         Synset syn = processSynset(parser);
-//                        syn.setWordClass(wordClass); TODO
                         germaNet.addSynset(syn);
                     }
                     break;

@@ -1,0 +1,62 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Folders
+_obj
+_test
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+# Go
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+_testmain.go
+*.exe
+*.test
+*.prof
+
+# Java/Maven
+/target
+dependency-reduced-pom.xml
+pom.xml.asc
+*.jar
+*.class
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
+
+# OSX
+.DS_Store
+
+# Idea
+/bin
+.idea
+*.iml
+
+# Node
+node_modules
+
+# Visual Studio Code
+.vscode
+
+# Eclipse Core      
+.project
+
+# JDT-specific (Eclipse Java Development Tools)     
+.classpath
+
+# Custom
+src/main/resources/webui/bundle.js
+src/main/resources/webui/bundle.js.map
+webui/lib/
+
+# Emacs
+*~

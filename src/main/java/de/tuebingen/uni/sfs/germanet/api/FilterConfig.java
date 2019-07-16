@@ -52,9 +52,9 @@ public class FilterConfig {
      */
     public FilterConfig(String searchString) {
         this.searchString = searchString;
-        this.wordCategories = EnumSet.allOf(WordCategory.class);
-        this.wordClasses = EnumSet.allOf(WordClass.class);
-        this.orthFormVariants = EnumSet.allOf(OrthFormVariant.class);
+        addAllWordCategories();;
+        addAllWordClasses();
+        addAllOrthFormVariants();
         this.regEx = false;
         this.ignoreCase = false;
         this.editDistance = 0;
@@ -204,12 +204,19 @@ public class FilterConfig {
     }
 
     /**
+     * Add all OrthFormVariants, which is the default configuration
+     */
+    public void addAllOrthFormVariants() {
+        orthFormVariants = EnumSet.allOf(OrthFormVariant.class);
+    }
+
+    /**
      * Remove one or more OrthFormVariants from this configuration
      * @param variants one or more OrthFormVariants to remove
      */
     public void removeOrthFormVariants(OrthFormVariant... variants) {
         for (OrthFormVariant variant : variants) {
-            orthFormVariants.remove(variants);
+            orthFormVariants.remove(variant);
         }
     }
 

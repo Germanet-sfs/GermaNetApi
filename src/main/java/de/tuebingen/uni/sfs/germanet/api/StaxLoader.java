@@ -43,7 +43,7 @@ class StaxLoader {
      * Constructs a <code>StaxLoader</code> for data files in directory
      * <code>germanetDirectory</code> and existing <code>GermaNet</code> object
      * <code>germaNet</code>.
-     * @param germanetDirectory location of GermaNet data files
+     * @param germaNetDir location of GermaNet data files
      * @param germaNet <code>GermaNet</code> object to load into
      * @throws java.io.FileNotFoundException
      */
@@ -65,7 +65,7 @@ class StaxLoader {
      * Constructs a <code>StaxLoader</code> for data streams in
      * <code>germanetStreams</code> and existing <code>GermaNet</code> object
      * <code>germaNet</code>.
-     * @param germanetDirectory location of GermaNet data files
+     * @param germaNetStreams location of GermaNet data files
      * @param germaNet <code>GermaNet</code> object to load into
      * @throws java.io.FileNotFoundException
      */
