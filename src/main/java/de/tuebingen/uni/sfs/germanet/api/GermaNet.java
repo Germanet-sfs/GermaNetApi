@@ -21,15 +21,12 @@ package de.tuebingen.uni.sfs.germanet.api;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.io.StreamCorruptedException;
+import java.io.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -99,6 +96,7 @@ import javax.xml.stream.XMLStreamException;
  */
 public class GermaNet {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GermaNet.class);
     public static final String XML_SYNSETS = "synsets";
     public static final String XML_SYNSET = "synset";
     public static final String XML_ID = "id";
@@ -157,6 +155,9 @@ public class GermaNet {
     public static final String XML_CATEGORY = "category";
     public static final String XML_COMPOUND_MODIFIER = "modifier";
     public static final String XML_COMPOUND_HEAD = "head";
+
+    // number of GermaNet files
+    public static final int NUMBER_OF_GERMANET_FILES = 55;
 
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
     private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
@@ -267,10 +268,8 @@ public class GermaNet {
     private void checkMemory() {
         long freeMemory = Runtime.getRuntime().freeMemory() / 1000000;
         if (freeMemory < 120) {
-            System.out.println("Warning: you may not have enough memory to "
-                    + "load GermaNet.");
-            System.out.println("Try using \"-Xms1g -Xmx1g\" JVM options:");
-            System.out.println("java -Xms1g -Xmx1g <restOfCommand>");
+            LOGGER.warn("You may not have enough memory to load GermaNet.\n"
+                    + "Try using \"-Xms1g -Xmx1g\" JVM options:");
         }
     }
 
@@ -279,7 +278,7 @@ public class GermaNet {
      *
      * @throws javax.xml.stream.XMLStreamException
      */
-    void load() throws XMLStreamException {
+    void load() throws FileNotFoundException, XMLStreamException {
         StaxLoader loader;
         String oldVal = null;
 
@@ -290,26 +289,19 @@ public class GermaNet {
 
         // load data
         if (this.dir != null) {
-            try {
-                loader = new StaxLoader(dir, this);
-                loader.load();
-                loadIli(false);
-                loadWiktionaryParaphrases(false);
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            loader = new StaxLoader(dir, this);
+            loader.load();
+            loadIli(false);
+            loadWiktionaryParaphrases(false);
+            trimAll();
         } else {
-            try {
-                loader = new StaxLoader(inputStreams, xmlNames, this);
-                loader.load();
-                loadIli(true);
-                loadWiktionaryParaphrases(true);
-            } catch (StreamCorruptedException ex) {
-                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            loader = new StaxLoader(inputStreams, xmlNames, this);
+            loader.load();
+            loadIli(true);
+            loadWiktionaryParaphrases(true);
+            trimAll();
         }
 
-        trimAll();
 
         // set parser back to whatever it was before
         if (oldVal != null) {
@@ -472,7 +464,7 @@ public class GermaNet {
      * Returns a <code>List</code> of <code>Synsets</code> in the given <code>Collection</code> of <code>Synset</code>
      * that satisfy the specified <code>FilterConfig</code>.
      *
-     * @param filter a <code>FilterConfig</code> to use for the search
+     * @param filter  a <code>FilterConfig</code> to use for the search
      * @param synsets a <code>Collection</code> of <code>Synset</code> to search
      * @return a <code>List</code> of <code>Synset</code> in the given <code>Collection</code> of <code>Synset</code>
      * that satisfy the specified <code>FilterConfig</code>. If no <code>Synsets</code> were found, this
@@ -933,7 +925,7 @@ public class GermaNet {
      * Returns a <code>List</code> of <code>LexUnits</code> in the given <code>Collection</code> of <code>LexUnit</code>
      * that satisfy the specified <code>FilterConfig</code>.
      *
-     * @param filter a <code>FilterConfig</code> to use for the search
+     * @param filter   a <code>FilterConfig</code> to use for the search
      * @param lexUnits a <code>Collection</code> of <code>LexUnit</code> to search
      * @return a <code>List</code> of <code>LexUnits</code> in the given <code>Collection</code> of <code>LexUnit</code>
      * that satisfy the specified <code>FilterConfig</code>. If no <code>LexUnits</code> were found, this
@@ -982,8 +974,8 @@ public class GermaNet {
      * edit distance into account if the search term is not a regular expression.
      *
      * @param lexUnits the <code>Collection</code> of <code>LexUnit</code>s to match
-     * @param filter the <code>FilterConfig</code> to use
-     * @param pattern a precompiled <code>Pattern</code>
+     * @param filter   the <code>FilterConfig</code> to use
+     * @param pattern  a precompiled <code>Pattern</code>
      * @return a <code>List</code> of <code>LexUnit</code>s within the given <code>Collection</code>
      * of <code>LexUnit</code>s that match the given precompiled <code>Pattern</code>, taking the filter's
      * edit distance into account if the search term is not a regular expression. If no matches are found, an
@@ -994,45 +986,45 @@ public class GermaNet {
         List<LexUnit> rval = new ArrayList<>();
 
         for (LexUnit lu : lexUnits) {
-                boolean hit = false;
-                for (OrthFormVariant variant : orthFormVariants) {
-                    String toMatch = null;
-                    switch (variant) {
-                        case orthForm:
-                            toMatch = lu.getOrthForm();
-                            break;
-                        case orthVar:
-                            toMatch = lu.getOrthVar();
-                            break;
-                        case oldOrthForm:
-                            toMatch = lu.getOldOrthForm();
-                            break;
-                        case oldOrthVar:
-                            toMatch = lu.getOldOrthVar();
-                            break;
-                    }
-                    if (toMatch != null) {
-                        int editDist = filter.getEditDistance();
-                        if (!filter.isRegEx() && editDist > 0) {
-                            String searchString = filter.getSearchString();
-                            if (filter.isIgnoreCase()) {
-                                searchString = searchString.toLowerCase();
-                            }
-                            int actualDist = levenshteinDistance.apply(searchString, toMatch);
-                            if ((actualDist >= 0) && (actualDist <= editDist)) {
-                                hit = true;
-                                break; // found a match in this LexUnit, stop looking
-                            }
-                        } else if (pattern.matcher(toMatch).matches()) {
+            boolean hit = false;
+            for (OrthFormVariant variant : orthFormVariants) {
+                String toMatch = null;
+                switch (variant) {
+                    case orthForm:
+                        toMatch = lu.getOrthForm();
+                        break;
+                    case orthVar:
+                        toMatch = lu.getOrthVar();
+                        break;
+                    case oldOrthForm:
+                        toMatch = lu.getOldOrthForm();
+                        break;
+                    case oldOrthVar:
+                        toMatch = lu.getOldOrthVar();
+                        break;
+                }
+                if (toMatch != null) {
+                    int editDist = filter.getEditDistance();
+                    if (!filter.isRegEx() && editDist > 0) {
+                        String searchString = filter.getSearchString();
+                        if (filter.isIgnoreCase()) {
+                            searchString = searchString.toLowerCase();
+                        }
+                        int actualDist = levenshteinDistance.apply(searchString, toMatch);
+                        if ((actualDist >= 0) && (actualDist <= editDist)) {
                             hit = true;
                             break; // found a match in this LexUnit, stop looking
                         }
+                    } else if (pattern.matcher(toMatch).matches()) {
+                        hit = true;
+                        break; // found a match in this LexUnit, stop looking
                     }
                 }
-                if (hit) {
-                    rval.add(lu);
-                }
             }
+            if (hit) {
+                rval.add(lu);
+            }
+        }
         return rval;
     }
 
@@ -1085,7 +1077,7 @@ public class GermaNet {
      * @param zip true if the ILI data files are zipped
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadIli(boolean zip) throws XMLStreamException {
+    private void loadIli(boolean zip) throws FileNotFoundException, XMLStreamException {
         IliLoader loader;
         String oldVal = null;
 
@@ -1095,23 +1087,25 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-        try {
-            loader = new IliLoader(this);
-            if (zip) {
-                InputStream iliStream = null;
-                for (int i = 0; i < inputStreams.size(); i++) {
-                    if (xmlNames.get(i).equals("interLingualIndex_DE-EN.xml")) {
-                        iliStream = inputStreams.get(i);
-                        break;
-                    }
-                }
-                loader.loadILI(iliStream);
-            } else loader.loadILI(new File(dir + File.separator + "interLingualIndex_DE-EN.xml"));
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
-        trimAll();
+        loader = new IliLoader(this);
+        if (zip) {
+            InputStream iliStream = null;
+            for (int i = 0; i < inputStreams.size(); i++) {
+                if (xmlNames.get(i).equals("interLingualIndex_DE-EN.xml")) {
+                    iliStream = inputStreams.get(i);
+                    break;
+                }
+            }
+            if (iliStream != null) {
+                loader.loadILI(iliStream);
+            }
+        } else {
+            File iliFile = new File(dir + File.separator + "interLingualIndex_DE-EN.xml");
+            if (iliFile.exists()) {
+                loader.loadILI(iliFile);
+            }
+        }
 
         // set parser back to whatever it was before
         if (oldVal != null) {
@@ -1164,7 +1158,7 @@ public class GermaNet {
      * @param zip true if the Wiktionary data files are zipped
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadWiktionaryParaphrases(boolean zip) throws XMLStreamException {
+    private void loadWiktionaryParaphrases(boolean zip) throws XMLStreamException, FileNotFoundException {
         WiktionaryLoader loader;
         String oldVal = null;
 
@@ -1174,16 +1168,12 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-        try {
-            loader = new WiktionaryLoader(this);
-            if (zip) {
-                loader.loadWiktionary(inputStreams, xmlNames);
-            } else loader.loadWiktionary(dir);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
+        loader = new WiktionaryLoader(this);
+        if (zip) {
+            loader.loadWiktionary(inputStreams, xmlNames);
+        } else {
+            loader.loadWiktionary(dir);
         }
-
-        trimAll();
 
         // set parser back to whatever it was before
         if (oldVal != null) {

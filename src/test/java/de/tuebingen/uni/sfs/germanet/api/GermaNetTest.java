@@ -3,6 +3,8 @@ package de.tuebingen.uni.sfs.germanet.api;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
@@ -26,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class GermaNetTest {
     static GermaNet gnetCaseSensitive;
     static GermaNet gnetIgnoreCase;
+    private static final Logger LOGGER = LoggerFactory.getLogger(GermaNetTest.class);
 
 
     @BeforeAll
@@ -33,50 +36,18 @@ class GermaNetTest {
         try {
             String userHome = System.getProperty("user.home");
             String sep = System.getProperty("file.separator");
-            String dataPath = userHome + sep + "Data" + sep + "GN-XML-ForApiUnitTesting";
+            String dataPath = userHome + sep + "Data" + sep + "GN-XML-ForApiUnitTesting/";
             gnetCaseSensitive = new GermaNet(dataPath, false);
             gnetIgnoreCase = new GermaNet(dataPath, true);
 
-        } catch (IOException e) {
-            System.out.println("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...");
+        } catch (IOException ex) {
+            LOGGER.error("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
             System.exit(0);
-        } catch (XMLStreamException e) {
-            System.out.println("\nUnable to load GermaNet data at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...");
+        } catch (XMLStreamException ex) {
+            LOGGER.error("\nUnable to load GermaNet data at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
             System.exit(0);
         }
     }
-
-    /*
-    Nomen und Adjektiv:
-    Weise - weise
-    Fett - fett
-    Fest - fest
-
-    Nomen und Verb:
-    Lächeln  - lächeln
-    Rahmen  -  rahmen
-    Knoten  -  knoten
-    Nutzen  - nutzen
-    Rauchen - rauchen
-    Husten  - husten
-
-    Orth Form und Orth Var:
-    Biografie  - Biographie
-    Panther  - Panter
-    Schenke - Schänke
-    orthografisch  -  orthographisch
-
-    Orth Form und Old Orth Form
-    Schloss - Schloß
-    Nuss  -  Nuß
-    Verschluss  - Verschluß
-
-    Orth Form und Orth Var und Old Orth Form und Old Orth Var:
-    Blässhuhn  Blesshuhn  Bläßhuhn  Bleßhuhn
-
-    Beispiel, die gleichzeitig unterschiedlichen Wortarten angehören und orthografische Varianten aufweisen, habe ich
-    nicht gefunden, es wird aber auch nicht sehr viele davon geben. Wenn ich ein entsprechendes Wort noch finde, schicke ich es dir.
-     */
 
     /**
      * Search gnet for Synsets with filterConfig and a GermaNet instance constructed with ignoreCase true | false.
