@@ -168,9 +168,15 @@ public class GermaNet {
     private HashMap<Integer, LexUnit> lexUnitID;
     private HashMap<Integer, Synset> synsetID;
     private File dir = null;
-    private List<InputStream> inputStreams = null;
-    private List<String> xmlNames = null;
-    private boolean ignoreCase = false;
+    List<InputStream> inputStreams;
+    List<String> xmlNames;
+    List<InputStream> wiktInputStreams;
+    List<String> wiktXmlNames;
+    InputStream iliInputStream;
+    String iliXmlName;
+    InputStream relsInputStream;
+    String relsXmlName;
+    private boolean ignoreCase;
     private static final int MAX_LEVENSHTEIN_DIST = 30;
     private LevenshteinDistance levenshteinDistance;
 
@@ -225,41 +231,71 @@ public class GermaNet {
     public GermaNet(File dir, boolean ignoreCase) throws XMLStreamException, IOException {
         checkMemory();
         this.ignoreCase = ignoreCase;
-        this.inputStreams = null;
-        this.synsets = new TreeSet<Synset>();
-        this.iliRecords = new ArrayList<IliRecord>();
-        this.wiktionaryParaphrases = new ArrayList<WiktionaryParaphrase>();
-        this.synsetID = new HashMap<Integer, Synset>();
-        this.lexUnitID = new HashMap<Integer, LexUnit>();
-        this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
-        this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
-        this.lowerToUpperMap = new HashMap<String, Set<String>>();
+        this.inputStreams = new ArrayList<>();
+        this.xmlNames = new ArrayList<>();
+        this.wiktInputStreams = new ArrayList<>();
+        this.wiktXmlNames = new ArrayList<>();
+        this.iliInputStream = null;
+        this.iliXmlName = null;
+        this.synsets = new TreeSet<>();
+        this.iliRecords = new ArrayList<>();
+        this.wiktionaryParaphrases = new ArrayList<>();
+        this.synsetID = new HashMap<>();
+        this.lexUnitID = new HashMap<>();
+        this.wordCategoryMap = new EnumMap<>(WordCategory.class);
+        this.wordCategoryMapAllOrthForms = new EnumMap<>(WordCategory.class);
+        this.lowerToUpperMap = new HashMap<>();
         this.levenshteinDistance = new LevenshteinDistance(MAX_LEVENSHTEIN_DIST);
 
         if (!dir.isDirectory() && isZipFile(dir)) {
             ZipFile zipFile = new ZipFile(dir);
             Enumeration entries = zipFile.entries();
 
-            List<InputStream> inputStreamList = new ArrayList<InputStream>();
-            List<String> nameList = new ArrayList<String>();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) entries.nextElement();
-                String entryName = entry.getName();
-                if (entryName.split(File.separator).length > 1) {
-                    entryName = entryName.split(File.separator)[entryName.split(File.separator).length - 1];
+                String name = entry.getName();
+                if (name.split(File.separator).length > 1) {
+                    name = name.split(File.separator)[name.split(File.separator).length - 1];
                 }
-                nameList.add(entryName);
-                InputStream stream = (zipFile.getInputStream(entry));
-                inputStreamList.add(stream);
+                InputStream stream = zipFile.getInputStream(entry);
+                addStreamToLists(name, stream);
             }
-            inputStreams = inputStreamList;
-            xmlNames = nameList;
-
         } else {
             this.dir = dir;
+            File[] allFiles = dir.listFiles();
+            for (int i = 0; i < allFiles.length; i++) {
+                InputStream stream = new FileInputStream(allFiles[i]);
+                String name = allFiles[i].getName();
+                addStreamToLists(name, stream);
+            }
         }
-
         load();
+    }
+
+    /**
+     * Add the given stream to the correct stream list for loading,
+     * based on its name.
+     *
+     * @param fileName
+     * @param stream
+     */
+    private void addStreamToLists(String fileName, InputStream stream) {
+        if (fileName.startsWith("wiktionary") && fileName.endsWith(".xml")) {
+            wiktInputStreams.add(stream);
+            wiktXmlNames.add(fileName);
+        } else if (fileName.startsWith("interLingualIndex") && fileName.endsWith(".xml")) {
+            iliInputStream = stream;
+            iliXmlName = fileName;
+        } else if (fileName.equals("gn_relations.xml")) {
+            relsInputStream = stream;
+            relsXmlName = fileName;
+        } else if (fileName.endsWith(".xml") &&
+                (fileName.startsWith("nomen.")
+                        || fileName.startsWith("adj.")
+                        || fileName.startsWith("verben."))) {
+            inputStreams.add(stream);
+            xmlNames.add(fileName);
+        }
     }
 
     /**
@@ -288,20 +324,11 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-        if (this.dir != null) {
-            loader = new StaxLoader(dir, this);
-            loader.load();
-            loadIli(false);
-            loadWiktionaryParaphrases(false);
-            trimAll();
-        } else {
-            loader = new StaxLoader(inputStreams, xmlNames, this);
-            loader.load();
-            loadIli(true);
-            loadWiktionaryParaphrases(true);
-            trimAll();
-        }
-
+        loader = new StaxLoader(this);
+        loader.load();
+        loadIli();
+        loadWiktionaryParaphrases();
+        trimAll();
 
         // set parser back to whatever it was before
         if (oldVal != null) {
@@ -1074,12 +1101,11 @@ public class GermaNet {
      * Loads the ILI data files into this <code>GermaNet</code> object
      * from the specified directory File
      *
-     * @param zip true if the ILI data files are zipped
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadIli(boolean zip) throws FileNotFoundException, XMLStreamException {
+    private void loadIli() throws FileNotFoundException, XMLStreamException {
         IliLoader loader;
-        String oldVal = null;
+        String oldVal;
 
         // use xerces xml parser
         oldVal = System.getProperty("javax.xml.stream.XMLInputFactory");
@@ -1087,33 +1113,18 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-
         loader = new IliLoader(this);
-        if (zip) {
-            InputStream iliStream = null;
-            for (int i = 0; i < inputStreams.size(); i++) {
-                if (xmlNames.get(i).equals("interLingualIndex_DE-EN.xml")) {
-                    iliStream = inputStreams.get(i);
-                    break;
-                }
-            }
-            if (iliStream != null) {
-                loader.loadILI(iliStream);
-            }
-        } else {
-            File iliFile = new File(dir + File.separator + "interLingualIndex_DE-EN.xml");
-            if (iliFile.exists()) {
-                loader.loadILI(iliFile);
-            }
+
+        if (iliInputStream != null) {
+            loader.loadILI(iliInputStream);
+            //add the information about corresponding IliRecords to LexUnits
+            updateLexUnitsWithIli();
         }
 
         // set parser back to whatever it was before
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
         }
-
-        //add the information about corresponding IliRecords to LexUnits
-        updateLexUnitsWithIli();
     }
 
     /**
@@ -1155,33 +1166,29 @@ public class GermaNet {
      * Loads the Wiktionary data files into this <code>GermaNet</code> object
      * from the specified directory File
      *
-     * @param zip true if the Wiktionary data files are zipped
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadWiktionaryParaphrases(boolean zip) throws XMLStreamException, FileNotFoundException {
+    private void loadWiktionaryParaphrases() throws XMLStreamException, FileNotFoundException {
         WiktionaryLoader loader;
-        String oldVal = null;
+        String oldVal;
 
         // use xerces xml parser
         oldVal = System.getProperty("javax.xml.stream.XMLInputFactory");
         System.setProperty("javax.xml.stream.XMLInputFactory",
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
-        // load data
-        loader = new WiktionaryLoader(this);
-        if (zip) {
-            loader.loadWiktionary(inputStreams, xmlNames);
-        } else {
-            loader.loadWiktionary(dir);
+        if (wiktInputStreams.size() > 0) {
+            // load data
+            loader = new WiktionaryLoader(this);
+            loader.loadWiktionary(wiktInputStreams, wiktXmlNames);
+            //add the information about corresponding WiktionaryParaphrases to LexUnits
+            updateLexUnitsWithWiktionary();
         }
 
         // set parser back to whatever it was before
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
         }
-
-        //add the information about corresponding WiktionaryParaphrases to LexUnits
-        updateLexUnitsWithWiktionary();
     }
 
     /**
@@ -1221,7 +1228,7 @@ public class GermaNet {
         for (WiktionaryParaphrase wiki : wiktionaryParaphrases) {
             int id = wiki.getLexUnitId();
             LexUnit lu = getLexUnitByID(id);
-            if (lu != null) { // TODO: this might get obsolete once we do a proper Wiktionary XML release
+            if (lu != null) {
                 lu.addWiktionaryParaphrase(wiki);
             }
             lexUnitID.put(id, lu);

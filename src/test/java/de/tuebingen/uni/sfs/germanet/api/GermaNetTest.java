@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
@@ -17,10 +18,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test that synset and lexunit searches return the expected results
  * regardless of which constructor was used (ignoreCase true | false),
  * which method is used (overloaded search methods or with FilterConfig).</br></br>
- *
+ * <p>
  * The GermaNet XML data is expected to be located at Data/GN-XML-ForApiUnitTesting
  * under your home directory.
- *
+ * <p>
  * author: meh, Seminar für Sprachwissenschaft, Universität Tübingen
  */
 
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class GermaNetTest {
     static GermaNet gnetCaseSensitive;
     static GermaNet gnetIgnoreCase;
+    static String dataPath;
     private static final Logger LOGGER = LoggerFactory.getLogger(GermaNetTest.class);
 
 
@@ -36,9 +38,11 @@ class GermaNetTest {
         try {
             String userHome = System.getProperty("user.home");
             String sep = System.getProperty("file.separator");
-            String dataPath = userHome + sep + "Data" + sep + "GN-XML-ForApiUnitTesting/";
-            gnetCaseSensitive = new GermaNet(dataPath, false);
-            gnetIgnoreCase = new GermaNet(dataPath, true);
+            dataPath = userHome + sep + "Data" + sep;
+            String goodDataPath = dataPath + "GN-XML-ForApiUnitTesting/";
+
+            gnetCaseSensitive = new GermaNet(goodDataPath, false);
+            gnetIgnoreCase = new GermaNet(goodDataPath, true);
 
         } catch (IOException ex) {
             LOGGER.error("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
@@ -47,6 +51,27 @@ class GermaNetTest {
             LOGGER.error("\nUnable to load GermaNet data at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
             System.exit(0);
         }
+    }
+
+    @Test
+    void badPathTest() {
+        assertThrows(FileNotFoundException.class, () -> {
+            GermaNet gnet = new GermaNet(dataPath + "blah/blah/");
+        });
+    }
+
+    @Test
+    void iliCountTest() {
+        // release 14
+        assertEquals(28565, gnetCaseSensitive.getIliRecords().size());
+        assertEquals(28565, gnetIgnoreCase.getIliRecords().size());
+    }
+
+    @Test
+    void wiktCountTest() {
+        // release 14
+        assertEquals(29549, gnetCaseSensitive.getWiktionaryParaphrases().size());
+        assertEquals(29549, gnetIgnoreCase.getWiktionaryParaphrases().size());
     }
 
     /**
@@ -98,7 +123,7 @@ class GermaNetTest {
             "getLexUnitsAllOrthFilterProvider",
             "getLexUnitsMainOnlyFilterProvider",
             "getLexUnitsAllOrthCatFilterProvider",
-             "getLexUnitsMainOrthCatFilterProvider",
+            "getLexUnitsMainOrthCatFilterProvider",
             "getLexUnitsAllOrthCatClassFilterProvider",
             "getLexUnitsMainOrthCatClassFilterProvider",
             "getLexUnitsVariedOrthCatClassFilterProvider",
@@ -227,17 +252,17 @@ class GermaNetTest {
 
         // Filter overrides constructor
         return Stream.of(
-                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(72040,3733,7447))),
-                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(72040,3733,7447))),
+                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(72040, 3733, 7447))),
+                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(72040, 3733, 7447))),
 
                 Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(72040))),
                 Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(72040))),
 
-                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(72040,3733,7447))),
-                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(72040,3733,7447))),
+                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(72040, 3733, 7447))),
+                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(72040, 3733, 7447))),
 
-                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(3733,7447))),
-                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(3733,7447)))
+                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(3733, 7447))),
+                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(3733, 7447)))
         );
     }
 
@@ -285,8 +310,8 @@ class GermaNetTest {
                 Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(0)),
                 Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(0)),
 
-                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(25879,40222,48503))),
-                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(25879,40222,48503)))
+                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(25879, 40222, 48503))),
+                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(25879, 40222, 48503)))
         );
     }
 
@@ -333,8 +358,8 @@ class GermaNetTest {
                 Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(0)),
                 Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(0)),
 
-                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(100314,58933,69249))),
-                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(100314,58933,69249)))
+                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(100314, 58933, 69249))),
+                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(100314, 58933, 69249)))
         );
     }
 
@@ -426,8 +451,8 @@ class GermaNetTest {
                 Arguments.of(filterConfig10, ignoreCase, new ArrayList<>(0)),
                 Arguments.of(filterConfig10, caseSensitive, new ArrayList<>(0)),
 
-                Arguments.of(filterConfig11, ignoreCase, new ArrayList<>(Arrays.asList(6011,42555))),
-                Arguments.of(filterConfig11, caseSensitive, new ArrayList<>(Arrays.asList(6011,42555)))
+                Arguments.of(filterConfig11, ignoreCase, new ArrayList<>(Arrays.asList(6011, 42555))),
+                Arguments.of(filterConfig11, caseSensitive, new ArrayList<>(Arrays.asList(6011, 42555)))
         );
     }
 
@@ -489,23 +514,23 @@ class GermaNetTest {
 
         // filterConfig overrides constructor for ignoreCase
         return Stream.of(
-                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(45139,18689,18690,145344))),
-                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(45139,18689,18690,145344))),
+                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344))),
+                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344))),
 
-                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(45139,18689,18690,145344))),
-                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(45139,18689,18690,145344))),
+                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344))),
+                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344))),
 
-                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(45139,18689,18690,145344))),
-                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(45139,18689,18690,145344))),
+                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344))),
+                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344))),
 
                 Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(0)),
                 Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(0)),
 
-                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(435,1963,3535,132285))),
-                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(435,1963,3535,132285))),
+                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285))),
+                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285))),
 
-                Arguments.of(filterConfig6, ignoreCase, new ArrayList<>(Arrays.asList(45139,18689,18690,145344,435,1963,3535,132285))),
-                Arguments.of(filterConfig6, caseSensitive, new ArrayList<>(Arrays.asList(45139,18689,18690,145344,435,1963,3535,132285))),
+                Arguments.of(filterConfig6, ignoreCase, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344, 435, 1963, 3535, 132285))),
+                Arguments.of(filterConfig6, caseSensitive, new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344, 435, 1963, 3535, 132285))),
 
                 Arguments.of(filterConfig7, ignoreCase, new ArrayList<>(0)),
                 Arguments.of(filterConfig7, caseSensitive, new ArrayList<>(0)),
@@ -519,8 +544,8 @@ class GermaNetTest {
                 Arguments.of(filterConfig10, ignoreCase, new ArrayList<>(0)),
                 Arguments.of(filterConfig10, caseSensitive, new ArrayList<>(0)),
 
-                Arguments.of(filterConfig11, ignoreCase, new ArrayList<>(Arrays.asList(62042,8893))),
-                Arguments.of(filterConfig11, caseSensitive, new ArrayList<>(Arrays.asList(62042,8893)))
+                Arguments.of(filterConfig11, ignoreCase, new ArrayList<>(Arrays.asList(62042, 8893))),
+                Arguments.of(filterConfig11, caseSensitive, new ArrayList<>(Arrays.asList(62042, 8893)))
         );
     }
 
@@ -630,14 +655,14 @@ class GermaNetTest {
 
         // filterConfig overrides constructor for ignoreCase
         return Stream.of(
-                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(2311,13474,13475))),
-                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(2311,13474,13475))),
+                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(2311, 13474, 13475))),
+                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(2311, 13474, 13475))),
 
-                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(32782,28213))),
-                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(32782,28213))),
+                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(32782, 28213))),
+                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(32782, 28213))),
 
-                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(99446,28213))),
-                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(99446,28213)))
+                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(99446, 28213))),
+                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(99446, 28213)))
         );
     }
 
@@ -669,14 +694,14 @@ class GermaNetTest {
 
         // filterConfig overrides constructor for ignoreCase
         return Stream.of(
-                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(3535,18689,18690))),
-                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(3535,18689,18690))),
+                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(3535, 18689, 18690))),
+                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(3535, 18689, 18690))),
 
-                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(45139,145344))),
-                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(45139,145344))),
+                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(45139, 145344))),
+                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(45139, 145344))),
 
-                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(145344,132285))),
-                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(145344,132285)))
+                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(145344, 132285))),
+                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(145344, 132285)))
         );
     }
 
@@ -905,10 +930,10 @@ class GermaNetTest {
 
         // filterConfig overrides constructor for ignoreCase
         return Stream.of(
-                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(13953,13966,13969,14004,101032,108169,122501,125332))),
-                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(13953,13966,13969,14004,101032,108169,122501,125332))),
-                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(13953,13966,13969,14004,101032,108169,122501,125332))),
-                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(13953,13966,13969,14004,101032,108169,122501,125332)))
+                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332))),
+                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332))),
+                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332))),
+                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332)))
         );
     }
 
@@ -933,10 +958,10 @@ class GermaNetTest {
 
         // filterConfig overrides constructor for ignoreCase
         return Stream.of(
-                Arguments.of(filterConfig1, ignoreCase,    new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538))),
-                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538))),
-                Arguments.of(filterConfig2, ignoreCase,    new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538))),
-                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538)))
+                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538))),
+                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538))),
+                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538))),
+                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538)))
         );
     }
 
@@ -986,17 +1011,17 @@ class GermaNetTest {
                 Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332))),
                 Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332))),
 
-                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(13953,13966,13969,14004,101032,108169,122501,125332))),
-                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(13953,13966,13969,14004,101032,108169,122501,125332))),
+                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332))),
+                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(13953, 13966, 13969, 14004, 101032, 108169, 122501, 125332))),
 
-                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(13943, 13952,13953,13966,13969,14004,108169,122501))),
-                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(13943, 13952,13953,13966,13969,14004,108169,122501))),
+                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(13943, 13952, 13953, 13966, 13969, 14004, 108169, 122501))),
+                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(13943, 13952, 13953, 13966, 13969, 14004, 108169, 122501))),
 
-                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(28692,6011,42555,51189))),
-                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(28692,6011,42555,51189))),
+                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189))),
+                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189))),
 
-                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(28692,6011,42555,51189))),
-                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(28692,6011,42555,51189)))
+                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189))),
+                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189)))
         );
     }
 
@@ -1044,20 +1069,20 @@ class GermaNetTest {
         // filterConfig overrides constructor for ignoreCase
         return Stream.of(
 
-                Arguments.of(filterConfig1, ignoreCase,    new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538))),
-                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538))),
+                Arguments.of(filterConfig1, ignoreCase, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538))),
+                Arguments.of(filterConfig1, caseSensitive, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538))),
 
-                Arguments.of(filterConfig2, ignoreCase,    new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538))),
-                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(19331,19344,19347,19387,134272,143622,161172,164538))),
+                Arguments.of(filterConfig2, ignoreCase, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538))),
+                Arguments.of(filterConfig2, caseSensitive, new ArrayList<>(Arrays.asList(19331, 19344, 19347, 19387, 134272, 143622, 161172, 164538))),
 
-                Arguments.of(filterConfig3, ignoreCase,    new ArrayList<>(Arrays.asList(19319,19330,19331,19344,19347,19387,143622,161172))),
-                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(19319,19330,19331,19344,19347,19387,143622,161172))),
+                Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(19319, 19330, 19331, 19344, 19347, 19387, 143622, 161172))),
+                Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(19319, 19330, 19331, 19344, 19347, 19387, 143622, 161172))),
 
-                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(8893,62042,72381,103425))),
-                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(8893,62042,72381,103425))),
+                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425))),
+                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425))),
 
-                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(8893,62042,72381,103425))),
-                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(8893,62042,72381,103425)))
+                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425))),
+                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425)))
         );
     }
 
@@ -1144,8 +1169,8 @@ class GermaNetTest {
         boolean caseSensitive = false;
 
         return Stream.of(
-                Arguments.of("Spitz", new ArrayList<>(Arrays.asList(72040,3733,7447)), ignoreCase),
-                Arguments.of("spitz", new ArrayList<>(Arrays.asList(72040,3733,7447)), ignoreCase),
+                Arguments.of("Spitz", new ArrayList<>(Arrays.asList(72040, 3733, 7447)), ignoreCase),
+                Arguments.of("spitz", new ArrayList<>(Arrays.asList(72040, 3733, 7447)), ignoreCase),
 
                 Arguments.of("Spitz", new ArrayList<>(Arrays.asList(72040)), caseSensitive),
                 Arguments.of("spitz", new ArrayList<>(Arrays.asList(3733, 7447)), caseSensitive),
@@ -1319,17 +1344,17 @@ class GermaNetTest {
         boolean caseSensitive = false;
 
         return Stream.of(
-                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139,18689,18690,145344)), ignoreCase, WordCategory.nomen),
-                Arguments.of("recht", new ArrayList<>(Arrays.asList(45139,18689,18690,145344)), ignoreCase, WordCategory.nomen),
+                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344)), ignoreCase, WordCategory.nomen),
+                Arguments.of("recht", new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344)), ignoreCase, WordCategory.nomen),
 
-                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139,18689,18690,145344)), caseSensitive, WordCategory.nomen),
+                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344)), caseSensitive, WordCategory.nomen),
                 Arguments.of("recht", new ArrayList<>(0), caseSensitive, WordCategory.nomen),
 
-                Arguments.of("Recht", new ArrayList<>(Arrays.asList(435,1963,3535,132285)), ignoreCase, WordCategory.adj),
-                Arguments.of("recht", new ArrayList<>(Arrays.asList(435,1963,3535,132285)), ignoreCase, WordCategory.adj),
+                Arguments.of("Recht", new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285)), ignoreCase, WordCategory.adj),
+                Arguments.of("recht", new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285)), ignoreCase, WordCategory.adj),
 
                 Arguments.of("Recht", new ArrayList<>(0), caseSensitive, WordCategory.adj),
-                Arguments.of("recht", new ArrayList<>(Arrays.asList(435,1963,3535,132285)), caseSensitive, WordCategory.adj),
+                Arguments.of("recht", new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285)), caseSensitive, WordCategory.adj),
 
                 Arguments.of("Schiffahrt", new ArrayList<>(Arrays.asList(26447)), ignoreCase, WordCategory.nomen),
                 Arguments.of("schiffahrt", new ArrayList<>(Arrays.asList(26447)), ignoreCase, WordCategory.nomen),
@@ -1420,17 +1445,17 @@ class GermaNetTest {
         boolean caseSensitive = false;
 
         return Stream.of(
-                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139,18689,18690,145344)), ignoreCase, WordCategory.nomen),
-                Arguments.of("recht", new ArrayList<>(Arrays.asList(45139,18689,18690,145344)), ignoreCase, WordCategory.nomen),
+                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344)), ignoreCase, WordCategory.nomen),
+                Arguments.of("recht", new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344)), ignoreCase, WordCategory.nomen),
 
-                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139,18689,18690,145344)), caseSensitive, WordCategory.nomen),
+                Arguments.of("Recht", new ArrayList<>(Arrays.asList(45139, 18689, 18690, 145344)), caseSensitive, WordCategory.nomen),
                 Arguments.of("recht", new ArrayList<>(0), caseSensitive, WordCategory.nomen),
 
-                Arguments.of("Recht", new ArrayList<>(Arrays.asList(435,1963,3535,132285)), ignoreCase, WordCategory.adj),
-                Arguments.of("recht", new ArrayList<>(Arrays.asList(435,1963,3535,132285)), ignoreCase, WordCategory.adj),
+                Arguments.of("Recht", new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285)), ignoreCase, WordCategory.adj),
+                Arguments.of("recht", new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285)), ignoreCase, WordCategory.adj),
 
                 Arguments.of("Recht", new ArrayList<>(0), caseSensitive, WordCategory.adj),
-                Arguments.of("recht", new ArrayList<>(Arrays.asList(435,1963,3535,132285)), caseSensitive, WordCategory.adj),
+                Arguments.of("recht", new ArrayList<>(Arrays.asList(435, 1963, 3535, 132285)), caseSensitive, WordCategory.adj),
 
                 Arguments.of("Schiffahrt", new ArrayList<>(0), ignoreCase, WordCategory.nomen),
                 Arguments.of("schiffahrt", new ArrayList<>(0), ignoreCase, WordCategory.nomen),

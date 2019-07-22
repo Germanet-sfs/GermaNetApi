@@ -79,6 +79,8 @@ class IliLoader {
         XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
         int event;
         String nodeName;
+        int iliCnt = 0;
+
         LOGGER.info("Loading interLingualIndex_DE-EN.xml...");
 
         //Parse entire file, looking for ili record start elements
@@ -93,12 +95,13 @@ class IliLoader {
                     if (nodeName.equals(GermaNet.XML_ILI_RECORD)) {
                         IliRecord ili = processIliRecord(parser);
                         germaNet.addIliRecord(ili);
+                        iliCnt++;
                     }
                     break;
             }
         }
         parser.close();
-        LOGGER.info("Done loading ILI data.");
+        LOGGER.info("Done loading {} ILI records.", iliCnt);
     }
 
     /**

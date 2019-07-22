@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -41,7 +43,6 @@ class WiktionaryLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(GermaNet.class);
     private GermaNet germaNet;
     private String namespace;
-    private File wikiDir;
 
     /**
      * Constructs a <code>WiktionaryLoader</code> for the specified
@@ -54,33 +55,25 @@ class WiktionaryLoader {
         this.germaNet = germaNet;
     }
 
+
     /**
-     * Loads <code>WiktionaryParaphrases</code> from the specified directory into this
+     * Loads <code>WiktionaryParaphrases</code> from the given streams into this
      * <code>WiktionaryLoader</code>'s <code>GermaNet</code> object.
      *
-     * @param wiktionaryDir the directory containing wiktionaryParaphrases*.xml files, which contain <code>WiktionaryParaphrases</code> data
-     * @throws java.io.FileNotFoundException
+     * @param wiktStreams the list of streams containing <code>WiktionaryParaphrases</code> data
+     * @param wiktNames   the names of the streams
      * @throws javax.xml.stream.XMLStreamException
      */
-    protected void loadWiktionary(File wiktionaryDir) throws FileNotFoundException, XMLStreamException {
-        wikiDir = wiktionaryDir;
-        FilenameFilter filter = new WikiFilter(); //get only wiktionary files
-        File[] wikiFiles = wikiDir.listFiles(filter);
+    protected void loadWiktionary(List<InputStream> wiktStreams, List<String> wiktNames) throws XMLStreamException {
 
-        if (wikiFiles == null || wikiFiles.length == 0) {
-            return;
-        }
-
-        for (int i = 0; i < wikiFiles.length; i++) {
-            LOGGER.info("Loading " + wikiFiles[i].getName() + "...");
-            InputStream in = new FileInputStream(wikiFiles[i]);
+        for (int i = 0; i < wiktStreams.size(); i++) {
+            LOGGER.info("Loading input stream " + wiktNames.get(i) + "...");
             XMLInputFactory factory = XMLInputFactory.newInstance();
-            XMLStreamReader parser = factory.createXMLStreamReader(in);
+            XMLStreamReader parser = factory.createXMLStreamReader(wiktStreams.get(i));
             int event;
             String nodeName;
 
-
-            //Parse entire file, looking for Wiktionary paraphrase start elements
+            //Parse entire stream, looking for Wiktionary paraphrase start elements
             while (parser.hasNext()) {
                 event = parser.next();
                 switch (event) {
@@ -97,52 +90,6 @@ class WiktionaryLoader {
                 }
             }
             parser.close();
-        }
-        LOGGER.info("Done loading Wiktionary data.");
-    }
-
-    /**
-     * Loads <code>WiktionaryParaphrases</code> from the given streams into this
-     * <code>WiktionaryLoader</code>'s <code>GermaNet</code> object.
-     *
-     * @param inputStreams the list of streams containing <code>WiktionaryParaphrases</code> data
-     * @param xmlNames     the names of the streams
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    protected void loadWiktionary(List<InputStream> inputStreams, List<String> xmlNames) throws XMLStreamException {
-
-        boolean found = false;
-        for (int i = 0; i < inputStreams.size(); i++) {
-            if (xmlNames.get(i).startsWith("wiktionary")) {
-                found = true;
-                LOGGER.info("Loading input stream " + xmlNames.get(i) + "...");
-                XMLInputFactory factory = XMLInputFactory.newInstance();
-                XMLStreamReader parser = factory.createXMLStreamReader(inputStreams.get(i));
-                int event;
-                String nodeName;
-
-
-                //Parse entire file, looking for Wiktionary paraphrase start elements
-                while (parser.hasNext()) {
-                    event = parser.next();
-                    switch (event) {
-                        case XMLStreamConstants.START_DOCUMENT:
-                            namespace = parser.getNamespaceURI();
-                            break;
-                        case XMLStreamConstants.START_ELEMENT:
-                            nodeName = parser.getLocalName();
-                            if (nodeName.equals(GermaNet.XML_WIKTIONARY_PARAPHRASE)) {
-                                WiktionaryParaphrase wiki = processWiktionaryParaphrase(parser);
-                                germaNet.addWiktionaryParaphrase(wiki);
-                            }
-                            break;
-                    }
-                }
-                parser.close();
-            }
-        }
-        if (found) {
-            LOGGER.info("Done loading Wiktionary data.");
         }
     }
 
@@ -175,17 +122,5 @@ class WiktionaryLoader {
                 wiktionarySense, edited);
 
         return curWiki;
-    }
-
-    /**
-     * Filters out all the files which do not contain <code>WiktionaryParaphrases</code>
-     */
-    private class WikiFilter implements FilenameFilter {
-
-        @Override
-        public boolean accept(File directory, String name) {
-            return (name.endsWith("xml")
-                    && (name.startsWith("wiktionaryParaphrases")));
-        }
     }
 }
