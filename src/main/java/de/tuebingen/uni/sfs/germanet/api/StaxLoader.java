@@ -53,7 +53,7 @@ class StaxLoader {
      * @param germaNet <code>GermaNet</code> object to load into
      * @throws java.io.FileNotFoundException
      */
-    protected StaxLoader(GermaNet germaNet) throws FileNotFoundException {
+    protected StaxLoader(GermaNet germaNet) {
         this.inputStreams = germaNet.inputStreams;
         this.xmlNames = germaNet.xmlNames;
         this.relsInputStream = germaNet.relsInputStream;
@@ -63,36 +63,12 @@ class StaxLoader {
     }
 
     /**
-     * Constructs a <code>StaxLoader</code> for data streams in
-     * <code>germanetStreams</code> and existing <code>GermaNet</code> object
-     * <code>germaNet</code>.
-     *
-     * @param germaNetStreams location of GermaNet data files
-     * @param germaNet        <code>GermaNet</code> object to load into
-     * @throws java.io.FileNotFoundException
-     */
-    /*
-    protected StaxLoader(List<InputStream> germaNetStreams, List<String> xmlNames, GermaNet germaNet) throws
-            FileNotFoundException {
-        this.germaNetStreams = germaNetStreams;
-        this.germaNetDir = null;
-        this.synLoader = new SynsetLoader(germaNet);
-        this.relLoader = new RelationLoader(germaNet);
-        this.xmlNames = xmlNames;
-
-        if (germaNetStreams.isEmpty()) {
-            throw new FileNotFoundException("Unable to load GermaNet data");
-        }
-    }
-    */
-
-    /**
      * Loads all synset files or streams (depending on what exists) and then all relation files.
      *
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    protected void load() throws XMLStreamException, FileNotFoundException {
+    protected void load() throws XMLStreamException, IOException {
 
         int loadedFiles = 0;
         if (inputStreams == null || inputStreams.isEmpty()) {
@@ -105,6 +81,7 @@ class StaxLoader {
             String name = xmlNames.get(i);
             LOGGER.info("Loading {}...", name);
             synLoader.loadSynsets(stream);
+            stream.close();
             loadedFiles++;
         }
 

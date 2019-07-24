@@ -60,38 +60,13 @@ class RelationLoader {
      */
     void loadRelations(File relationFile) throws FileNotFoundException,
             XMLStreamException {
-        InputStream in = new FileInputStream(relationFile);
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        XMLStreamReader parser = factory.createXMLStreamReader(in);
-        int event;
-        String nodeName;
-
-        //Parse entire file, looking for lex- and con- relations
-        while (parser.hasNext()) {
-            event = parser.getEventType();
-            switch (event) {
-                case XMLStreamConstants.START_DOCUMENT:
-                    namespace = parser.getNamespaceURI();
-                    break;
-
-                case XMLStreamConstants.START_ELEMENT:
-                    nodeName = parser.getLocalName();
-                    if (nodeName.equals(GermaNet.XML_LEX_REL)) {
-                        processLexRel(parser);
-                    } else if (nodeName.equals(GermaNet.XML_CON_REL)) {
-                        processConRel(parser);
-                    }
-                    break;
-            }
-            parser.next();
-        }
-        parser.close();
+        loadRelations(new FileInputStream(relationFile));
     }
 
     /**
      * Loads relations from the specified file into this
      * <code>RelationLoader</code>'s <code>GermaNet</code> object.
-     * @param relationFile file containing GermaNet relation data
+     * @param inputStream containing GermaNet relation data
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */

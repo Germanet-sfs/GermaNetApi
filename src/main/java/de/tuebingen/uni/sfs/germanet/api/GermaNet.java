@@ -314,7 +314,7 @@ public class GermaNet {
      *
      * @throws javax.xml.stream.XMLStreamException
      */
-    void load() throws FileNotFoundException, XMLStreamException {
+    void load() throws IOException, XMLStreamException {
         StaxLoader loader;
         String oldVal = null;
 
