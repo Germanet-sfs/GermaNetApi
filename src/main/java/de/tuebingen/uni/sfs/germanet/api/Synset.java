@@ -67,11 +67,11 @@ public class Synset implements Comparable {
     private int id;
     private WordCategory wordCategory;
     private WordClass wordClass;
-    private ArrayList<LexUnit> lexUnits;
+    private Set<LexUnit> lexUnits;
     private String paraphrase;
 
     // Relations of this Synset
-    private EnumMap<ConRel, ArrayList<Synset>> relations;
+    private EnumMap<ConRel, Set<Synset>> relations;
 
     /**
      * Constructs a <code>Synset</code> with the specified attributes.
@@ -83,9 +83,9 @@ public class Synset implements Comparable {
         this.id = id;
         this.wordCategory = wordCategory;
         this.wordClass = wordClass;
-        lexUnits = new ArrayList<LexUnit>(0);
+        lexUnits = new HashSet<>(0);
         paraphrase = "";
-        relations = new EnumMap<ConRel, ArrayList<Synset>>(ConRel.class);
+        relations = new EnumMap<>(ConRel.class);
     }
 
     /**
@@ -110,7 +110,7 @@ public class Synset implements Comparable {
      * @return true if this <code>Synset</code> is in <code>wordCategory</code>
      */
     public boolean inWordCategory(WordCategory wordCategory) {
-        return wordCategory == this.wordCategory;
+        return this.wordCategory == wordCategory;
     }
 
     /**
@@ -119,7 +119,7 @@ public class Synset implements Comparable {
      * @return true if this <code>Synset</code> is in <code>wordClass</code>
      */
     public boolean inWordClass(WordClass wordClass) {
-        return wordClass == this.wordClass;
+        return this.wordClass == wordClass;
     }
 
     /**
@@ -167,19 +167,9 @@ public class Synset implements Comparable {
      * Trims all <code>ArrayLists</code> to conserve memory.
      */
     protected void trimAll() {
-        ArrayList<Synset> list;
-        lexUnits.trimToSize();
-
         // trim LexUnits
         for (LexUnit lu : lexUnits) {
             lu.trimAll();
-        }
-
-        // trim relations
-        for (ConRel rel : relations.keySet()) {
-            list = relations.get(rel);
-            list.trimToSize();
-            relations.put(rel, list);
         }
     }
 
@@ -191,7 +181,8 @@ public class Synset implements Comparable {
      */
     @SuppressWarnings("unchecked")
     public List<LexUnit> getLexUnits() {
-        return (List<LexUnit>) lexUnits.clone();
+        ArrayList<LexUnit> rval = new ArrayList<>(lexUnits);
+        return (List<LexUnit>) rval.clone();
     }
 
     /**
@@ -203,12 +194,12 @@ public class Synset implements Comparable {
      * <code>LexUnits</code> of this <code>Synset</code>
      */
     public List<String> getAllOrthForms() {
-        List<String> rval = new ArrayList<String>(0);
-        List<LexUnit> luList = getLexUnits();
-        for (LexUnit lu : luList) {
-            rval.addAll(lu.getOrthForms());
+        Set<String> allOrthForms = new HashSet<>();
+
+        for (LexUnit lu : lexUnits) {
+            allOrthForms.addAll(lu.getOrthForms());
         }
-        return rval;
+        return new ArrayList<>(allOrthForms);
     }
 
     /**
@@ -217,7 +208,7 @@ public class Synset implements Comparable {
      * @return this <code>Synset</code>'s paraphrase
      */
     public String getParaphrase() {
-        return this.paraphrase;
+        return paraphrase;
     }
 
     /**
@@ -229,8 +220,8 @@ public class Synset implements Comparable {
      */
     public List<String> getParaphrases() {
         List<String> rval = new ArrayList<String>();
-        if (this.paraphrase.length() != 0) {
-            rval.add(this.paraphrase);
+        if (paraphrase.length() != 0) {
+            rval.add(paraphrase);
         }
         for (LexUnit lu : lexUnits) {
             List<WiktionaryParaphrase> wphrases = lu.getWiktionaryParaphrases();
@@ -247,12 +238,12 @@ public class Synset implements Comparable {
      * @param target the target <code>Synset</code>
      */
     protected void addRelation(ConRel type, Synset target) {
-        ArrayList<Synset> relList = this.relations.get(type);
+        Set<Synset> relList = relations.get(type);
         if (relList == null) {
-            relList = new ArrayList<Synset>(1);
+            relList = new HashSet<>(1);
         }
         relList.add(target);
-        this.relations.put(type, relList);
+        relations.put(type, relList);
     }
 
     /**
@@ -265,13 +256,13 @@ public class Synset implements Comparable {
      * the type <code>ConRel.has_hypernym</code>
      */
     public List<Synset> getRelatedSynsets(ConRel type) {
-        ArrayList<Synset> rval = this.relations.get(type);
-        if (rval == null) {
-            rval = new ArrayList<Synset>(0);
-        } else {
-            rval = (ArrayList<Synset>) rval.clone();
+        Set<Synset> rels = relations.get(type);
+        ArrayList<Synset> rval = new ArrayList<>();
+
+        if (rels != null) {
+            rval = new ArrayList<>(rels);
         }
-        return rval;
+        return (ArrayList<Synset>) rval.clone();
     }
 
     /**
@@ -290,8 +281,8 @@ public class Synset implements Comparable {
      * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
      */
     public List<List<Synset>> getTransRelatedSynsets(ConRel type) {
-        List<List<Synset>> result = new ArrayList<List<Synset>>();
-        List<Synset> resultPrevDepth = new ArrayList<Synset>(1);
+        List<List<Synset>> result = new ArrayList<>();
+        List<Synset> resultPrevDepth = new ArrayList<>(1);
         List<Synset> resultCurDepth;
 
         if (!type.isTransitive()) {
@@ -300,7 +291,7 @@ public class Synset implements Comparable {
         resultPrevDepth.add(this);
         result.add(resultPrevDepth);
         while (resultPrevDepth.size() > 0) {
-            resultCurDepth = new ArrayList<Synset>();
+            resultCurDepth = new ArrayList<>();
             for (Synset sset : resultPrevDepth) {
                 List<Synset> ssetRels = sset.getRelatedSynsets(type);
                 resultCurDepth.addAll(ssetRels);
@@ -322,7 +313,7 @@ public class Synset implements Comparable {
     public List<Synset> getRelatedSynsets() {
         List<Synset> rval = new ArrayList<Synset>();
 
-        for (Map.Entry<ConRel, ArrayList<Synset>> entry : relations.entrySet()) {
+        for (Map.Entry<ConRel, Set<Synset>> entry : relations.entrySet()) {
             rval.addAll(entry.getValue());
         }
         return rval;
@@ -353,7 +344,7 @@ public class Synset implements Comparable {
      * <code>Synset</code> is associated with
      */
     public List<IliRecord> getIliRecords() {
-        List<IliRecord> iliRecords = new ArrayList<IliRecord>();
+        List<IliRecord> iliRecords = new ArrayList<>();
         for (LexUnit unit : lexUnits) {
             for (IliRecord ili : unit.getIliRecords()) {
                 iliRecords.add(ili);

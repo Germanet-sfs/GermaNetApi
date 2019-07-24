@@ -1465,5 +1465,119 @@ class GermaNetTest {
 
         );
     }
+
+    /**
+     * synset relation searches
+     * ignoreCase true | false in constructor
+     * by ID
+     */
+    @ParameterizedTest(name = "{index} {0} {1} {2} {3}")
+    @MethodSource({"getConRelationsProvider"})
+    void getRelatedSynsets(int synsetID, Set<ConRel> relations, List<Integer> expectedIds, boolean useGnetIgnoreCase) {
+        GermaNet gnet;
+        List<Synset> actualList = new ArrayList<>();
+
+        gnet = (useGnetIgnoreCase) ? gnetIgnoreCase : gnetCaseSensitive;
+        Synset synset = gnet.getSynsetByID(synsetID);
+        for (ConRel conRel : relations) {
+            actualList.addAll(synset.getRelatedSynsets(conRel));
+        }
+        List<Integer> actualIds = new ArrayList<>(actualList.size());
+
+        for (Synset syn : actualList) {
+            actualIds.add(syn.getId());
+        }
+
+        Collections.sort(expectedIds);
+        Collections.sort(actualIds);
+        assertEquals(expectedIds, actualIds);
+    }
+
+    private static Stream<Arguments> getConRelationsProvider() {
+        boolean ignoreCase = true;
+        boolean caseSensitive = false;
+        int klauenID = 52509;
+        Set<ConRel> allConRelSet = new HashSet<>(Arrays.asList(ConRel.values()));
+        Set<ConRel> hyponymSet = new HashSet<>();
+        hyponymSet.add(ConRel.has_hyponym);
+        Set<ConRel> hypernymSet = new HashSet<>();
+        hypernymSet.add(ConRel.has_hypernym);
+
+        return Stream.of(
+                Arguments.of(klauenID, allConRelSet, new ArrayList<>(Arrays.asList(124504, 52545, 52508, 52516)), ignoreCase),
+                Arguments.of(klauenID, allConRelSet, new ArrayList<>(Arrays.asList(124504, 52545, 52508, 52516)), caseSensitive),
+
+                Arguments.of(klauenID, hyponymSet, new ArrayList<>(Arrays.asList(124504, 52545, 52516)), ignoreCase),
+                Arguments.of(klauenID, hyponymSet, new ArrayList<>(Arrays.asList(124504, 52545, 52516)), caseSensitive),
+
+                Arguments.of(klauenID, hypernymSet, new ArrayList<>(Arrays.asList(52508)), ignoreCase),
+                Arguments.of(klauenID, hypernymSet, new ArrayList<>(Arrays.asList(52508)), caseSensitive)
+        );
+    }
+
+    /**
+     * lexunit relation searches
+     * ignoreCase true | false in constructor
+     * by ID
+     */
+    @ParameterizedTest(name = "{index} {0} {1} {2} {3}")
+    @MethodSource({"getLexRelationsProvider"})
+    void getRelatedLexUnits(int lexUnitID, Set<LexRel> relations, List<Integer> expectedIds, boolean useGnetIgnoreCase) {
+        GermaNet gnet;
+        List<LexUnit> actualList = new ArrayList<>();
+
+        gnet = (useGnetIgnoreCase) ? gnetIgnoreCase : gnetCaseSensitive;
+        LexUnit lexUnit = gnet.getLexUnitByID(lexUnitID);
+        for (LexRel lexRel : relations) {
+            actualList.addAll(lexUnit.getRelatedLexUnits(lexRel));
+        }
+        List<Integer> actualIds = new ArrayList<>(actualList.size());
+
+        for (LexUnit lu : actualList) {
+            actualIds.add(lu.getId());
+        }
+
+        Collections.sort(expectedIds);
+        Collections.sort(actualIds);
+        assertEquals(expectedIds, actualIds);
+    }
+
+    private static Stream<Arguments> getLexRelationsProvider() {
+        boolean ignoreCase = true;
+        boolean caseSensitive = false;
+        int laufenID = 81287;
+        Set<LexRel> allLexRelSet = new HashSet<>(Arrays.asList(LexRel.values()));
+        Set<LexRel> synPartSet = new HashSet<>();
+        synPartSet.add(LexRel.has_synonym);
+        synPartSet.add(LexRel.has_participle);
+
+        return Stream.of(
+                Arguments.of(laufenID, allLexRelSet, new ArrayList<>(Arrays.asList(81288, 676)), ignoreCase),
+                Arguments.of(laufenID, allLexRelSet, new ArrayList<>(Arrays.asList(81288, 676)), caseSensitive),
+
+                Arguments.of(laufenID, synPartSet, new ArrayList<>(Arrays.asList(81288, 676)), ignoreCase),
+                Arguments.of(laufenID, synPartSet, new ArrayList<>(Arrays.asList(81288, 676)), caseSensitive)
+        );
+    }
+
+    @Test
+    void transRelatedTest() {
+        List<List<Synset>> rels = gnetCaseSensitive.getSynsetByID(52509).getTransRelatedSynsets(ConRel.has_hypernym);
+        List<Integer> expectedList = new ArrayList<>(Arrays.asList(52509, 52508, 52497, 51001));
+        int expected;
+        int actual;
+
+        for (int i=0; i < 4; i++) {
+            List<Synset> list = rels.get(i);
+            if (list.size() != 1) {
+                fail("size of each list should be 1");
+            }
+            actual = list.get(0).getId();
+            expected = expectedList.get(i);
+
+            assertEquals(expected, actual);
+        }
+
+    }
 }
 

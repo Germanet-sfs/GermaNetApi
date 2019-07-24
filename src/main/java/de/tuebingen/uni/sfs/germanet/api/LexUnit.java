@@ -76,7 +76,7 @@ public class LexUnit {
     private ArrayList<IliRecord> iliRecords;
     private ArrayList<WiktionaryParaphrase> wiktionaryParaphrases;
     // Relations of this LexUnit
-    private EnumMap<LexRel, ArrayList<LexUnit>> relations;
+    private EnumMap<LexRel, List<LexUnit>> relations;
     private CompoundInfo compoundInfo;
 
     /**
@@ -89,7 +89,7 @@ public class LexUnit {
      * @param orthForm boolean attribute
      * @param orthVar boolean attribute
      * @param oldOrthForm boolean attribute
-     * @param oldOrthVar
+     * @param oldOrthVar boolean attribute
      * @param namedEntity boolean attribute
      * @param source source of this <code>LexUnit</code> (eg "core")
      */
@@ -107,11 +107,11 @@ public class LexUnit {
         this.oldOrthVar = oldOrthVar;
         this.namedEntity = namedEntity;
         this.source = source;
-        this.relations = new EnumMap<LexRel, ArrayList<LexUnit>>(LexRel.class);
-        this.frames = new ArrayList<Frame>();
-        this.examples = new ArrayList<Example>();
-        this.iliRecords = new ArrayList<IliRecord>();
-        this.wiktionaryParaphrases = new ArrayList<WiktionaryParaphrase>();
+        this.relations = new EnumMap<>(LexRel.class);
+        this.frames = new ArrayList<>();
+        this.examples = new ArrayList<>();
+        this.iliRecords = new ArrayList<>();
+        this.wiktionaryParaphrases = new ArrayList<>();
     }
 
     /**
@@ -119,7 +119,7 @@ public class LexUnit {
      * @return the <code>Synset</code> to which this <code>LexUnit</code> belongs
      */
     public Synset getSynset() {
-        return this.synset;
+        return synset;
     }
 
     /**
@@ -127,7 +127,7 @@ public class LexUnit {
      * @return the sense number of this <code>LexUnit</code>
      */
     public int getSense() {
-        return this.sense;
+        return sense;
     }
 
     /**
@@ -135,7 +135,7 @@ public class LexUnit {
      * @return the unique identifier of this <code>LexUnit</code>
      */
     public int getId() {
-        return this.id;
+        return id;
     }
 
     /**
@@ -143,7 +143,7 @@ public class LexUnit {
      * @return true if the <code>styleMarking</code> attribute is set, false otherwise
      */
     public boolean isStyleMarking() {
-        return this.styleMarking;
+        return styleMarking;
     }
 
     /**
@@ -151,7 +151,7 @@ public class LexUnit {
      * @return true if the <code>artificial</code> attribute is set, false otherwise
      */
     public boolean isArtificial() {
-        return this.artificial;
+        return artificial;
     }
 
     /**
@@ -159,20 +159,17 @@ public class LexUnit {
      * @return true if the <code>namedEntity</code> attribute is set, false otherwise
      */
     public boolean isNamedEntity() {
-        return this.namedEntity;
+        return namedEntity;
     }
 
     /**
      * Trims all <code>ArrayLists</code>
      */
     protected void trimAll() {
-        ArrayList<LexUnit> list;
-
-        for (LexRel rel : this.relations.keySet()) {
-            list = this.relations.get(rel);
-            list.trimToSize();
-            this.relations.put(rel, list);
-        }
+        frames.trimToSize();
+        examples.trimToSize();
+        iliRecords.trimToSize();
+        wiktionaryParaphrases.trimToSize();
     }
 
     /**
@@ -180,7 +177,7 @@ public class LexUnit {
      * @return the orthographic form of this <code>LexUnit</code>
      */
     public String getOrthForm() {
-        return this.orthForm;
+        return orthForm;
     }
 
     /**
@@ -188,7 +185,7 @@ public class LexUnit {
      * @return the orthographic variant of this <code>LexUnit</code>
      */
     public String getOrthVar() {
-        return this.orthVar;
+        return orthVar;
     }
 
     /**
@@ -196,7 +193,7 @@ public class LexUnit {
      * @return the old orthographic form of this <code>LexUnit</code>
      */
     public String getOldOrthForm() {
-        return this.oldOrthForm;
+        return oldOrthForm;
     }
 
     /**
@@ -216,22 +213,22 @@ public class LexUnit {
      * <code>orthVar</code>, <code>oldOrthForm</code>, and <code>oldOrthVar</code>)
      */
     public List<String> getOrthForms() {
-        List<String> allOrthForms = new ArrayList<String>();
-        allOrthForms.add(this.orthForm);
+        Set<String> allOrthForms = new HashSet<>();
+        allOrthForms.add(orthForm);
 
         if (getOrthVar() != null) {
-            allOrthForms.add(this.orthVar);
+            allOrthForms.add(orthVar);
         }
 
-        if (getOldOrthForm() != null && !allOrthForms.contains(this.oldOrthForm)) {
-            allOrthForms.add(this.oldOrthForm);
+        if (getOldOrthForm() != null) {
+            allOrthForms.add(oldOrthForm);
         }
 
-        if (getOldOrthVar() != null && !allOrthForms.contains(this.oldOrthVar)) {
-            allOrthForms.add(this.oldOrthVar);
+        if (getOldOrthVar() != null) {
+            allOrthForms.add(oldOrthVar);
         }
 
-        return allOrthForms;
+        return new ArrayList<>(allOrthForms);
     }
 
     /**
@@ -240,13 +237,13 @@ public class LexUnit {
      * @param target the target <code>LexUnit</code>
      */
     protected void addRelation(LexRel type, LexUnit target) {
-        ArrayList<LexUnit> relationList = this.relations.get(type);
+        List<LexUnit> relationList = relations.get(type);
 
         if (relationList == null) {
-            relationList = new ArrayList<LexUnit>(1);
+            relationList = new ArrayList<>(1);
         }
         relationList.add(target);
-        this.relations.put(type, relationList);
+        relations.put(type, relationList);
     }
 
     /**
@@ -261,17 +258,19 @@ public class LexUnit {
     @SuppressWarnings("unchecked")
     public List<LexUnit> getRelatedLexUnits(LexRel type) {
         ArrayList<LexUnit> rval = null;
+        List<LexUnit> rels;
+
         if (type.equals(LexRel.has_synonym)) {
             return getSynonyms();
         } else {
-            rval = this.relations.get(type);
-            if (rval == null) {
+            rels = relations.get(type);
+            if (rels == null) {
                 rval = new ArrayList<LexUnit>(0);
             } else {
-                rval = (ArrayList<LexUnit>) rval.clone();
+                rval = new ArrayList<>(rels);
             }
         }
-        return rval;
+        return (List<LexUnit>) rval.clone();
     }
 
     /**
@@ -282,7 +281,7 @@ public class LexUnit {
      * Same as <code>getRelatedLexUnits(LexRel.synonymy)</code>
      */
     public List<LexUnit> getSynonyms() {
-        List<LexUnit> rval = this.synset.getLexUnits();
+        List<LexUnit> rval = synset.getLexUnits();
         rval.remove(this);
         return rval;
     }
@@ -294,9 +293,9 @@ public class LexUnit {
      * <code>LexUnit</code> has any relation to
      */
     public List<LexUnit> getRelatedLexUnits() {
-        List<LexUnit> rval = new ArrayList<LexUnit>();
+        List<LexUnit> rval = new ArrayList<>();
 
-        for (Map.Entry<LexRel, ArrayList<LexUnit>> entry : this.relations.entrySet()) {
+        for (Map.Entry<LexRel, List<LexUnit>> entry : relations.entrySet()) {
             rval.addAll(entry.getValue());
         }
         return rval;
@@ -308,27 +307,27 @@ public class LexUnit {
      */
     @Override
     public String toString() {
-        String lexUnitAsString = "id: " + this.id
-                + ", orth form: " + this.orthForm;
+        String lexUnitAsString = "id: " + id
+                + ", orth form: " + orthForm;
 
         if (getOrthVar() != null) {
-            lexUnitAsString += ", orth var: " + this.orthVar;
+            lexUnitAsString += ", orth var: " + orthVar;
         }
 
         if (getOldOrthForm() != null) {
-            lexUnitAsString += ", old orth form: " + this.oldOrthForm;
+            lexUnitAsString += ", old orth form: " + oldOrthForm;
         }
 
         if (getOldOrthVar() != null) {
-            lexUnitAsString += ", old orth var: " + this.oldOrthVar;
+            lexUnitAsString += ", old orth var: " + oldOrthVar;
         }
 
-        lexUnitAsString += ", synset id: " + this.synset.getId()
-                + ", sense: " + this.sense
-                + ", source: " + this.source
-                + ", named entity: " + this.namedEntity
-                + ", artificial: " + this.artificial
-                + ", style marking: " + this.styleMarking;
+        lexUnitAsString += ", synset id: " + synset.getId()
+                + ", sense: " + sense
+                + ", source: " + source
+                + ", named entity: " + namedEntity
+                + ", artificial: " + artificial
+                + ", style marking: " + styleMarking;
 
         return lexUnitAsString;
     }
@@ -338,7 +337,7 @@ public class LexUnit {
      * @param example the <code>Example</code> to add
      */
     protected void addExample(Example example) {
-        this.examples.add(example);
+        examples.add(example);
     }
 
     /**
@@ -346,7 +345,7 @@ public class LexUnit {
      * @param frame the <code>Frame</code> to add
      */
     protected void addFrame(Frame frame) {
-        this.frames.add(frame);
+        frames.add(frame);
     }
 
     /**
@@ -354,7 +353,7 @@ public class LexUnit {
      * @return the source of this <code>LexUnit</code>
      */
     public String getSource() {
-        return this.source;
+        return source;
     }
 
     /**
@@ -364,7 +363,7 @@ public class LexUnit {
      * <code>Examples</code>
      */
     public List<Example> getExamples() {
-        return (List<Example>) this.examples.clone();
+        return (List<Example>) examples.clone();
     }
 
     /**
@@ -374,7 +373,7 @@ public class LexUnit {
      * <code>Frames</code>
      */
     public List<Frame> getFrames() {
-        return (List<Frame>) this.frames.clone();
+        return (List<Frame>) frames.clone();
     }
 
     /**
@@ -383,7 +382,7 @@ public class LexUnit {
      * (eg. nomen, verben, adj).
      */
     public WordCategory getWordCategory() {
-        return this.synset.getWordCategory();
+        return synset.getWordCategory();
     }
 
     /**
@@ -392,7 +391,7 @@ public class LexUnit {
      * @return true if this <code>LexUnit</code> is in <code>wordCategory</code>
      */
     public boolean inWordCategory(WordCategory wordCategory) {
-        return wordCategory == this.synset.getWordCategory();
+        return wordCategory == synset.getWordCategory();
     }
 
 
@@ -402,7 +401,7 @@ public class LexUnit {
      * (eg. Menge, Allgemein).
      */
     public WordClass getWordClass() {
-        return this.synset.getWordClass();
+        return synset.getWordClass();
     }
 
     /**
@@ -411,7 +410,7 @@ public class LexUnit {
      * @return true if this <code>LexUnit</code> is in <code>wordClass</code>
      */
     public boolean inWordClass(WordClass wordClass) {
-        return wordClass == this.synset.getWordClass();
+        return wordClass == synset.getWordClass();
     }
 
     /**
@@ -419,7 +418,7 @@ public class LexUnit {
      * @return the number of <code>Frames</code> in this <code>Synset</code>
      */
     public int numFrames() {
-        return this.frames.size();
+        return frames.size();
     }
 
     /**
@@ -427,7 +426,7 @@ public class LexUnit {
      * @return the number of <code>Examples</code> in this <code>Synset</code>
      */
     public int numExamples() {
-        return this.examples.size();
+        return examples.size();
     }
 
     /**
@@ -435,7 +434,7 @@ public class LexUnit {
      * @return <code>List</code> of <code>IliRecords</code> for this <code>LexUnit</code>
      */
     public List<IliRecord> getIliRecords() {
-        return (List<IliRecord>) this.iliRecords.clone();
+        return (List<IliRecord>) iliRecords.clone();
     }
 
     /**
@@ -451,7 +450,7 @@ public class LexUnit {
      * @return the <code>CompoundInfo</code> for this <code>LexUnit</code>
      */
     public CompoundInfo getCompoundInfo() {
-        return this.compoundInfo;
+        return compoundInfo;
     }
 
     /**
@@ -469,7 +468,7 @@ public class LexUnit {
      * for this <code>LexUnit</code>
      */
     public List<WiktionaryParaphrase> getWiktionaryParaphrases() {
-        return (List<WiktionaryParaphrase>) this.wiktionaryParaphrases.clone();
+        return (List<WiktionaryParaphrase>) wiktionaryParaphrases.clone();
     }
 
     /**
