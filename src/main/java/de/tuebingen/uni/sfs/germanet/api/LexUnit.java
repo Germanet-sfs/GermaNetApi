@@ -19,6 +19,8 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import de.tuebingen.uni.sfs.germanet.graph.GermaNetVertex;
+
 import java.util.*;
 
 /**
@@ -63,8 +65,7 @@ import java.util.*;
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
-public class LexUnit {
-
+public class LexUnit implements GermaNetVertex {
     private int id;
     private String source;
     private boolean styleMarking, artificial, namedEntity;
@@ -478,16 +479,35 @@ public class LexUnit {
     public void addWiktionaryParaphrase(WiktionaryParaphrase paraphrase) {
         wiktionaryParaphrases.add(paraphrase);
     }
-    
+
     /**
      * Return true if this <code>LexUnit</code> is equal to another <code>LexUnit</code>.
-     * @param other the <code>LexUnit</code> to compare to
+     * @param o the <code>LexUnit</code> to compare to
      * @return true if this <code>LexUnit</code> is equal to another <code>LexUnit</code>
      */
-    public boolean equals(LexUnit other) {
-        if (this.id == other.id) {
-            return true;
-        }
-        return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LexUnit lexUnit = (LexUnit) o;
+
+        if (id != lexUnit.id) return false;
+        return orthForm.equals(lexUnit.orthForm);
+    }
+
+    /**
+     * Return the hashcode for this object
+     * @return the hashcode for this object
+     */
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + orthForm.hashCode();
+        return result;
+    }
+
+    public String getLabel() {
+        return id + ": " + getOrthForms();
     }
 }

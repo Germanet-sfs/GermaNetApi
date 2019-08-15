@@ -19,6 +19,7 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import de.tuebingen.uni.sfs.germanet.graph.GermaNetVertex;
 import java.util.*;
 
 /**
@@ -63,12 +64,13 @@ import java.util.*;
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
-public class Synset implements Comparable {
+public class Synset implements Comparable, GermaNetVertex {
     private int id;
     private WordCategory wordCategory;
     private WordClass wordClass;
     private Set<LexUnit> lexUnits;
     private String paraphrase;
+    private int distToRoot;
 
     // Relations of this Synset
     private EnumMap<ConRel, Set<Synset>> relations;
@@ -326,6 +328,7 @@ public class Synset implements Comparable {
     @Override
     public String toString() {
         String synsetAsString = "id: " + getId() + ", orth forms: " + getAllOrthForms().toString();
+        /*
         if (!getParaphrases().isEmpty()) {
             synsetAsString += ", paraphrases: ";
             for (String para : getParaphrases()) {
@@ -333,7 +336,7 @@ public class Synset implements Comparable {
             }
             synsetAsString = synsetAsString.substring(0, synsetAsString.length()-2);
         }
-
+        */
         return synsetAsString;
     }
 
@@ -355,15 +358,43 @@ public class Synset implements Comparable {
     
     /**
      * Return true if this <code>Synset</code> is equal to another <code>Synset</code>.
-     * @param other the <code>Synset</code> to compare to
+     * @param o the <code>Synset</code> to compare to
      * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
      */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Synset synset = (Synset) o;
+        return id == synset.id &&
+                wordCategory == synset.wordCategory &&
+                wordClass == synset.wordClass;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, wordCategory, wordClass);
+    }
+
+    public String getLabel() {
+        return id + " " + getOrthForms();
+    }
+
+    /**
+     * Same as getAllOrthForms.
+     * @return
+     */
+    public List<String> getOrthForms() {
+        return getAllOrthForms();
+    }
+    /*
     public boolean equals(Synset other) {
         if (this.id == other.id) {
             return true;
         }
         return false;
     }
+     */
 
      /**
      * Return 1 if this <code>Synset</code> has a larger id than another <code>Synset</code>,
