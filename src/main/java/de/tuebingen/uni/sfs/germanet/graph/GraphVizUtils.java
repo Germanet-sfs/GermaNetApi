@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * author: meh, Seminar für Sprachwissenschaft, Universität Tübingen
+ * author: Marie Hinrichs, Seminar für Sprachwissenschaft, Universität Tübingen
  */
 public class GraphVizUtils {
 
@@ -23,12 +23,13 @@ public class GraphVizUtils {
 
     public static void getHyperHypoImage(Synset synset, int hyperDepth, int hypoDepth, Format format, File imgFile) throws IOException {
 
+        String label = synset.getId() + " " + synset.getAllOrthForms();
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("\ndigraph G {\n");
         stringBuilder.append("rankdir=TB;\n");
 
         // add the root node with a color
-        stringBuilder.append(synset.getId() + " [label=\"" + synset.getLabel() + "\", color=blue ];\n");
+        stringBuilder.append(synset.getId() + " [label=\"" + label + "\", color=blue ];\n");
         // add all hypernyms
         getHyperHypoImage(synset, ConRel.has_hypernym, 0, hyperDepth, stringBuilder);
         // add all hyponyms
@@ -52,7 +53,8 @@ public class GraphVizUtils {
         List<Synset> relatedSynsets = synset.getRelatedSynsets(rel);
         List<Integer> relatedIds = new ArrayList<>();
         for (Synset related : relatedSynsets) {
-            stringBuilder.append(related.getId() + " [label=\"" + related.getLabel() + "\" ];\n");
+            String label = related.getId() + " " + related.getAllOrthForms();
+            stringBuilder.append(related.getId() + " [label=\"" + label + "\" ];\n");
 
             // reverse the edge direction and relation for hypernyms
             // which results in a better-looking graph

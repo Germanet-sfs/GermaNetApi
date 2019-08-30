@@ -19,15 +19,13 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import de.tuebingen.uni.sfs.germanet.graph.GraphRelation;
-
 /**
  * Enumeration of all conceptual relations.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
-public enum ConRel implements GraphRelation<ConRel>  {
+public enum ConRel {
     has_hypernym(true),
     has_hyponym(true),
     has_component_meronym(true),
@@ -72,10 +70,5 @@ public enum ConRel implements GraphRelation<ConRel>  {
      */
     public boolean isTransitive() {
         return transitive;
-    }
-
-    @Override
-    public ConRel getRel() {
-        return this;
     }
 }

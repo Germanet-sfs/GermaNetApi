@@ -22,6 +22,7 @@ package de.tuebingen.uni.sfs.germanet.api;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -97,6 +98,7 @@ import javax.xml.stream.XMLStreamException;
 public class GermaNet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GermaNet.class);
+    public static final int GNROOT_ID = 51001;
     public static final String XML_SYNSETS = "synsets";
     public static final String XML_SYNSET = "synset";
     public static final String XML_ID = "id";
@@ -179,6 +181,7 @@ public class GermaNet {
     private boolean ignoreCase;
     private static final int MAX_LEVENSHTEIN_DIST = 30;
     private LevenshteinDistance levenshteinDistance;
+    private SemanticUtils semanticUtils;
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
@@ -247,6 +250,7 @@ public class GermaNet {
         this.lowerToUpperMap = new HashMap<>();
         this.levenshteinDistance = new LevenshteinDistance(MAX_LEVENSHTEIN_DIST);
 
+        long startTime = System.currentTimeMillis();
         if (!dir.isDirectory() && isZipFile(dir)) {
             ZipFile zipFile = new ZipFile(dir);
             Enumeration entries = zipFile.entries();
@@ -270,6 +274,12 @@ public class GermaNet {
             }
         }
         load();
+
+        semanticUtils = new SemanticUtils(this);
+        long endTime = System.currentTimeMillis();
+        double processingTime = (double) (endTime - startTime) / 1000;
+        DecimalFormat dec = new DecimalFormat("#0.00");
+        LOGGER.info("Done loading GermaNet data ({} seconds).", dec.format(processingTime));
     }
 
     /**
@@ -1140,6 +1150,7 @@ public class GermaNet {
             loader.loadWiktionary(wiktInputStreams, wiktXmlNames);
             //add the information about corresponding WiktionaryParaphrases to LexUnits
             updateLexUnitsWithWiktionary();
+            LOGGER.info("Done loading wiktionary data.");
         }
 
         // set parser back to whatever it was before
@@ -1190,6 +1201,34 @@ public class GermaNet {
             }
             lexUnitIDMap.put(id, lu);
         }
+    }
+
+    /**
+     * Find the least common subsumer(s) for these two synsets. This is the closest common parent,
+     * using hypernym relations only.
+     *
+     * @param synset1 one synset
+     * @param synset2 another synset
+     * @return a set of LeastCommonSubsumer objects, each of which contains a synset ID of a synset that is
+     * a common parent of both input synsets, and which has the shortest possible distance of all common parents.
+     * It is possible that multiple least common subsumers exist for the input synsets, in which case
+     * all least common subsumers will have the same, shortest, distance.
+     */
+    public Set<LeastCommonSubsumer> getLeastCommonSubsumer(Synset synset1, Synset synset2) {
+        return semanticUtils.getLeastCommonSubsumer(synset1, synset2);
+    }
+
+    /**
+     * Calculate the longest least common subsumer(s) for wordCategory. This is used by the
+     * semantic relatedness algorithms. It is included for completeness, but is most likely
+     * not needed by users of this API. Note also that for nouns, this method may be slow the
+     * first time it is called.
+     *
+     * @param wordCategory WordCategory to process
+     * @return a set of LeastCommonSubsumers with the longest possible paths for WordCategory
+     */
+    public Set<LeastCommonSubsumer> longestLeastCommonSubsumer(WordCategory wordCategory) {
+        return semanticUtils.longestLeastCommonSubsumer(wordCategory);
     }
 
     /**

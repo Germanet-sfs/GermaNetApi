@@ -19,7 +19,6 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import de.tuebingen.uni.sfs.germanet.graph.GermaNetVertex;
 import java.util.*;
 
 /**
@@ -64,7 +63,7 @@ import java.util.*;
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
-public class Synset implements Comparable, GermaNetVertex {
+public class Synset implements Comparable {
     private int id;
     private WordCategory wordCategory;
     private WordClass wordClass;
@@ -328,7 +327,6 @@ public class Synset implements Comparable, GermaNetVertex {
     @Override
     public String toString() {
         String synsetAsString = "id: " + getId() + ", orth forms: " + getAllOrthForms().toString();
-        /*
         if (!getParaphrases().isEmpty()) {
             synsetAsString += ", paraphrases: ";
             for (String para : getParaphrases()) {
@@ -336,7 +334,7 @@ public class Synset implements Comparable, GermaNetVertex {
             }
             synsetAsString = synsetAsString.substring(0, synsetAsString.length()-2);
         }
-        */
+
         return synsetAsString;
     }
 
@@ -375,26 +373,6 @@ public class Synset implements Comparable, GermaNetVertex {
     public int hashCode() {
         return Objects.hash(id, wordCategory, wordClass);
     }
-
-    public String getLabel() {
-        return id + " " + getOrthForms();
-    }
-
-    /**
-     * Same as getAllOrthForms.
-     * @return
-     */
-    public List<String> getOrthForms() {
-        return getAllOrthForms();
-    }
-    /*
-    public boolean equals(Synset other) {
-        if (this.id == other.id) {
-            return true;
-        }
-        return false;
-    }
-     */
 
      /**
      * Return 1 if this <code>Synset</code> has a larger id than another <code>Synset</code>,

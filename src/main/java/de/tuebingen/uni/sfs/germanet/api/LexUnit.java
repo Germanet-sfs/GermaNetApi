@@ -19,8 +19,6 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import de.tuebingen.uni.sfs.germanet.graph.GermaNetVertex;
-
 import java.util.*;
 
 /**
@@ -65,7 +63,7 @@ import java.util.*;
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
-public class LexUnit implements GermaNetVertex {
+public class LexUnit {
     private int id;
     private String source;
     private boolean styleMarking, artificial, namedEntity;
@@ -505,9 +503,5 @@ public class LexUnit implements GermaNetVertex {
         int result = id;
         result = 31 * result + orthForm.hashCode();
         return result;
-    }
-
-    public String getLabel() {
-        return id + ": " + getOrthForms();
     }
 }

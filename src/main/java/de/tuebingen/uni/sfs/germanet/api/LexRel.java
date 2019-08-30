@@ -19,15 +19,13 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import de.tuebingen.uni.sfs.germanet.graph.GraphRelation;
-
 /**
  * Enumeration of all lexical relations.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
-public enum LexRel implements GraphRelation<LexRel> {
+public enum LexRel {
     has_synonym,
     has_antonym,
     has_pertainym,
@@ -103,11 +101,5 @@ public enum LexRel implements GraphRelation<LexRel> {
             }
         }
         return false;
-    }
-
-
-    @Override
-    public LexRel getRel() {
-        return this;
     }
 }
