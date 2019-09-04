@@ -67,7 +67,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.1.2</version>
+            <version>1.2.3</version>
         </dependency>
 
         <!-- convenience methods for sets/collections https://mvnrepository.com/artifact/com.google.guava/guava -->
