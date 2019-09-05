@@ -543,8 +543,7 @@ public class GermaNet {
      * @return a <code>list</code> of all <code>Synsets</code>
      */
     public List<Synset> getSynsets() {
-        ArrayList<Synset> rval = new ArrayList<>(synsets);
-        return (ArrayList<Synset>) rval.clone();
+        return new ArrayList<>(synsets);
     }
 
     /**
@@ -882,7 +881,7 @@ public class GermaNet {
                 rval.addAll(tmpLexUnitSet);
             }
         }
-        return (List<LexUnit>) rval.clone();
+        return rval;
     }
 
     /**
@@ -908,7 +907,7 @@ public class GermaNet {
         rval = new ArrayList<>(tmpLexUnitSet);
         rval.trimToSize();
 
-        return ((ArrayList<LexUnit>) rval.clone());
+        return rval;
     }
 
     /**
@@ -1110,7 +1109,7 @@ public class GermaNet {
      * @return a <code>List</code> of all <code>IliRecords</code>
      */
     public List<IliRecord> getIliRecords() {
-        return (List<IliRecord>) iliRecords.clone();
+        return new ArrayList<>(iliRecords);
     }
 
     /**
@@ -1175,7 +1174,7 @@ public class GermaNet {
      * @return a <code>List</code> of all <code>WiktionaryParaphrases</code>
      */
     public List<WiktionaryParaphrase> getWiktionaryParaphrases() {
-        return (List<WiktionaryParaphrase>) wiktionaryParaphrases.clone();
+        return new ArrayList<>(wiktionaryParaphrases);
     }
 
     public HashMap<LexUnit, CompoundInfo> getLexUnitsWithCompoundInfo() {
@@ -1215,7 +1214,7 @@ public class GermaNet {
      * all least common subsumers will have the same, shortest, distance.
      */
     public Set<LeastCommonSubsumer> getLeastCommonSubsumer(Synset synset1, Synset synset2) {
-        return semanticUtils.getLeastCommonSubsumer(synset1, synset2);
+        return synset1.getLeastCommonSubsumer(synset2);
     }
 
     /**

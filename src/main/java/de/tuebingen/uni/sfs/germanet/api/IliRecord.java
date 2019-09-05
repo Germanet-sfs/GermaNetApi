@@ -42,15 +42,13 @@ public class IliRecord {
     private String pwn30Id;
     private String pwn20paraphrase = "";
     private String source;
-    private ArrayList<String> englishSynonyms;
+    private List<String> englishSynonyms;
 
     /**
      * Constructs an <code>IliRecord</code> with the specified attributes.
      * @param lexUnitId the identifier of the <code>LexUnit</code>
-     * @param gnWord the orthographic form of this <code>IliRecord</code>
      * @param ewnRelation the EuroWordNet cross-language relation
      * @param pwnWord the corresponding English word
-     * @param pwn20Sense the sense number of the corresponding English word from PWN 2.0
      * @param pwn20Id the identifier of the corresponding English word from PWN 2.0
      * @param pwn30Id the identifier of the corresponding English word from PWN 3.0
      * @param pwn20paraphrase the paraphrase for the corresponding English word from PWN 2.0
@@ -65,7 +63,7 @@ public class IliRecord {
         this.pwn30Id = pwn30Id;
         if (pwn20paraphrase != null) this.pwn20paraphrase = pwn20paraphrase;
         this.source = source;
-        this.englishSynonyms = new ArrayList<String>();
+        this.englishSynonyms = new ArrayList<>();
     }
 
     /**
@@ -142,7 +140,7 @@ public class IliRecord {
      * English synonyms from PWN 2.0
      */
     public List<String> getEnglishSynonyms() {
-        return (List<String>) this.englishSynonyms.clone();
+        return new ArrayList<>(englishSynonyms);
     }
     
     /**

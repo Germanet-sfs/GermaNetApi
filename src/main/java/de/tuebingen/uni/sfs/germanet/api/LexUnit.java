@@ -164,7 +164,7 @@ public class LexUnit {
     /**
      * Trims all <code>ArrayLists</code>
      */
-    protected void trimAll() {
+    void trimAll() {
         frames.trimToSize();
         examples.trimToSize();
         iliRecords.trimToSize();
@@ -235,7 +235,7 @@ public class LexUnit {
      * @param type the type of relation (eg. <code>LexRel.antonymy</code>)
      * @param target the target <code>LexUnit</code>
      */
-    protected void addRelation(LexRel type, LexUnit target) {
+     void addRelation(LexRel type, LexUnit target) {
         List<LexUnit> relationList = relations.get(type);
 
         if (relationList == null) {
@@ -264,12 +264,12 @@ public class LexUnit {
         } else {
             rels = relations.get(type);
             if (rels == null) {
-                rval = new ArrayList<LexUnit>(0);
+                rval = new ArrayList<>(0);
             } else {
                 rval = new ArrayList<>(rels);
             }
         }
-        return (List<LexUnit>) rval.clone();
+        return rval;
     }
 
     /**
@@ -335,7 +335,7 @@ public class LexUnit {
      * Adds an <code>Example</code> to this <code>Synset</code>.
      * @param example the <code>Example</code> to add
      */
-    protected void addExample(Example example) {
+     void addExample(Example example) {
         examples.add(example);
     }
 
@@ -343,7 +343,7 @@ public class LexUnit {
      * Adds a <code>Frame</code> to this <code>Synset</code>.
      * @param frame the <code>Frame</code> to add
      */
-    protected void addFrame(Frame frame) {
+     void addFrame(Frame frame) {
         frames.add(frame);
     }
 
@@ -362,7 +362,7 @@ public class LexUnit {
      * <code>Examples</code>
      */
     public List<Example> getExamples() {
-        return (List<Example>) examples.clone();
+        return new ArrayList<>(examples);
     }
 
     /**
@@ -372,7 +372,7 @@ public class LexUnit {
      * <code>Frames</code>
      */
     public List<Frame> getFrames() {
-        return (List<Frame>) frames.clone();
+        return new ArrayList<>(frames);
     }
 
     /**
@@ -433,14 +433,14 @@ public class LexUnit {
      * @return <code>List</code> of <code>IliRecords</code> for this <code>LexUnit</code>
      */
     public List<IliRecord> getIliRecords() {
-        return (List<IliRecord>) iliRecords.clone();
+        return new ArrayList<>(iliRecords);
     }
 
     /**
      * Add an <code>IliRecord</code> to this <code>LexUnit</code>.
      * @param record <code>IliRecord</code> to add to this <code>LexUnit</code>
      */
-    protected void addIliRecord(IliRecord record) {
+     void addIliRecord(IliRecord record) {
         iliRecords.add(record);
     }
 
@@ -456,7 +456,7 @@ public class LexUnit {
      * Set the <code>CompoundInfo</code> for this <code>LexUnit</code>.
      * @param compoundInfo the <code>CompoundInfo</code> for this <code>LexUnit</code>
      */
-    protected void setCompoundInfo(CompoundInfo compoundInfo) {
+     void setCompoundInfo(CompoundInfo compoundInfo) {
         this.compoundInfo = compoundInfo;
     }
 
@@ -467,7 +467,7 @@ public class LexUnit {
      * for this <code>LexUnit</code>
      */
     public List<WiktionaryParaphrase> getWiktionaryParaphrases() {
-        return (List<WiktionaryParaphrase>) wiktionaryParaphrases.clone();
+        return new ArrayList<>(wiktionaryParaphrases);
     }
 
     /**

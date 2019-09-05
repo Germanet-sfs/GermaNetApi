@@ -1577,7 +1577,45 @@ class GermaNetTest {
 
             assertEquals(expected, actual);
         }
+    }
 
+    @Test
+    void immutable1Test() {
+        List<Synset> expected = gnetCaseSensitive.getSynsets();
+        List<Synset> cleared = gnetCaseSensitive.getSynsets();
+        cleared.clear();
+        List<Synset> afterClear = gnetCaseSensitive.getSynsets();
+        assertEquals(expected, afterClear);
+    }
+
+    @Test
+    void immutable2Test() {
+        int laufenID = 52047;
+        List<Synset> expected = gnetCaseSensitive.getSynsetByID(laufenID).getRelatedSynsets(ConRel.has_hypernym);
+        List<Synset> cleared = gnetCaseSensitive.getSynsetByID(laufenID).getRelatedSynsets(ConRel.has_hypernym);
+        cleared.clear();
+        List<Synset> afterClear = gnetCaseSensitive.getSynsetByID(laufenID).getRelatedSynsets(ConRel.has_hypernym);
+        assertEquals(expected, afterClear);
+    }
+
+    @Test
+    void immutable3Test() {
+        int laufenID = 52047;
+        List<LexUnit> expected = gnetCaseSensitive.getSynsetByID(laufenID).getLexUnits();
+        List<LexUnit> cleared = gnetCaseSensitive.getSynsetByID(laufenID).getLexUnits();
+        cleared.clear();
+        List<LexUnit> afterClear = gnetCaseSensitive.getSynsetByID(laufenID).getLexUnits();
+        assertEquals(expected, afterClear);
+    }
+
+    @Test
+    void immutable4Test() {
+        int laufenID = 52047;
+        List<IliRecord> expected = gnetCaseSensitive.getSynsetByID(laufenID).getIliRecords();
+        List<IliRecord> cleared = gnetCaseSensitive.getSynsetByID(laufenID).getIliRecords();
+        cleared.clear();
+        List<IliRecord> afterClear = gnetCaseSensitive.getSynsetByID(laufenID).getIliRecords();
+        assertEquals(expected, afterClear);
     }
 }
 
