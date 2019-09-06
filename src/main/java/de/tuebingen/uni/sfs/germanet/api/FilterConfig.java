@@ -24,14 +24,14 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Configuration for complex filtering of <code>Synset</code> or <code>LexUnit</code> searches.</br></br>
- * Default values:</br>
- * wordCategories: ALL</br>
- * wordClasses: ALL</br>
- * orthFormVariants: ALL</br>
- * regEx: false</br>
- * ignoreCase: false</br>
- * editDistance: 0 (edit distance is ignored if using a regular expression)</br>
+ * Configuration for complex filtering of <code>Synset</code> or <code>LexUnit</code> searches.<br><br>
+ * Default values:<br>
+ * wordCategories: ALL<br>
+ * wordClasses: ALL<br>
+ * orthFormVariants: ALL<br>
+ * regEx: false<br>
+ * ignoreCase: false<br>
+ * editDistance: 0 (edit distance is ignored if using a regular expression)<br>
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.2
@@ -48,11 +48,12 @@ public class FilterConfig {
     /**
      * Construct a new FilterConfig with the literal search term and the default values.
      * Note that no results will be returned if the search string is null or empty.
-     * @param searchString
+     *
+     * @param searchString the search string for this configuration
      */
     public FilterConfig(String searchString) {
         this.searchString = searchString;
-        addAllWordCategories();;
+        addAllWordCategories();
         addAllWordClasses();
         addAllOrthFormVariants();
         this.regEx = false;
@@ -62,6 +63,7 @@ public class FilterConfig {
 
     /**
      * Returns the search string for this configuration
+     *
      * @return the search string
      */
     public String getSearchString() {
@@ -70,7 +72,8 @@ public class FilterConfig {
 
     /**
      * Set the search string for this configuration
-     * @param searchString
+     *
+     * @param searchString the search string for this configuration
      */
     public void setSearchString(String searchString) {
         this.searchString = searchString;
@@ -78,6 +81,7 @@ public class FilterConfig {
 
     /**
      * Get the Word Categories for this configuration
+     *
      * @return the WordCategories for this configuration
      */
     public Set<WordCategory> getWordCategories() {
@@ -86,6 +90,7 @@ public class FilterConfig {
 
     /**
      * Set the Word Categories to be included in searches
+     *
      * @param categories one or more Word Categories to be included in searches
      */
     public void setWordCategories(WordCategory... categories) {
@@ -95,6 +100,7 @@ public class FilterConfig {
 
     /**
      * Add one or more Word Categories to this configuration
+     *
      * @param categories one or more Word Categories to add
      */
     public void addWordCategories(WordCategory... categories) {
@@ -110,6 +116,7 @@ public class FilterConfig {
 
     /**
      * Remove one or more Word Categories from this search configuration
+     *
      * @param categories Word Categories to remove
      */
     public void removeWordCategories(WordCategory... categories) {
@@ -128,6 +135,7 @@ public class FilterConfig {
 
     /**
      * Get the Word Classes for this configuration
+     *
      * @return the Word Classes for this configuration
      */
     public Set<WordClass> getWordClasses() {
@@ -136,6 +144,7 @@ public class FilterConfig {
 
     /**
      * Set the Word Classes for this configuration
+     *
      * @param classes one or more Word Classes to be included in searches
      */
     public void setWordClasses(WordClass... classes) {
@@ -145,6 +154,7 @@ public class FilterConfig {
 
     /**
      * Add one or more Word Classes to this configuration
+     *
      * @param classes one or more Word Classes to add
      */
     public void addWordClasses(WordClass... classes) {
@@ -160,6 +170,7 @@ public class FilterConfig {
 
     /**
      * Remove one or more Word Classes from this configuration
+     *
      * @param classes one or more Word Classes to remove
      */
     public void removeWordClasses(WordClass... classes) {
@@ -178,6 +189,7 @@ public class FilterConfig {
 
     /**
      * Get OrthFormVariants for this configuration
+     *
      * @return the OrthFormVariants for this configuration
      */
     public Set<OrthFormVariant> getOrthFormVariants() {
@@ -186,6 +198,7 @@ public class FilterConfig {
 
     /**
      * Set the OrthFormVariants for this configuration
+     *
      * @param variants one or more OrthFormVariants to be included in searches
      */
     public void setOrthFormVariants(OrthFormVariant... variants) {
@@ -195,6 +208,7 @@ public class FilterConfig {
 
     /**
      * Add one or more OrthFormVariants to this configuration
+     *
      * @param variants one or more OrthFormVariants to add
      */
     public void addOrthFormVariants(OrthFormVariant... variants) {
@@ -212,6 +226,7 @@ public class FilterConfig {
 
     /**
      * Remove one or more OrthFormVariants from this configuration
+     *
      * @param variants one or more OrthFormVariants to remove
      */
     public void removeOrthFormVariants(OrthFormVariant... variants) {
@@ -230,6 +245,7 @@ public class FilterConfig {
 
     /**
      * Return true if the searchString is interpreted as a regular expression, otherwise false.
+     *
      * @return true if the searchString is interpreted as a regular expression, otherwise false
      */
     public boolean isRegEx() {
@@ -239,6 +255,7 @@ public class FilterConfig {
     /**
      * Set the regular expression flag to true (regular expression) or false (literal).
      * Note that if the searchString is a regular expression, editDistance will be ignored.
+     *
      * @param regEx true if searchString is a regular expression, false if it is a literal
      */
     public void setRegEx(boolean regEx) {
@@ -247,18 +264,25 @@ public class FilterConfig {
 
     /**
      * Return true if case is ignored, false for case sensitive searching
+     *
      * @return true if case is ignored, false for case sensitive searching
      */
-    public boolean isIgnoreCase() { return ignoreCase; }
+    public boolean isIgnoreCase() {
+        return ignoreCase;
+    }
 
     /**
      * Set the ignoreCase flag (true to ignore case, false for case sensitive)
+     *
      * @param ignoreCase true to ignore case, false for case sensitive
      */
-    public void setIgnoreCase(boolean ignoreCase) { this.ignoreCase = ignoreCase; }
+    public void setIgnoreCase(boolean ignoreCase) {
+        this.ignoreCase = ignoreCase;
+    }
 
     /**
      * Get the edit distance for this configuration.
+     *
      * @return the edit distance for this configuration
      */
     public int getEditDistance() {
@@ -268,6 +292,7 @@ public class FilterConfig {
     /**
      * Set the edit distance for this configuration.
      * Note that edit distance will be ignored if the searchString is a regular expression.
+     *
      * @param editDistance the edit distance for this configuration
      */
     public void setEditDistance(int editDistance) {

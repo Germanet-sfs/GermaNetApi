@@ -20,18 +20,16 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
-
-import java.io.*;
-import java.text.DecimalFormat;
-import java.util.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.stream.XMLStreamException;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import javax.xml.stream.XMLStreamException;
 
 /**
  * Provides high-level look-up access to GermaNet data. Intended as a read-only
@@ -74,7 +72,7 @@ import javax.xml.stream.XMLStreamException;
  * <code>Synsets</code> or <code>LexUnits</code>, given
  * an orthForm or a WordCategory.  For example,<br><br><code>
  * List&lt;LexUnit&gt; lexList = gnet.getLexUnits("Bank");<br>
- * List&lt;LexUnit&gt;> verbenLU = gnet.getLexUnits(WordCategory.verben);<br>
+ * List&lt;LexUnit&gt; verbenLU = gnet.getLexUnits(WordCategory.verben);<br>
  * List&lt;Synset&gt; synList = gnet.getSynsets("gehen");<br>
  * List&lt;Synset&gt; adjSynsets = gnet.getSynsets(WordCategory.adj);<br><br>
  * </code>
@@ -188,8 +186,8 @@ public class GermaNet {
      * files in the specified directory/archive path name - searches are case sensitive.
      *
      * @param dirName the directory where the GermaNet data files are located
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws java.io.IOException
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
     public GermaNet(String dirName) throws IOException, XMLStreamException {
         this(new File(dirName), false);
@@ -202,8 +200,8 @@ public class GermaNet {
      * @param dirName    the directory where the GermaNet data files are located
      * @param ignoreCase if true ignore case on lookups, otherwise do case
      *                   sensitive searches
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws java.io.IOException
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
     public GermaNet(String dirName, boolean ignoreCase) throws XMLStreamException, IOException {
         this(new File(dirName), ignoreCase);
@@ -214,8 +212,8 @@ public class GermaNet {
      * files in the specified directory/archive File - searches are case sensitive.
      *
      * @param dir location of the GermaNet data files
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws java.io.IOException
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
     public GermaNet(File dir) throws XMLStreamException, IOException {
         this(dir, false);
@@ -228,8 +226,8 @@ public class GermaNet {
      * @param dir        location of the GermaNet data files
      * @param ignoreCase if true ignore case on lookups, otherwise do case
      *                   sensitive searches
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws java.io.IOException
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
     public GermaNet(File dir, boolean ignoreCase) throws XMLStreamException, IOException {
         checkMemory();
@@ -322,7 +320,7 @@ public class GermaNet {
     /**
      * Loads the data files into this <code>GermaNet</code> object.
      *
-     * @throws javax.xml.stream.XMLStreamException
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
      */
     void load() throws IOException, XMLStreamException {
         StaxLoader loader;
@@ -1235,7 +1233,7 @@ public class GermaNet {
      *
      * @param file the <code>File</code> to check
      * @return true if this <code>File</code> is a <code>ZipFile</code>
-     * @throws java.io.IOException
+     * @throws java.io.IOException if there is an error opening or reading the file.
      */
     protected static boolean isZipFile(File file) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(file, "r");

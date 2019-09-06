@@ -20,8 +20,6 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 import com.google.common.collect.Sets;
-import de.tuebingen.uni.sfs.germanet.graph.GraphVizUtils;
-import guru.nidi.graphviz.engine.Format;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -32,14 +30,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
-import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Junit tests for the semantic relatedness functionality of the GermaNet API.

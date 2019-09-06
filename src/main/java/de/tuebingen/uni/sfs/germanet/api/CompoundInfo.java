@@ -38,22 +38,23 @@ public class CompoundInfo {
 
     /**
      * Constructs a <code>CompoundInfo</code> with the specified attributes.
-     * @param modifier1
-     * @param modifier1Property
-     * @param modifier1Category
-     * @param modifier2
-     * @param modifier2Property
-     * @param modifier2Category
-     * @param head
-     * @param headProperty
+     *
+     * @param modifier1         modifier1
+     * @param modifier1Property modifier1 property
+     * @param modifier1Category modifier1 category
+     * @param modifier2         modifier2
+     * @param modifier2Property modifier2 property
+     * @param modifier2Category modifier2 category
+     * @param head              head
+     * @param headProperty      head property
      */
-    public CompoundInfo (String modifier1,
-            CompoundProperty modifier1Property,
-            CompoundCategory modifier1Category,
-            String modifier2,
-            CompoundProperty modifier2Property,
-            CompoundCategory modifier2Category,
-            String head, CompoundProperty headProperty) {
+    public CompoundInfo(String modifier1,
+                        CompoundProperty modifier1Property,
+                        CompoundCategory modifier1Category,
+                        String modifier2,
+                        CompoundProperty modifier2Property,
+                        CompoundCategory modifier2Category,
+                        String head, CompoundProperty headProperty) {
         this.modifier1 = modifier1;
         this.modifier1Property = modifier1Property;
         this.modifier1Category = modifier1Category;
@@ -66,6 +67,7 @@ public class CompoundInfo {
 
     /**
      * Returns the first modifier of the compound
+     *
      * @return the first modifier of the compound
      */
     public String getModifier1() {
@@ -75,6 +77,7 @@ public class CompoundInfo {
     /**
      * Returns the <code>CompoundProperty</code> of the first modifier
      * or null if it has not been set
+     *
      * @return the <code>CompoundProperty</code> of the first modifier
      */
     public CompoundProperty getModifier1Property() {
@@ -84,6 +87,7 @@ public class CompoundInfo {
     /**
      * Returns the <code>CompoundCategory</code> of the first modifier
      * or null if it has not been set
+     *
      * @return the <code>CompoundCategory</code> of the first modifier
      */
     public CompoundCategory getModifier1Category() {
@@ -93,6 +97,7 @@ public class CompoundInfo {
     /**
      * Returns the second, alternative modifier of the compound
      * or null if it has not been set
+     *
      * @return the second modifier of the compound
      */
     public String getModifier2() {
@@ -102,6 +107,7 @@ public class CompoundInfo {
     /**
      * Returns the <code>CompoundProperty</code> of the second modifier
      * or null if it has not been set
+     *
      * @return the <code>CompoundProperty</code> of the second modifier
      */
     public CompoundProperty getModifier2Property() {
@@ -111,6 +117,7 @@ public class CompoundInfo {
     /**
      * Returns the <code>CompoundCategory</code> of the second modifier
      * or null if it has not been set
+     *
      * @return the <code>CompoundCategory</code> of the second modifier
      */
     public CompoundCategory getModifier2Category() {
@@ -119,6 +126,7 @@ public class CompoundInfo {
 
     /**
      * Returns the head of the compound
+     *
      * @return the head of the compound
      */
     public String getHead() {
@@ -128,6 +136,7 @@ public class CompoundInfo {
     /**
      * Returns the <code>CompoundProperty</code> of the head
      * or null if it has not been set
+     *
      * @return the <code>CompoundProperty</code> of the head
      */
     public CompoundProperty getHeadProperty() {
@@ -136,6 +145,7 @@ public class CompoundInfo {
 
     /**
      * Return a String representation of the compound.
+     *
      * @return a String representation of the compound.
      */
     @Override
