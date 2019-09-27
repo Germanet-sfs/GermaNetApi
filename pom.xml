@@ -163,7 +163,7 @@
                         </goals>
                         <configuration>
                             <failOnError>false</failOnError>
-                            <additionalparam>-Xdoclint:none</additionalparam>
+                            <doclint>all,-missing</doclint>
                         </configuration>
                     </execution>
                 </executions>
