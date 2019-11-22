@@ -35,12 +35,12 @@ class SemanticUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SemanticUtils.class);
     private GermaNet gnet;
     private Map<WordCategory, Set<LeastCommonSubsumer>> catLongestLCSMap;
-    private Map<WordCategory, Integer> catMaxDistMap;
+    private Map<WordCategory, Integer> catMaxHypernymDistanceMap;
 
     SemanticUtils(GermaNet gnet) {
         this.gnet = gnet;
         catLongestLCSMap = new HashMap<>(WordCategory.values().length);
-        catMaxDistMap = new HashMap<>(WordCategory.values().length);
+        catMaxHypernymDistanceMap = new HashMap<>(WordCategory.values().length);
         loadDistanceMaps();
     }
 
@@ -72,7 +72,7 @@ class SemanticUtils {
                     maxHypernymDistance = synsetMaxDistance;
                 }
             }
-            catMaxDistMap.put(wordCategory, maxHypernymDistance);
+            catMaxHypernymDistanceMap.put(wordCategory, maxHypernymDistance);
         }
 
         long endTime = System.currentTimeMillis();
@@ -141,7 +141,7 @@ class SemanticUtils {
         // longest distance between 2 synsets found so far
         int longestDistance = 0;
         // longest path between a synset and any of its hypernyms in the graph
-        int maxHypernymDistance = catMaxDistMap.get(wordCategory);
+        int maxHypernymDistance = catMaxHypernymDistanceMap.get(wordCategory);
 
         // iterate over all pairs of synsets, avoiding processing any pair twice
         for (int i = 0; i < hypernymDistances.size(); i++) {
@@ -183,5 +183,51 @@ class SemanticUtils {
 
         catLongestLCSMap.put(wordCategory, leastCommonSubsumers);
         return leastCommonSubsumers;
+    }
+
+    /**
+     * Get the similarity using the Path measurement.
+     * ToDo: Provide link to publication
+     *
+     * @param synset1
+     * @param synset2
+     * @return
+     */
+    double getSimilarityPath(Synset synset1, Synset synset2) {
+        if ((synset1 == null) || (synset2 == null) || ! synset2.inWordCategory(synset1.getWordCategory())) {
+            return -1; // ToDo: return what value when no similarity exists?
+        }
+
+        // the longest LCS for any two synsets in GermaNet for the WordCategory that
+        // synset1 and synset2 belong to
+        Set<LeastCommonSubsumer> lcsSet = catLongestLCSMap.get(synset1.getWordCategory());
+
+        // all LCS's have the same distance, just get the first one
+        int maxShortestPathLength = lcsSet.iterator().next().getDistance();
+
+        int pathLength = synset1.getLeastCommonSubsumerDistance(synset2);
+
+        return (maxShortestPathLength - pathLength) / maxShortestPathLength;
+    }
+
+    /**
+     * Get the similarity using the Lea and Chodorow algorithm.
+     * ToDo: Provide link to publication
+     *
+     * @param synset1
+     * @param synset2
+     * @return
+     */
+    double getSimilarityLeacockChodorow(Synset synset1, Synset synset2) {
+        if ((synset1 == null) || (synset2 == null) || ! synset2.inWordCategory(synset1.getWordCategory())) {
+            return -1; // ToDo: return what value when no similarity exists?
+        }
+
+        int maxDepth = catMaxHypernymDistanceMap.get(synset1.getWordCategory());
+
+        // the distance, using hypernym relations, between synset1 and synset2
+        int pathLength = synset1.getLeastCommonSubsumerDistance(synset2);
+
+        return Math.log(pathLength / (2*maxDepth));
     }
 }
