@@ -273,11 +273,18 @@ public class GermaNet {
         }
         load();
 
+        long endTime = System.currentTimeMillis();
+        double processingTime = (double) (endTime - startTime) / 1000;
+        DecimalFormat dec = new DecimalFormat("#0.00");
+        LOGGER.info("Done loading GermaNet data ({} seconds).", dec.format(processingTime));
+
+        /*
         semanticUtils = new SemanticUtils(this);
         long endTime = System.currentTimeMillis();
         double processingTime = (double) (endTime - startTime) / 1000;
         DecimalFormat dec = new DecimalFormat("#0.00");
         LOGGER.info("Done loading GermaNet data ({} seconds).", dec.format(processingTime));
+        */
     }
 
     /**
@@ -324,6 +331,7 @@ public class GermaNet {
      */
     void load() throws IOException, XMLStreamException {
         StaxLoader loader;
+        SynsetDistanceMapLoader distMapLoader;
         String oldVal = null;
 
         // use xerces xml parser
@@ -337,6 +345,13 @@ public class GermaNet {
         loadIli();
         loadWiktionaryParaphrases();
         trimAll();
+
+        // calculate and load distance maps into Synset objects
+        distMapLoader = new SynsetDistanceMapLoader(this);
+        distMapLoader.loadDistanceMaps();
+
+        // create SemanticUtils object
+        semanticUtils = new SemanticUtils(distMapLoader.getCatMaxHypernymDistanceMap(), distMapLoader.getCatLongestLCSMap(), this);
 
         // set parser back to whatever it was before
         if (oldVal != null) {
@@ -1200,32 +1215,8 @@ public class GermaNet {
         }
     }
 
-    /**
-     * Find the least common subsumer(s) for these two synsets. This is the closest common parent,
-     * using hypernym relations only.
-     *
-     * @param synset1 one synset
-     * @param synset2 another synset
-     * @return a set of LeastCommonSubsumer objects, each of which contains a synset ID of a synset that is
-     * a common parent of both input synsets, and which has the shortest possible distance of all common parents.
-     * It is possible that multiple least common subsumers exist for the input synsets, in which case
-     * all least common subsumers will have the same, shortest, distance.
-     */
-    public Set<LeastCommonSubsumer> getLeastCommonSubsumer(Synset synset1, Synset synset2) {
-        return synset1.getLeastCommonSubsumer(synset2);
-    }
-
-    /**
-     * Calculate the longest least common subsumer(s) for wordCategory. This is used by the
-     * semantic relatedness algorithms. It is included for completeness, but is most likely
-     * not needed by users of this API. Note also that for nouns, this method may be slow the
-     * first time it is called.
-     *
-     * @param wordCategory WordCategory to process
-     * @return a set of LeastCommonSubsumers with the longest possible paths for WordCategory
-     */
-    public Set<LeastCommonSubsumer> longestLeastCommonSubsumer(WordCategory wordCategory) {
-        return semanticUtils.longestLeastCommonSubsumer(wordCategory);
+    public SemanticUtils getSemanticUtils() {
+        return semanticUtils;
     }
 
     /**

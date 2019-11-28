@@ -37,14 +37,26 @@ public class LeastCommonSubsumer {
         this.distance = distance;
     }
 
+    /**
+     * Get the Synset ID of the least common subsumer.
+     * @return the Synset ID of the least common subsumer
+     */
     public int getLcsID() {
         return lcsID;
     }
 
+    /**
+     * Get the Synset IDs of the two synsets.
+     * @return the Synset IDs of the two synsets
+     */
     public Set<Integer> getFromToSynsetIDs() {
         return fromToSynsetIDs;
     }
 
+    /**
+     * Get the shortest distance between the two synsets using hypernym / hyponym relations.
+     * @return the shortest distance between the two synsets using hypernym / hyponym relations
+     */
     public int getDistance() {
         return distance;
     }

@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 
 import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Junit tests for the semantic relatedness functionality of the GermaNet API.
@@ -46,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SemanticUtilsTest {
     static GermaNet gnetCaseSensitive;
+    static SemanticUtils semanticUtils;
     static String dataPath;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SemanticUtilsTest.class);
@@ -59,6 +61,7 @@ public class SemanticUtilsTest {
             String goodDataPath = dataPath + "GN-XML-ForApiUnitTesting/";
 
             gnetCaseSensitive = new GermaNet(goodDataPath, false);
+            semanticUtils = gnetCaseSensitive.getSemanticUtils();
         } catch (IOException ex) {
             LOGGER.error("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
             System.exit(0);
@@ -77,7 +80,7 @@ public class SemanticUtilsTest {
         Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
         Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
 
-        Set<LeastCommonSubsumer> actual = gnetCaseSensitive.getLeastCommonSubsumer(synset1, synset2);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumer(synset1, synset2);
 
         assertEquals(expected, actual);
     }
@@ -216,7 +219,7 @@ public class SemanticUtilsTest {
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(49774, 138670), 35)
         );
 
-        Set<LeastCommonSubsumer> actual = gnetCaseSensitive.longestLeastCommonSubsumer(WordCategory.nomen);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumer(WordCategory.nomen);
 
         LOGGER.info("actual longestShortest LCS(s) for noun: {}", actual);
 
@@ -232,7 +235,7 @@ public class SemanticUtilsTest {
         Synset synset2 = gnetCaseSensitive.getSynsetByID(heilpflanzeID); // Heilpflanze
 
         // different word categories - should be null
-        Set<LeastCommonSubsumer> actual = gnetCaseSensitive.getLeastCommonSubsumer(synset1, synset2);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumer(synset1, synset2);
 
         assertEquals(null, actual);
     }
@@ -259,7 +262,7 @@ public class SemanticUtilsTest {
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(119463, 123246), 28)
         );
 
-        Set<LeastCommonSubsumer> actual = gnetCaseSensitive.longestLeastCommonSubsumer(WordCategory.verben);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumer(WordCategory.verben);
 
         LOGGER.info("actual longestShortest LCS(s) for verb: {}", actual);
 
@@ -280,16 +283,112 @@ public class SemanticUtilsTest {
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(94411, 94396), 20)
         );
 
-        Set<LeastCommonSubsumer> actual = gnetCaseSensitive.longestLeastCommonSubsumer(WordCategory.adj);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumer(WordCategory.adj);
 
         LOGGER.info("actual longestShortest LCS(s) for adj: {}", actual);
 
         assertEquals(expected, actual);
     }
 
+    @ParameterizedTest(name = "{0} {1} {2} Path")
+    @MethodSource({"similarityPathProvider"})
+    void similarityPathTest(int sID1, int sID2, int normalizedMax, double expected) {
+        Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
+        Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
+
+        double epsilon = 0.00001; // tolerance for working with doubles
+        double actual = semanticUtils.getSimilarityPath(synset1, synset2, normalizedMax);
+        assertEquals(expected, actual, epsilon);
+    }
+
+    private static Stream<Arguments> similarityPathProvider() {
+
+        // Bambus - Veilchen
+        int bambusID = 46047;
+        int veilchenID = 45380;
+        double bambusVeilchenExpected = 0.885714;
+
+        // Kleines Johanniswürmchen - Lebertransplantation
+        int kleinesJohanniswürmchenID = 49774;
+        int lebertransplantationID = 83979;
+        double unsimilarExpected = 0.0;
+        double identityExpected = 1.0;
+
+        // bemehlen - anmustern
+        int bemehlenID = 57534;
+        int anmusternID = 119463;
+
+        // blasphemisch - regressiv
+        int blasphemischID = 94396;
+        int regressivID = 94411;
+
+        return Stream.of(
+                Arguments.of(bambusID, veilchenID, 0, bambusVeilchenExpected),
+                Arguments.of(kleinesJohanniswürmchenID, lebertransplantationID, 0, unsimilarExpected),
+                Arguments.of(bemehlenID, anmusternID, 0, unsimilarExpected),
+                Arguments.of(bemehlenID, bemehlenID, 0, identityExpected),
+                Arguments.of(blasphemischID, regressivID, 0, unsimilarExpected),
+                Arguments.of(blasphemischID, regressivID, 10, unsimilarExpected),
+                Arguments.of(blasphemischID, blasphemischID, 0, identityExpected),
+                Arguments.of(blasphemischID, blasphemischID, 10, 10.0)
+        );
+    }
+
+    @ParameterizedTest(name = "{0} {1} {2} Leacock and Chodorow")
+    @MethodSource({"similarityLCProvider"})
+    void similarityLCTest(int sID1, int sID2, int normalizedMax, double expected) {
+        Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
+        Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
+
+        double epsilon = 0.1; // tolerance for working with doubles
+        double actual = semanticUtils.getSimilarityLeacockChodorow(synset1, synset2, normalizedMax);
+        assertEquals(expected, actual, epsilon);
+    }
+
+    private static Stream<Arguments> similarityLCProvider() {
+
+        // Bambus - Veilchen
+        int bambusID = 46047;
+        int veilchenID = 45380;
+        double bambusVeilchenRawExpected = 2.1;
+        double identityExpected = 1.0; //3.6888;
+
+        // Kleines Johanniswürmchen - Lebertransplantation
+        int kleinesJohanniswuermchenID = 49774;
+        int lebertransplantationID = 83979;
+        double kJohannisLebertransExpected = 0.0;
+
+        // bemehlen - anmustern
+        int bemehlenID = 57534;
+        int anmusternID = 119463;
+
+        // blasphemisch - regressiv
+        int blasphemischID = 94396;
+        int regressivID = 94411;
+
+        return Stream.of(
+                Arguments.of(bambusID, veilchenID, 0, bambusVeilchenRawExpected),
+                Arguments.of(bambusID, veilchenID, 10, 5.62),
+                Arguments.of(bambusID, bambusID, 1, identityExpected),
+                Arguments.of(bambusID, bambusID, 10, 10.0),
+                Arguments.of(veilchenID, veilchenID, 1, identityExpected),
+                Arguments.of(kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 1, identityExpected),
+                Arguments.of(lebertransplantationID, lebertransplantationID, 1, identityExpected),
+                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 1, kJohannisLebertransExpected),
+                Arguments.of(bemehlenID, anmusternID, 0, 0.16),
+                Arguments.of(bemehlenID, anmusternID, 1, 0.0),
+                Arguments.of(bemehlenID, bemehlenID, 0, 3.53),
+                Arguments.of(bemehlenID, bemehlenID, 1, 1.0),
+                Arguments.of(blasphemischID, regressivID, 0, 0.05),
+                Arguments.of(blasphemischID, regressivID, 1, 0.0),
+                Arguments.of(blasphemischID, blasphemischID, 0, 3.09),
+                Arguments.of(blasphemischID, blasphemischID, 1, 1.0)
+        );
+    }
+
+    // Find all synsets whose wordCategory does not match that of all its direct hypernyms.
+    // This should never happen.
     @Test
-        // Find all synsets whose wordCategory does not match that of all its direct hypernyms.
-        // This should never happen.
     void catDoesntMatchHyperTest() {
         List<Synset> synsetList = gnetCaseSensitive.getSynsets();
 

@@ -397,7 +397,7 @@ public class Synset implements Comparable {
      * all least common subsumers will have the same, shortest, distance. Returns null if both synsets do not belong
      * to the same WordCategory.
      */
-    Set<LeastCommonSubsumer> getLeastCommonSubsumer(Synset otherSynset) {
+    Set<LeastCommonSubsumer> getLeastCommonSubsumers(Synset otherSynset) {
 
         if (otherSynset == null || !otherSynset.inWordCategory(wordCategory)) {
             return null;
@@ -426,21 +426,20 @@ public class Synset implements Comparable {
     }
 
     /**
-     *  Get the distance to the least common subsumer(s) of this synset and the input synset.
-     *  The least common subsumer of two synsets is the closest common parent, using hypernym relations only.
+     *  Get the shortest distance to otherSynset using hypernym / hyponym relations only.
      *
      * @param otherSynset the other synset
-     * @return The distance to the least common subsumer(s), or null if otherSynset does not belong to the
+     * @return The distance to otherSynset, or null if otherSynset does not belong to the
      * same WordCategory as this synset.
      */
-    Integer getLeastCommonSubsumerDistance(Synset otherSynset) {
+    Integer getDistanceToSynset(Synset otherSynset) {
 
         if (otherSynset == null || !otherSynset.inWordCategory(wordCategory)) {
             return null;
         }
 
         // all LCS's have the same distance, just get the first one
-        return getLeastCommonSubsumer(otherSynset).iterator().next().getDistance();
+        return getLeastCommonSubsumers(otherSynset).iterator().next().getDistance();
     }
 
     void putDistanceMap(Integer hypernymID, Integer depth) {
