@@ -290,9 +290,60 @@ public class SemanticUtilsTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    void maxDepthNounTest() {
+
+        List<Synset> synsets = gnetCaseSensitive.getSynsets(WordCategory.nomen);
+        int maxDepth = 0;
+
+        for (Synset synset : synsets) {
+            int depth = synset.getDepth();
+            if (depth > maxDepth) {
+                maxDepth = depth;
+            }
+        }
+
+        // max depth for nouns is 20
+        assertEquals(20, maxDepth);
+    }
+
+    @Test
+    void maxDepthVerbTest() {
+
+        List<Synset> synsets = gnetCaseSensitive.getSynsets(WordCategory.verben);
+        int maxDepth = 0;
+
+        for (Synset synset : synsets) {
+            int depth = synset.getDepth();
+            if (depth > maxDepth) {
+                maxDepth = depth;
+            }
+        }
+
+        // max depth for nouns is 20
+        assertEquals(15, maxDepth);
+    }
+
+    @Test
+    void maxDepthAdjTest() {
+
+        List<Synset> synsets = gnetCaseSensitive.getSynsets(WordCategory.adj);
+        int maxDepth = 0;
+
+        for (Synset synset : synsets) {
+            int depth = synset.getDepth();
+            if (depth > maxDepth) {
+                maxDepth = depth;
+            }
+        }
+
+        // max depth for nouns is 20
+        assertEquals(10, maxDepth);
+    }
+
     @ParameterizedTest(name = "{0} {1} {2} Path")
-    @MethodSource({"similarityPathProvider"})
-    void similarityPathTest(int sID1, int sID2, int normalizedMax, double expected) {
+    @MethodSource({"simplePathProvider"})
+    void simplePathTest(int sID1, int sID2, int normalizedMax, double expected) {
         Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
         Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
 
@@ -301,7 +352,7 @@ public class SemanticUtilsTest {
         assertEquals(expected, actual, epsilon);
     }
 
-    private static Stream<Arguments> similarityPathProvider() {
+    private static Stream<Arguments> simplePathProvider() {
 
         // Bambus - Veilchen
         int bambusID = 46047;
@@ -335,8 +386,8 @@ public class SemanticUtilsTest {
     }
 
     @ParameterizedTest(name = "{0} {1} {2} Leacock and Chodorow")
-    @MethodSource({"similarityLCProvider"})
-    void similarityLCTest(int sID1, int sID2, int normalizedMax, double expected) {
+    @MethodSource({"leacockChodorowProvider"})
+    void leacockChodorowTest(int sID1, int sID2, int normalizedMax, double expected) {
         Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
         Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
 
@@ -345,7 +396,7 @@ public class SemanticUtilsTest {
         assertEquals(expected, actual, epsilon);
     }
 
-    private static Stream<Arguments> similarityLCProvider() {
+    private static Stream<Arguments> leacockChodorowProvider() {
 
         // Bambus - Veilchen
         int bambusID = 46047;

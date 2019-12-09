@@ -34,15 +34,38 @@ public class SemanticUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SemanticUtils.class);
     private Map<WordCategory, Integer> catMaxHypernymDistanceMap;
     private Map<WordCategory, Set<LeastCommonSubsumer>> catLongestLCSMap;
+    private Map<WordCategory, Integer> catMaxDepthMap;
     private Map<WordCategory, Map<SemRelMeasure, List<Double>>> catNormalizationMap;
     private GermaNet gnet;
 
-    SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap,Map<WordCategory, Set<LeastCommonSubsumer>> catLongestLCSMap, GermaNet gnet) {
+    SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap, GermaNet gnet) {
         this.catMaxHypernymDistanceMap = catMaxHypernymDistanceMap;
-        this.catLongestLCSMap = catLongestLCSMap;
-        catNormalizationMap = new HashMap<>();
         this.gnet = gnet;
+        catMaxDepthMap = new HashMap<>(3);
+        catNormalizationMap = new HashMap<>();
+        LOGGER.info("Initializing SemanticUtils object...");
+        initCatLongestLCSMap();
+        initMaxDepthMap();
         initMinMaxValues();
+        LOGGER.info("Done initializing SemanticUtils object.");
+    }
+
+    private void initMaxDepthMap() {
+        LOGGER.info("Calculating max depths...");
+        for (WordCategory wordCategory : WordCategory.values()) {
+            List<Synset> synsets = gnet.getSynsets(wordCategory);
+            int maxDepth = 0;
+
+            for (Synset synset : synsets) {
+                int depth = synset.getDepth();
+                if (depth > maxDepth) {
+                    maxDepth = depth;
+                }
+            }
+            catMaxDepthMap.put(wordCategory, maxDepth);
+            LOGGER.info("Max depth for {}: {}", wordCategory, maxDepth);
+        }
+        LOGGER.info("Done calculating max depths.");
     }
 
     /**
@@ -107,6 +130,99 @@ public class SemanticUtils {
         return (rawValue / maxVal) * normalizedMax;
     }
 
+    private void initCatLongestLCSMap() {
+        if (catLongestLCSMap == null) {
+            catLongestLCSMap = new HashMap<>();
+        }
+        LOGGER.info("Calculating longest LCS's...");
+        for (WordCategory wordCategory : WordCategory.values()) {
+            // don't calculate again if it was already done
+            if (catLongestLCSMap.get(wordCategory) == null) {
+                long startTime = System.currentTimeMillis();
+                Set<LeastCommonSubsumer> lcsSet = longestLeastCommonSubsumer(wordCategory);
+                catLongestLCSMap.put(wordCategory, lcsSet);
+
+                long endTime = System.currentTimeMillis();
+                double processingTime = (double) (endTime - startTime) / 1000;
+                LOGGER.info("Found {} longest LCS for {} of length {} (in {} seconds).", lcsSet.size(),
+                        wordCategory.name(), lcsSet.iterator().next().getDistance(), processingTime);
+            }
+        }
+        LOGGER.info("Done calculating longest LCS's.");
+    }
+
+    /**
+     * Calculate the longest least common subsumer(s) for wordCategory. This is used by
+     * some of the semantic relatedness algorithms.
+     *
+     * @param wordCategory WordCategory to process
+     * @return a set of LeastCommonSubsumers with the longest possible paths for WordCategory
+     */
+    private Set<LeastCommonSubsumer> longestLeastCommonSubsumer(WordCategory wordCategory) {
+        Set<LeastCommonSubsumer> leastCommonSubsumers = new HashSet<>();
+
+        // processing is faster if the synsets are sorted by maxDistance to any synset on its path to root
+        List<Synset> hypernymDistances = gnet.getSynsets(wordCategory);
+        Collections.sort(hypernymDistances, (s1, s2) -> (s2.getMaxDistance() - s1.getMaxDistance()));
+
+        // longest distance between 2 synsets found so far
+        int longestDistance = 0;
+        // longest path between a synset and any of its hypernyms in the graph
+        int maxHypernymDistance = catMaxHypernymDistanceMap.get(wordCategory);
+
+        // iterate over all pairs of synsets, avoiding processing any pair twice
+        for (int i = 0; i < hypernymDistances.size(); i++) {
+            Synset synset1 = hypernymDistances.get(i);
+            int synset1MaxHypernymDist = synset1.getMaxDistance();
+
+            // not possible for this synset to be one of the longest
+            if (maxHypernymDistance + synset1MaxHypernymDist < longestDistance) {
+                continue;
+            }
+
+            // start at i+1 to avoid double processing
+            for (int j = i + 1; j < hypernymDistances.size(); j++) {
+                Synset synset2 = hypernymDistances.get(j);
+
+                // not possible for these two synsets to have a path longer than
+                // the longest distance so far
+                if (synset2.getMaxDistance() + synset1MaxHypernymDist < longestDistance) {
+                    continue;
+                }
+
+                // find the least common subsumers for these two synsets
+                Set<LeastCommonSubsumer> lcsSet = synset1.getLeastCommonSubsumers(synset2);
+                int pathLength = lcsSet.iterator().next().getDistance();
+
+                if (pathLength > longestDistance) {
+                    // path length is longer that any found so far
+                    // replace LCS set with this one
+                    leastCommonSubsumers.clear();
+                    leastCommonSubsumers.addAll(lcsSet);
+                    longestDistance = pathLength;
+                } else if (pathLength == longestDistance) {
+                    // path length is equal to longest so far
+                    // add this one to result
+                    leastCommonSubsumers.addAll(lcsSet);
+                }
+            }
+        }
+        return leastCommonSubsumers;
+    }
+
+    // ToDo: javadoc
+    public int getDistanceBetweenSynsets(Synset fromSynset, Synset toSynset) {
+        return (fromSynset.getDistanceToSynset(toSynset));
+    }
+
+    // ToDo: javadoc
+    /**
+    public List<Synset> getPathBetweenSynsets(Synset fromSynset, Synset toSynset) {
+        List<Synset> path = new ArrayList<>();
+
+    }
+     */
+
     /**
      * A simple relatedness measure based on the distance between two nodes and
      * the longest possible 'shortest path' between any two Synsets in GermaNet:<br>
@@ -170,7 +286,7 @@ public class SemanticUtils {
      * <code>rel(s1,s2) = -log(pathlength/2D)</code><br>
      * <p>
      * pathlength = number of nodes on the shortest path from s1 to s2<br>
-     * D = max depth of taxonomy using node counting: maxDepth = 20 for nouns, 16 for verbs, and 10 for adjectives
+     * D = max depth of taxonomy using node counting: maxDepth = 20 for nouns, 15 for verbs, and 10 for adjectives
      * in release 14.0 of the GermaNet data. It is possible that these values are slightly different for other data
      * releases.<br>
      * If normalizedMax is > 0, then synsets that are very similar will be close to that
@@ -191,7 +307,7 @@ public class SemanticUtils {
 
         // maxDepth and pathLength represent the number of edges
         // add 1 to get the number of nodes
-        int maxDepth = catMaxHypernymDistanceMap.get(s1.getWordCategory()) +1;
+        int maxDepth = catMaxDepthMap.get(s1.getWordCategory()) +1;
 
         // the distance, using hypernym relations, between s1 and s2
         int pathLength = s1.getDistanceToSynset(s2) +1;

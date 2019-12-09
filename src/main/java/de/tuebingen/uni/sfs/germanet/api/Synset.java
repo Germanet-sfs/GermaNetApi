@@ -74,8 +74,8 @@ public class Synset implements Comparable {
 
     // for semantic relatedness utils
     private Map<Integer, Integer> distanceMap;
-    private Set<Integer> hypernymIds;
-    private int maxDistance;
+    private int maxDistance; // to any hypernym on path to root
+    private int depth; // distance from root
 
     // Relations of this Synset
     private EnumMap<ConRel, Set<Synset>> relations;
@@ -96,9 +96,7 @@ public class Synset implements Comparable {
         relations = new EnumMap<>(ConRel.class);
         maxDistance = 0;
         distanceMap = new HashMap<>();
-        hypernymIds = new HashSet<>();
         distanceMap.put(id, 0);
-        hypernymIds.add(id);
     }
 
     /**
@@ -407,7 +405,7 @@ public class Synset implements Comparable {
         int shortestDistance = Integer.MAX_VALUE;
 
         // the intersection of the hypernyms are the common subsumers
-        Set<Integer> intersection = Sets.intersection(hypernymIds, otherSynset.getHypernymIds());
+        Set<Integer> intersection = Sets.intersection(getHypernymIds(), otherSynset.getHypernymIds());
 
         int otherId = otherSynset.getId();
 
@@ -442,26 +440,55 @@ public class Synset implements Comparable {
         return getLeastCommonSubsumers(otherSynset).iterator().next().getDistance();
     }
 
-    void putDistanceMap(Integer hypernymID, Integer depth) {
-        distanceMap.put(hypernymID, depth);
+    /**
+     * Add the input hypernymID and distance to the distance map (or replace the distance
+     * if hypernymID is already in the map). Also adjust maxDistance (to any hypernym) and
+     * depth (from ROOT), if necessary.
+     * @param hypernymID synset ID of the hypernym
+     * @param distance distance from this synset to the hypernym
+     */
+    void updateDistanceMap(Integer hypernymID, Integer distance) {
+        Integer curDist = distanceMap.get(hypernymID);
+        distanceMap.put(hypernymID, distance);
+        if ((distance > maxDistance) || (curDist != null && curDist == maxDistance)) {
+            maxDistance = distance;
+        }
+
+        if (hypernymID == GermaNet.GNROOT_ID) {
+            this.depth = distance;
+        }
     }
 
+    /**
+     * Return the set of all synset IDs that are on a path from this synset to ROOT,
+     * using hypernym relations.
+     * @return the set of all synset IDs that are on a path from this synset to ROOT,
+     * using hypernym relations
+     */
     Set<Integer> getHypernymIds() {
-        return hypernymIds;
+        return distanceMap.keySet();
     }
 
-    void addHypernymId(Integer hypernymID) {
-        hypernymIds.add(hypernymID);
-    }
-
+    /**
+     * Return the maximum distance between this synset and another synset on the path
+     * to ROOT, using edge counting and hypernym relations. Note: the distance to ROOT
+     * is not always the max distance.
+     * @return
+     */
     int getMaxDistance() {
         return maxDistance;
     }
 
-    void setMaxDistance(int maxDistance) {
-        this.maxDistance = maxDistance;
+    /**
+     * Return the depth of this synset. This is the length, using edge counting of hypernym relations,
+     * from this synset to ROOT. If there are multiple paths to ROOT, the length of the shortest path is returned.
+     * @return the depth of this synset
+     */
+    public int getDepth() {
+        return depth;
     }
 
+    // ToDo: javadoc
     Integer getDistanceToHypernym(int hypernymID) {
         return distanceMap.get(hypernymID);
     }

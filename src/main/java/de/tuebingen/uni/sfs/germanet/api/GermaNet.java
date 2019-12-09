@@ -179,6 +179,9 @@ public class GermaNet {
     private boolean ignoreCase;
     private static final int MAX_LEVENSHTEIN_DIST = 30;
     private LevenshteinDistance levenshteinDistance;
+
+    // semanticUtils
+    private Map<WordCategory, Integer> catMaxHypernymDistanceMap;
     private SemanticUtils semanticUtils;
 
     /**
@@ -247,6 +250,7 @@ public class GermaNet {
         this.wordCategoryMapAllOrthForms = new EnumMap<>(WordCategory.class);
         this.lowerToUpperMap = new HashMap<>();
         this.levenshteinDistance = new LevenshteinDistance(MAX_LEVENSHTEIN_DIST);
+        semanticUtils = null;
 
         long startTime = System.currentTimeMillis();
         if (!dir.isDirectory() && isZipFile(dir)) {
@@ -277,14 +281,6 @@ public class GermaNet {
         double processingTime = (double) (endTime - startTime) / 1000;
         DecimalFormat dec = new DecimalFormat("#0.00");
         LOGGER.info("Done loading GermaNet data ({} seconds).", dec.format(processingTime));
-
-        /*
-        semanticUtils = new SemanticUtils(this);
-        long endTime = System.currentTimeMillis();
-        double processingTime = (double) (endTime - startTime) / 1000;
-        DecimalFormat dec = new DecimalFormat("#0.00");
-        LOGGER.info("Done loading GermaNet data ({} seconds).", dec.format(processingTime));
-        */
     }
 
     /**
@@ -350,8 +346,9 @@ public class GermaNet {
         distMapLoader = new SynsetDistanceMapLoader(this);
         distMapLoader.loadDistanceMaps();
 
-        // create SemanticUtils object
-        semanticUtils = new SemanticUtils(distMapLoader.getCatMaxHypernymDistanceMap(), distMapLoader.getCatLongestLCSMap(), this);
+        // get maps for creating a SemanticUtils object if necessary
+        // for now just set semanticUtils to null
+        catMaxHypernymDistanceMap = distMapLoader.getCatMaxHypernymDistanceMap();
 
         // set parser back to whatever it was before
         if (oldVal != null) {
@@ -1216,6 +1213,9 @@ public class GermaNet {
     }
 
     public SemanticUtils getSemanticUtils() {
+        if (semanticUtils == null) {
+            semanticUtils = new SemanticUtils(catMaxHypernymDistanceMap, this);
+        }
         return semanticUtils;
     }
 
