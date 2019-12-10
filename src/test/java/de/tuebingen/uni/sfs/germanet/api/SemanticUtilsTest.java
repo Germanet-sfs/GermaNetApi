@@ -37,7 +37,6 @@ import java.util.stream.Stream;
 
 import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Junit tests for the semantic relatedness functionality of the GermaNet API.
@@ -320,7 +319,7 @@ public class SemanticUtilsTest {
             }
         }
 
-        // max depth for nouns is 20
+        // max depth for verbs is 15
         assertEquals(15, maxDepth);
     }
 
@@ -337,7 +336,7 @@ public class SemanticUtilsTest {
             }
         }
 
-        // max depth for nouns is 20
+        // max depth for adj is 10
         assertEquals(10, maxDepth);
     }
 

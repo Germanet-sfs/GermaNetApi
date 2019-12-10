@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.*;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -279,8 +278,8 @@ public class GermaNet {
 
         long endTime = System.currentTimeMillis();
         double processingTime = (double) (endTime - startTime) / 1000;
-        DecimalFormat dec = new DecimalFormat("#0.00");
-        LOGGER.info("Done loading GermaNet data ({} seconds).", dec.format(processingTime));
+        //DecimalFormat dec = new DecimalFormat("#0.00");
+        LOGGER.info("Done loading GermaNet data ({} seconds).", processingTime);
     }
 
     /**
@@ -346,8 +345,7 @@ public class GermaNet {
         distMapLoader = new SynsetDistanceMapLoader(this);
         distMapLoader.loadDistanceMaps();
 
-        // get maps for creating a SemanticUtils object if necessary
-        // for now just set semanticUtils to null
+        // get maps for creating a SemanticUtils object if necessary at a later point
         catMaxHypernymDistanceMap = distMapLoader.getCatMaxHypernymDistanceMap();
 
         // set parser back to whatever it was before

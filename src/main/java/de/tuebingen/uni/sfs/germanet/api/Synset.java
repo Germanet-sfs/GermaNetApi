@@ -20,7 +20,6 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 import com.google.common.collect.Sets;
-
 import java.util.*;
 
 /**

@@ -41,12 +41,12 @@ public class SemanticUtils {
     SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap, GermaNet gnet) {
         this.catMaxHypernymDistanceMap = catMaxHypernymDistanceMap;
         this.gnet = gnet;
-        catMaxDepthMap = new HashMap<>(3);
-        catNormalizationMap = new HashMap<>();
+        catMaxDepthMap = new HashMap<>(WordCategory.values().length);
+        catNormalizationMap = new HashMap<>(WordCategory.values().length);
         LOGGER.info("Initializing SemanticUtils object...");
         initCatLongestLCSMap();
         initMaxDepthMap();
-        initMinMaxValues();
+        initMinMaxNormalizationValues();
         LOGGER.info("Done initializing SemanticUtils object.");
     }
 
@@ -71,14 +71,13 @@ public class SemanticUtils {
     /**
      * Initialize the normalization values for each word category and each relatedness measure.
      */
-    private void initMinMaxValues() {
-        //
+    private void initMinMaxNormalizationValues() {
         for (WordCategory wordCategory : WordCategory.values()) {
             Map<SemRelMeasure, List<Double>> normalizeMinMaxValues = new HashMap<>();
 
             for (SemRelMeasure semRelMeasure : SemRelMeasure.values()) {
                 // min at index1, max at index2
-                List<Double> maxMin = new ArrayList<>(2); // min at index1, max at index2
+                List<Double> maxMin = new ArrayList<>(2); // min at index 0, max at index 1
                 List<Integer> maxDistantSynsetIds = Lists.newArrayList(catLongestLCSMap.get(wordCategory).iterator().next().getFromToSynsetIDs());
                 Synset synset1 = gnet.getSynsetByID(maxDistantSynsetIds.get(0));
                 Synset synset2 = gnet.getSynsetByID(maxDistantSynsetIds.get(1));
@@ -162,8 +161,8 @@ public class SemanticUtils {
         Set<LeastCommonSubsumer> leastCommonSubsumers = new HashSet<>();
 
         // processing is faster if the synsets are sorted by maxDistance to any synset on its path to root
-        List<Synset> hypernymDistances = gnet.getSynsets(wordCategory);
-        Collections.sort(hypernymDistances, (s1, s2) -> (s2.getMaxDistance() - s1.getMaxDistance()));
+        List<Synset> synsetsByCat = gnet.getSynsets(wordCategory);
+        Collections.sort(synsetsByCat, (s1, s2) -> (s2.getMaxDistance() - s1.getMaxDistance()));
 
         // longest distance between 2 synsets found so far
         int longestDistance = 0;
@@ -171,8 +170,8 @@ public class SemanticUtils {
         int maxHypernymDistance = catMaxHypernymDistanceMap.get(wordCategory);
 
         // iterate over all pairs of synsets, avoiding processing any pair twice
-        for (int i = 0; i < hypernymDistances.size(); i++) {
-            Synset synset1 = hypernymDistances.get(i);
+        for (int i = 0; i < synsetsByCat.size(); i++) {
+            Synset synset1 = synsetsByCat.get(i);
             int synset1MaxHypernymDist = synset1.getMaxDistance();
 
             // not possible for this synset to be one of the longest
@@ -181,8 +180,8 @@ public class SemanticUtils {
             }
 
             // start at i+1 to avoid double processing
-            for (int j = i + 1; j < hypernymDistances.size(); j++) {
-                Synset synset2 = hypernymDistances.get(j);
+            for (int j = i + 1; j < synsetsByCat.size(); j++) {
+                Synset synset2 = synsetsByCat.get(j);
 
                 // not possible for these two synsets to have a path longer than
                 // the longest distance so far
@@ -286,8 +285,9 @@ public class SemanticUtils {
      * <code>rel(s1,s2) = -log(pathlength/2D)</code><br>
      * <p>
      * pathlength = number of nodes on the shortest path from s1 to s2<br>
-     * D = max depth of taxonomy using node counting: maxDepth = 20 for nouns, 15 for verbs, and 10 for adjectives
-     * in release 14.0 of the GermaNet data. It is possible that these values are slightly different for other data
+     * D = max depth of taxonomy using node counting. Max depth is calculated for each Word Category
+     * when the data is loaded. The max depth values for release 14.0 of the GermaNet data are: 20 for nouns,
+     * 15 for verbs, and 10 for adjectives. It is possible that these values are slightly different for other data
      * releases.<br>
      * If normalizedMax is > 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
