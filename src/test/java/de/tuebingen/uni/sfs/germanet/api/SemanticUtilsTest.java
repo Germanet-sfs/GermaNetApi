@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -289,6 +291,8 @@ public class SemanticUtilsTest {
         assertEquals(expected, actual);
     }
 
+    // ToDo: fix maxDepth tests
+
     @Test
     void maxDepthNounTest() {
 
@@ -339,6 +343,68 @@ public class SemanticUtilsTest {
         // max depth for adj is 10
         assertEquals(10, maxDepth);
     }
+
+    @ParameterizedTest(name = "{0} {1} {2} PathBetweenSynsets")
+    @MethodSource({"pathsBetweenSynsetsProvider"})
+    void pathsBetweenSynsetsTest(Synset synset1, Synset synset2, Set<List<Synset>> expected) {
+        Set<List<Synset>> actual = semanticUtils.getPathBetweenSynsets(synset1, synset2);
+
+        assertEquals(expected, actual);
+    }
+
+    private static Stream<Arguments> pathsBetweenSynsetsProvider() {
+        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(46665);
+        Synset alleebaum = gnetCaseSensitive.getSynsetByID(100607);
+        Synset baum = gnetCaseSensitive.getSynsetByID(46042);
+        Synset obstbaum = gnetCaseSensitive.getSynsetByID(46682);
+        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(46683);
+        Synset holzpflanze = gnetCaseSensitive.getSynsetByID(46041);
+        Synset pflanze = gnetCaseSensitive.getSynsetByID(44960);
+        Synset nutzpflanze = gnetCaseSensitive.getSynsetByID(46311);
+        Synset kulturpflanze = gnetCaseSensitive.getSynsetByID(44965);
+        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(46650);
+
+        Set<List<Synset>> expectedChinaAllee = new HashSet<>();
+        List<Synset> pathChinaAllee = new ArrayList<>();
+        pathChinaAllee.add(chinarindenbaum);
+        pathChinaAllee.add(baum);
+        pathChinaAllee.add(alleebaum);
+        expectedChinaAllee.add(pathChinaAllee);
+
+        Set<List<Synset>> expectedChinaAlpfel = new HashSet<>();
+        List<Synset> pathChinaApfel = new ArrayList<>();
+        pathChinaApfel.add(chinarindenbaum);
+        pathChinaApfel.add(baum);
+        pathChinaApfel.add(obstbaum);
+        pathChinaApfel.add(apfelbaum);
+        expectedChinaAlpfel.add(pathChinaApfel);
+
+        Set<List<Synset>> expectedAlpfelGift = new HashSet<>();
+        List<Synset> pathApfelGift1 = new ArrayList<>();
+        pathApfelGift1.add(apfelbaum);
+        pathApfelGift1.add(obstbaum);
+        pathApfelGift1.add(nutzpflanze);
+        pathApfelGift1.add(kulturpflanze);
+        pathApfelGift1.add(pflanze);
+        pathApfelGift1.add(giftpflanze);
+        expectedAlpfelGift.add(pathApfelGift1);
+        List<Synset> pathApfelGift2 = new ArrayList<>();
+        pathApfelGift2.add(apfelbaum);
+        pathApfelGift2.add(obstbaum);
+        pathApfelGift2.add(baum);
+        pathApfelGift2.add(holzpflanze);
+        pathApfelGift2.add(pflanze);
+        pathApfelGift2.add(giftpflanze);
+        expectedAlpfelGift.add(pathApfelGift2);
+
+        return Stream.of(
+                Arguments.of(chinarindenbaum, alleebaum, expectedChinaAllee),
+                Arguments.of(chinarindenbaum, apfelbaum, expectedChinaAlpfel),
+                Arguments.of(apfelbaum, giftpflanze, expectedAlpfelGift)
+        );
+    }
+
+    // ToDo: check measures tests - some may be too lenient
 
     @ParameterizedTest(name = "{0} {1} {2} Path")
     @MethodSource({"simplePathProvider"})

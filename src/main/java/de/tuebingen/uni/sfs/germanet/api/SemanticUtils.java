@@ -86,18 +86,18 @@ public class SemanticUtils {
 
                 switch (semRelMeasure) {
                     case Path:
-                        minVal = getSimilarityPath(synset1, synset2, 0); // least similar, lowest value
-                        maxVal = getSimilarityPath(synset1, synset1, 0); // most similar, highest value
+                        minVal = getSimilarityPath(synset1, synset2, 0); // least similar, lowest value, not normalized
+                        maxVal = getSimilarityPath(synset1, synset1, 0); // most similar, highest value, not normalized
                         break;
 
                     case LeacockAndChodorow:
-                        minVal = getSimilarityLeacockChodorow(synset1, synset2, 0); // least similar, lowest value
-                        maxVal = getSimilarityLeacockChodorow(synset1, synset1, 0); // most similar, highest value
+                        minVal = getSimilarityLeacockChodorow(synset1, synset2, 0); // least similar, lowest value, not normalized
+                        maxVal = getSimilarityLeacockChodorow(synset1, synset1, 0); // most similar, highest value, not normalized
                         break;
 
                     case WuAndPalmer:
-                        minVal = getSimilarityWuAndPalmer(synset1, synset2, 0); // least similar, lowest value
-                        maxVal = getSimilarityWuAndPalmer(synset1, synset1, 0); // most similar, highest value
+                        minVal = getSimilarityWuAndPalmer(synset1, synset2, 0); // least similar, lowest value, not normalized
+                        maxVal = getSimilarityWuAndPalmer(synset1, synset1, 0); // most similar, highest value, not normalized
                         break;
 
                     default:
@@ -115,9 +115,10 @@ public class SemanticUtils {
     /**
      * Normalize the relatedness value, taking into consideration the WordCategory, algorithm, and upper bound.
      * The lower bound is 0.0.
-     * @param wordCategory the WordCategory
+     *
+     * @param wordCategory  the WordCategory
      * @param semRelMeasure the algorithm
-     * @param rawValue raw value of the algorithm
+     * @param rawValue      raw value of the algorithm
      * @param normalizedMax upper bound on normalization range (lower bound is 0)
      * @return the normalized value, taking into consideration the WordCategory, algorithm, and requested upper bound
      */
@@ -210,38 +211,93 @@ public class SemanticUtils {
     }
 
     // ToDo: javadoc
-    public int getDistanceBetweenSynsets(Synset fromSynset, Synset toSynset) {
-        return (fromSynset.getDistanceToSynset(toSynset));
+    public int getDistanceBetweenSynsets(Synset synset1, Synset synset2) {
+        return (synset1.getDistanceToSynset(synset2));
     }
 
     // ToDo: javadoc
-    /**
-    public List<Synset> getPathBetweenSynsets(Synset fromSynset, Synset toSynset) {
-        List<Synset> path = new ArrayList<>();
+    // ToDo: use HyperHypoPath objects ??
+    public Set<List<Synset>> getPathBetweenSynsets(Synset synset1, Synset synset2) {
+        Set<List<Synset>> paths = new HashSet<>();
+        Set<LeastCommonSubsumer> lcsSet = synset1.getLeastCommonSubsumers(synset2);
 
+        for (LeastCommonSubsumer lcs : lcsSet) {
+            List<List<Synset>> s1 = getPathToHypernym(synset1, lcs.getLcsID(), synset1.getDistanceToHypernym(lcs.getLcsID()));
+            List<List<Synset>> s2 = getPathToHypernym(synset2, lcs.getLcsID(), synset2.getDistanceToHypernym(lcs.getLcsID()));
+
+            for (List<Synset> s1Path : s1) {
+                // lcs is at the end of both paths, remove it from s1Path
+                s1Path.remove(s1Path.size()-1);
+
+                for (List<Synset> s2Path : s2) {
+                    List<Synset> path = new ArrayList<>();
+                    path.addAll(s1Path);
+
+                    // s2Path is from s2 to lcs, add synsets in reverse order
+                    for (int i=s2Path.size()-1; i >=0; i--) {
+                        path.add(s2Path.get(i));
+                    }
+                    paths.add(path);
+                }
+            }
+        }
+        return paths;
     }
-     */
+
+    // ToDo: javadoc
+    private List<List<Synset>> getPathToHypernym(Synset synset, Integer lcsId, int maxDistance) {
+
+        // the synset is not on the shortest path to lcs
+        Integer synsetLcsDistance = synset.getDistanceToHypernym(lcsId);
+        if (synsetLcsDistance == null || synsetLcsDistance > maxDistance) {
+            return null;
+        }
+
+        List<List<Synset>> rval = new ArrayList<>();
+        List<Synset> path = new LinkedList<>();
+
+        // got to the lcs, we're done
+        if (synset.getId() == lcsId) {
+            path.add(synset);
+            rval.add(path);
+        } else {
+            path.add(synset);
+
+            // process each direct hypernym of this synset
+            for (Synset hypernym : synset.getRelatedSynsets(ConRel.has_hypernym)) {
+                List<List<Synset>> paths = getPathToHypernym(hypernym, lcsId, maxDistance - 1);
+                if (paths != null && !paths.isEmpty()) {
+                    for (List<Synset> partialPath : paths) {
+                        partialPath.addAll(0, path);
+                        rval.add(partialPath);
+                    }
+                }
+            }
+        }
+        return rval;
+    }
+
 
     /**
      * A simple relatedness measure based on the distance between two nodes and
      * the longest possible 'shortest path' between any two Synsets in GermaNet:<br>
      *
      * <code>rel(s1,s2) = (MAX_SHORTEST_PATH - distance(s2,s2)) / MAX_SHORTEST_PATH</code><br><br>
-     *
+     * <p>
      * If normalizedMax is > 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
-     *
+     * <p>
      * Synsets must be in the same WordCategory. This implementation uses the
      * MAX_SHORTEST_PATH for the WordCategory that the input synsets belong to.
      *
-     * @param s1 first Synset
-     * @param s2 second Synset
+     * @param s1            first Synset
+     * @param s2            second Synset
      * @param normalizedMax value to use for maximal similarity (raw value is returned if <= 0)
      * @return The similarity using a simple algorithm with optional normalization, or -1 if
      * the synsets do not belong to the same WordCategory.
      */
-    double getSimilarityPath(Synset s1, Synset s2,  int normalizedMax) {
-        if ((s1 == null) || (s2 == null) || ! s2.inWordCategory(s1.getWordCategory())) {
+    public double getSimilarityPath(Synset s1, Synset s2, int normalizedMax) {
+        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return -1;
         }
 
@@ -255,10 +311,10 @@ public class SemanticUtils {
         int pathLength = s1.getDistanceToSynset(s2);
 
         double rawValue = (maxShortestPathLength - pathLength) / (double) maxShortestPathLength;
-        return (normalizedMax > 0) ?  normalize(s1.getWordCategory(), SemRelMeasure.Path, rawValue, normalizedMax) : rawValue;
+        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.Path, rawValue, normalizedMax) : rawValue;
     }
 
-    double getSimilarityWuAndPalmer(Synset s1, Synset s2,  int normalizedMax) {
+    public double getSimilarityWuAndPalmer(Synset s1, Synset s2, int normalizedMax) {
         Set<LeastCommonSubsumer> lcsSet;
         int maxLCSdistToRoot = 0;
 
@@ -274,7 +330,7 @@ public class SemanticUtils {
         int pathLength = s1.getDistanceToSynset(s2);
         double doubleMaxLCSdistToRoot = 2.0 * maxLCSdistToRoot;
         double rawValue = doubleMaxLCSdistToRoot / (pathLength * doubleMaxLCSdistToRoot);
-        return (normalizedMax > 0) ?  normalize(s1.getWordCategory(), SemRelMeasure.WuAndPalmer, rawValue, normalizedMax) : rawValue;
+        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.WuAndPalmer, rawValue, normalizedMax) : rawValue;
     }
 
     /**
@@ -291,29 +347,29 @@ public class SemanticUtils {
      * releases.<br>
      * If normalizedMax is > 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
-     *
+     * <p>
      * Synsets must be in the same WordCategory.
      *
-     * @param s1 first synset to be compared
-     * @param s2 second synset to be compared
+     * @param s1            first synset to be compared
+     * @param s2            second synset to be compared
      * @param normalizedMax value to use for maximal similarity (raw value is returned if <= 0)
      * @return The similarity using the Leacock and Chodorow algorithm with optional normalization, or -1 if
      * the synsets do not belong to the same WordCategory.
      */
-    double getSimilarityLeacockChodorow(Synset s1, Synset s2, int normalizedMax) {
-        if ((s1 == null) || (s2 == null) || ! s2.inWordCategory(s1.getWordCategory())) {
+    public double getSimilarityLeacockChodorow(Synset s1, Synset s2, int normalizedMax) {
+        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return -1.0;
         }
 
         // maxDepth and pathLength represent the number of edges
         // add 1 to get the number of nodes
-        int maxDepth = catMaxDepthMap.get(s1.getWordCategory()) +1;
+        int maxDepth = catMaxDepthMap.get(s1.getWordCategory()) + 1;
 
         // the distance, using hypernym relations, between s1 and s2
-        int pathLength = s1.getDistanceToSynset(s2) +1;
+        int pathLength = s1.getDistanceToSynset(s2) + 1;
 
-        double rawValue = -Math.log(pathLength / (2.0*maxDepth));
-        return (normalizedMax > 0) ?  normalize(s1.getWordCategory(), SemRelMeasure.LeacockAndChodorow, rawValue, normalizedMax) : rawValue;
+        double rawValue = -Math.log(pathLength / (2.0 * maxDepth));
+        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.LeacockAndChodorow, rawValue, normalizedMax) : rawValue;
     }
 
     /**
