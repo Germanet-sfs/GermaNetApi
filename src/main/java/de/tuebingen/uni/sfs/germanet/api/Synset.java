@@ -423,7 +423,8 @@ public class Synset implements Comparable {
     }
 
     /**
-     *  Get the shortest distance to otherSynset using hypernym / hyponym relations only.
+     *  Get the shortest distance to otherSynset using hypernym / hyponym relations only. Both
+     *  Synsets must belong to the same WordCategory.
      *
      * @param otherSynset the other synset
      * @return The distance to otherSynset, or null if otherSynset does not belong to the
@@ -487,7 +488,14 @@ public class Synset implements Comparable {
         return depth;
     }
 
-    // ToDo: javadoc
+    /**
+     * Get the distance from this synset to one of the hypernyms on the path to ROOT, or null if
+     * the hypernym is not on the path.
+     *
+     * @param hypernymID ID of the hypernym
+     * @return the distance from this synset to one of the hypernyms on the path to ROOT, or null if
+     * the hypernym is not on the path
+     */
     Integer getDistanceToHypernym(int hypernymID) {
         return distanceMap.get(hypernymID);
     }

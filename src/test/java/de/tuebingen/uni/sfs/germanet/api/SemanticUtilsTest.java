@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Junit tests for the semantic relatedness functionality of the GermaNet API.
@@ -81,7 +82,7 @@ public class SemanticUtilsTest {
         Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
         Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
 
-        Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumer(synset1, synset2);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumers(synset1, synset2);
 
         assertEquals(expected, actual);
     }
@@ -220,7 +221,7 @@ public class SemanticUtilsTest {
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(49774, 138670), 35)
         );
 
-        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumer(WordCategory.nomen);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.nomen);
 
         LOGGER.info("actual longestShortest LCS(s) for noun: {}", actual);
 
@@ -236,7 +237,7 @@ public class SemanticUtilsTest {
         Synset synset2 = gnetCaseSensitive.getSynsetByID(heilpflanzeID); // Heilpflanze
 
         // different word categories - should be null
-        Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumer(synset1, synset2);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumers(synset1, synset2);
 
         assertEquals(null, actual);
     }
@@ -263,7 +264,7 @@ public class SemanticUtilsTest {
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(119463, 123246), 28)
         );
 
-        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumer(WordCategory.verben);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.verben);
 
         LOGGER.info("actual longestShortest LCS(s) for verb: {}", actual);
 
@@ -284,7 +285,7 @@ public class SemanticUtilsTest {
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(94411, 94396), 20)
         );
 
-        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumer(WordCategory.adj);
+        Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.adj);
 
         LOGGER.info("actual longestShortest LCS(s) for adj: {}", actual);
 
@@ -344,10 +345,35 @@ public class SemanticUtilsTest {
         assertEquals(10, maxDepth);
     }
 
+    @ParameterizedTest(name = "{0} {1} {2} DistanceBetweenSynsets")
+    @MethodSource({"distanceBetweenSynsetsProvider"})
+    void distanceBetweenSynsetsTest(Synset synset1, Synset synset2, Integer expected) {
+        Integer actual = semanticUtils.getDistanceBetweenSynsets(synset1, synset2);
+        assertEquals(expected, actual);
+    }
+
+    private static Stream<Arguments> distanceBetweenSynsetsProvider() {
+        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(46665);
+        Synset alleebaum = gnetCaseSensitive.getSynsetByID(100607);
+        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(46683);
+        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(46650);
+        Synset sollen = gnetCaseSensitive.getSynsetByID(52068);
+        Synset menge = gnetCaseSensitive.getSynsetByID(33224);
+
+        return Stream.of(
+                Arguments.of(chinarindenbaum, alleebaum, 2),
+                Arguments.of(chinarindenbaum, apfelbaum, 3),
+                Arguments.of(apfelbaum, giftpflanze, 5),
+                Arguments.of(sollen, menge, null),
+                Arguments.of(sollen, null, null),
+                Arguments.of(null, menge, null)
+        );
+    }
+
     @ParameterizedTest(name = "{0} {1} {2} PathBetweenSynsets")
     @MethodSource({"pathsBetweenSynsetsProvider"})
     void pathsBetweenSynsetsTest(Synset synset1, Synset synset2, Set<List<Synset>> expected) {
-        Set<List<Synset>> actual = semanticUtils.getPathBetweenSynsets(synset1, synset2);
+        Set<List<Synset>> actual = semanticUtils.getPathsBetweenSynsets(synset1, synset2);
 
         assertEquals(expected, actual);
     }
@@ -363,6 +389,8 @@ public class SemanticUtilsTest {
         Synset nutzpflanze = gnetCaseSensitive.getSynsetByID(46311);
         Synset kulturpflanze = gnetCaseSensitive.getSynsetByID(44965);
         Synset giftpflanze = gnetCaseSensitive.getSynsetByID(46650);
+        Synset sollen = gnetCaseSensitive.getSynsetByID(52068);
+        Synset menge = gnetCaseSensitive.getSynsetByID(33224);
 
         Set<List<Synset>> expectedChinaAllee = new HashSet<>();
         List<Synset> pathChinaAllee = new ArrayList<>();
@@ -400,21 +428,29 @@ public class SemanticUtilsTest {
         return Stream.of(
                 Arguments.of(chinarindenbaum, alleebaum, expectedChinaAllee),
                 Arguments.of(chinarindenbaum, apfelbaum, expectedChinaAlpfel),
-                Arguments.of(apfelbaum, giftpflanze, expectedAlpfelGift)
+                Arguments.of(apfelbaum, giftpflanze, expectedAlpfelGift),
+                Arguments.of(sollen, menge, null),
+                Arguments.of(sollen, null, null),
+                Arguments.of(null, menge, null)
         );
     }
 
-    // ToDo: check measures tests - some may be too lenient
-
-    @ParameterizedTest(name = "{0} {1} {2} Path")
+    @ParameterizedTest(name = "{0} {1} {2} SimplePath")
     @MethodSource({"simplePathProvider"})
-    void simplePathTest(int sID1, int sID2, int normalizedMax, double expected) {
-        Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
-        Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
+    void simplePathTest(Integer sID1, Integer sID2, int normalizedMax, Double expected) {
+        Synset synset1, synset2;
 
-        double epsilon = 0.00001; // tolerance for working with doubles
-        double actual = semanticUtils.getSimilarityPath(synset1, synset2, normalizedMax);
-        assertEquals(expected, actual, epsilon);
+        synset1 = (sID1 == null) ? null : gnetCaseSensitive.getSynsetByID(sID1);
+        synset2 = (sID2 == null) ? null : gnetCaseSensitive.getSynsetByID(sID2);
+
+        double epsilon = 0.0001; // tolerance for working with doubles
+        Double actual = semanticUtils.getSimilaritySimplePath(synset1, synset2, normalizedMax);
+
+        if (sID1 == null || sID2 == null) {
+            assertNull(actual);
+        } else {
+            assertEquals(expected, actual, epsilon);
+        }
     }
 
     private static Stream<Arguments> simplePathProvider() {
@@ -422,7 +458,7 @@ public class SemanticUtilsTest {
         // Bambus - Veilchen
         int bambusID = 46047;
         int veilchenID = 45380;
-        double bambusVeilchenExpected = 0.885714;
+        double bambusVeilchenExpected = 0.88571;
 
         // Kleines Johanniswürmchen - Lebertransplantation
         int kleinesJohanniswürmchenID = 49774;
@@ -438,6 +474,11 @@ public class SemanticUtilsTest {
         int blasphemischID = 94396;
         int regressivID = 94411;
 
+        // Apfelbaum - Giftpflanze
+        int apfelbaumId = 46683;
+        int giftpflanzeId = 46650;
+        double normalized10Expected = 8.5714;
+
         return Stream.of(
                 Arguments.of(bambusID, veilchenID, 0, bambusVeilchenExpected),
                 Arguments.of(kleinesJohanniswürmchenID, lebertransplantationID, 0, unsimilarExpected),
@@ -446,61 +487,169 @@ public class SemanticUtilsTest {
                 Arguments.of(blasphemischID, regressivID, 0, unsimilarExpected),
                 Arguments.of(blasphemischID, regressivID, 10, unsimilarExpected),
                 Arguments.of(blasphemischID, blasphemischID, 0, identityExpected),
-                Arguments.of(blasphemischID, blasphemischID, 10, 10.0)
+                Arguments.of(blasphemischID, blasphemischID, 10, 10.0),
+                Arguments.of(apfelbaumId, giftpflanzeId, 10, normalized10Expected),
+                Arguments.of(apfelbaumId, null, 10, null),
+                Arguments.of(null, giftpflanzeId, 10, null)
         );
     }
 
     @ParameterizedTest(name = "{0} {1} {2} Leacock and Chodorow")
     @MethodSource({"leacockChodorowProvider"})
-    void leacockChodorowTest(int sID1, int sID2, int normalizedMax, double expected) {
-        Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
-        Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
+    void leacockChodorowTest(Integer sID1, Integer sID2, int normalizedMax, Double expected) {
+        Synset synset1, synset2;
 
-        double epsilon = 0.1; // tolerance for working with doubles
-        double actual = semanticUtils.getSimilarityLeacockChodorow(synset1, synset2, normalizedMax);
-        assertEquals(expected, actual, epsilon);
+        synset1 = (sID1 == null) ? null : gnetCaseSensitive.getSynsetByID(sID1);
+        synset2 = (sID2 == null) ? null : gnetCaseSensitive.getSynsetByID(sID2);
+
+        double epsilon = 0.0001; // tolerance for working with doubles
+        Double actual = semanticUtils.getSimilarityLeacockChodorow(synset1, synset2, normalizedMax);
+
+        if (sID1 == null || sID2 == null) {
+            assertNull(actual);
+        } else {
+            assertEquals(expected, actual, epsilon);
+        }
     }
 
     private static Stream<Arguments> leacockChodorowProvider() {
 
-        // Bambus - Veilchen
+        // Bambus - Veilchen, pathlength = 4
         int bambusID = 46047;
         int veilchenID = 45380;
-        double bambusVeilchenRawExpected = 2.1;
-        double identityExpected = 1.0; //3.6888;
+        double bambusVeilchenRawExpected = 0.92428;
+        double bambusVeilchenNormalized10Expected = 5.69401;
+        double identityExpectedNounRaw = 1.62325;
+        double normalized10EdentityExpected = 10.0;
+
+        // Kleines Johanniswürmchen - Lebertransplantation
+        int kleinesJohanniswuermchenID = 49774;
+        int lebertransplantationID = 83979;
+        double kJohannisLebertransExpected = 0.066946;
+        double kJohannisLebertransNorm10Expected = 0.4124;
+
+        // Apfelbaum - Giftpflanze
+        int apfelbaumId = 46683;
+        int giftpflanzeId = 46650;
+        double abaumGiftpRawExpected = 0.84509;
+        double normalized10Expected = 5.20616;
+
+        // bemehlen - anmustern
+        int bemehlenID = 57534;
+        int anmusternID = 119463;
+        double identityExpectedVerbRaw = 1.50515;
+        double bemAnmustRawExpected = 0.042752;
+        double bemAnmustNorm10Expected = 0.28404;
+
+        // blasphemisch - regressiv
+        int blasphemischID = 94396;
+        int regressivID = 94411;
+        double identityExpectedAdjRaw = 1.342423;
+        double blasRegRawExpected = 0.020203;
+        double blasRegNorm10Expected = 0.150499;
+
+
+        return Stream.of(
+                Arguments.of(bambusID, veilchenID, 0, bambusVeilchenRawExpected),
+                Arguments.of(bambusID, veilchenID, 10, bambusVeilchenNormalized10Expected),
+                Arguments.of(bambusID, bambusID, 10, normalized10EdentityExpected),
+                Arguments.of(veilchenID, veilchenID, 0, identityExpectedNounRaw),
+                Arguments.of(kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10EdentityExpected),
+                Arguments.of(lebertransplantationID, lebertransplantationID, 0, identityExpectedNounRaw),
+                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 0, kJohannisLebertransExpected),
+                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 10, kJohannisLebertransNorm10Expected),
+                Arguments.of(bemehlenID, anmusternID, 0, bemAnmustRawExpected),
+                Arguments.of(bemehlenID, anmusternID, 10, bemAnmustNorm10Expected),
+                Arguments.of(bemehlenID, bemehlenID, 0, identityExpectedVerbRaw),
+                Arguments.of(blasphemischID, regressivID, 0, blasRegRawExpected),
+                Arguments.of(blasphemischID, regressivID, 10, blasRegNorm10Expected),
+                Arguments.of(blasphemischID, blasphemischID, 0, identityExpectedAdjRaw),
+                Arguments.of(blasphemischID, blasphemischID, 10, 10.0),
+                Arguments.of(apfelbaumId, giftpflanzeId, 0, abaumGiftpRawExpected),
+                Arguments.of(apfelbaumId, giftpflanzeId, 10, normalized10Expected),
+                Arguments.of(giftpflanzeId, apfelbaumId, 0, abaumGiftpRawExpected),
+                Arguments.of(giftpflanzeId, apfelbaumId, 10, normalized10Expected),
+                Arguments.of(apfelbaumId, null, 10, null),
+                Arguments.of(null, giftpflanzeId, 10, null)
+        );
+    }
+
+    @ParameterizedTest(name = "{0} {1} {2} Wu and Palmer")
+    @MethodSource({"wuAndPalmerProvider"})
+    void wuAndPalmerTest(Integer sID1, Integer sID2, int normalizedMax, Double expected) {
+        Synset synset1, synset2;
+
+        synset1 = (sID1 == null) ? null : gnetCaseSensitive.getSynsetByID(sID1);
+        synset2 = (sID2 == null) ? null : gnetCaseSensitive.getSynsetByID(sID2);
+
+        double epsilon = 0.0001; // tolerance for working with doubles
+        Double actual = semanticUtils.getSimilarityWuAndPalmer(synset1, synset2, normalizedMax);
+
+        if (sID1 == null || sID2 == null) {
+            assertNull(actual);
+        } else {
+            assertEquals(expected, actual, epsilon);
+        }
+    }
+
+    private static Stream<Arguments> wuAndPalmerProvider() {
+
+        // Bambus - Veilchen, pathlength = 4
+        int bambusID = 46047;
+        int veilchenID = 45380;
+        double bambusVeilchenRawExpected = 0.75;
+        double bambusVeilchenNormalized10Expected = 7.5;
+        double identityExpectedRaw = 1.0;
+        double normalized10EdentityExpected = 10.0;
 
         // Kleines Johanniswürmchen - Lebertransplantation
         int kleinesJohanniswuermchenID = 49774;
         int lebertransplantationID = 83979;
         double kJohannisLebertransExpected = 0.0;
+        double kJohannisLebertransNorm10Expected = 0.0;
+
+        // Apfelbaum - Giftpflanze
+        int apfelbaumId = 46683;
+        int giftpflanzeId = 46650;
+        double abaumGiftpRawExpected = 0.70588;
+        double normalized10Expected = 7.0588;
 
         // bemehlen - anmustern
         int bemehlenID = 57534;
         int anmusternID = 119463;
+        double bemAnmustRawExpected = 0.0;
+        double bemAnmustNorm10Expected = 0.0;
 
         // blasphemisch - regressiv
         int blasphemischID = 94396;
         int regressivID = 94411;
+        double blasRegRawExpected = 0.0;
+        double blasRegNorm10Expected = 0.0;
+
 
         return Stream.of(
                 Arguments.of(bambusID, veilchenID, 0, bambusVeilchenRawExpected),
-                Arguments.of(bambusID, veilchenID, 10, 5.62),
-                Arguments.of(bambusID, bambusID, 1, identityExpected),
-                Arguments.of(bambusID, bambusID, 10, 10.0),
-                Arguments.of(veilchenID, veilchenID, 1, identityExpected),
-                Arguments.of(kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 1, identityExpected),
-                Arguments.of(lebertransplantationID, lebertransplantationID, 1, identityExpected),
-                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 1, kJohannisLebertransExpected),
-                Arguments.of(bemehlenID, anmusternID, 0, 0.16),
-                Arguments.of(bemehlenID, anmusternID, 1, 0.0),
-                Arguments.of(bemehlenID, bemehlenID, 0, 3.53),
-                Arguments.of(bemehlenID, bemehlenID, 1, 1.0),
-                Arguments.of(blasphemischID, regressivID, 0, 0.05),
-                Arguments.of(blasphemischID, regressivID, 1, 0.0),
-                Arguments.of(blasphemischID, blasphemischID, 0, 3.09),
-                Arguments.of(blasphemischID, blasphemischID, 1, 1.0)
+                Arguments.of(bambusID, veilchenID, 10, bambusVeilchenNormalized10Expected),
+                Arguments.of(bambusID, bambusID, 10, normalized10EdentityExpected),
+                Arguments.of(veilchenID, veilchenID, 0, identityExpectedRaw),
+                Arguments.of(kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10EdentityExpected),
+                Arguments.of(lebertransplantationID, lebertransplantationID, 0, identityExpectedRaw),
+                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 0, kJohannisLebertransExpected),
+                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 10, kJohannisLebertransNorm10Expected),
+                Arguments.of(bemehlenID, anmusternID, 0, bemAnmustRawExpected),
+                Arguments.of(bemehlenID, anmusternID, 10, bemAnmustNorm10Expected),
+                Arguments.of(bemehlenID, bemehlenID, 0, identityExpectedRaw),
+                Arguments.of(blasphemischID, regressivID, 0, blasRegRawExpected),
+                Arguments.of(blasphemischID, regressivID, 10, blasRegNorm10Expected),
+                Arguments.of(blasphemischID, blasphemischID, 0, identityExpectedRaw),
+                Arguments.of(blasphemischID, blasphemischID, 10, normalized10EdentityExpected),
+                Arguments.of(apfelbaumId, giftpflanzeId, 0, abaumGiftpRawExpected),
+                Arguments.of(apfelbaumId, giftpflanzeId, 10, normalized10Expected),
+                Arguments.of(apfelbaumId, null, 10, null),
+                Arguments.of(null, giftpflanzeId, 10, null)
         );
     }
+
 
     // Find all synsets whose wordCategory does not match that of all its direct hypernyms.
     // This should never happen.
