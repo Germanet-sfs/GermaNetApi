@@ -229,37 +229,38 @@ public class SemanticUtils {
      * Get the set of all shortest paths between two Synsets, using hypernym/hyponym relations. Both synsets
      * must belong to the same WordCategory.
      *
-     * @param synset1 a synset
-     * @param synset2 another synset
+     * @param fromSynset a synset
+     * @param toSynset another synset
      * @return the set of all shortest paths between two Synsets, using hypernym/hyponym relations, or null
      * if the synsets belong to different Word Categories.
      */
-    // ToDo: use HyperHypoPath objects ??
-    public Set<List<Synset>> getPathsBetweenSynsets(Synset synset1, Synset synset2) {
-        if ((synset1 == null) || (synset2 == null) || !synset1.inWordCategory(synset2.getWordCategory())) {
+    public Set<SynsetPath> getPathsBetweenSynsets(Synset fromSynset, Synset toSynset) {
+        if ((fromSynset == null) || (toSynset == null) || !fromSynset.inWordCategory(toSynset.getWordCategory())) {
             return null;
         }
 
-        Set<List<Synset>> paths = new HashSet<>();
-        Set<LeastCommonSubsumer> lcsSet = synset1.getLeastCommonSubsumers(synset2);
+        Set<SynsetPath> paths = new HashSet<>();
+        Set<LeastCommonSubsumer> lcsSet = fromSynset.getLeastCommonSubsumers(toSynset);
 
         for (LeastCommonSubsumer lcs : lcsSet) {
-            List<List<Synset>> s1 = getPathToHypernym(synset1, lcs.getLcsID(), synset1.getDistanceToHypernym(lcs.getLcsID()));
-            List<List<Synset>> s2 = getPathToHypernym(synset2, lcs.getLcsID(), synset2.getDistanceToHypernym(lcs.getLcsID()));
+            List<List<Synset>> fromSynsetToLcsPaths = getPathToHypernym(fromSynset, lcs.getLcsID(), fromSynset.getDistanceToHypernym(lcs.getLcsID()));
+            List<List<Synset>> toSynsetToLcsPaths = getPathToHypernym(toSynset, lcs.getLcsID(), toSynset.getDistanceToHypernym(lcs.getLcsID()));
 
-            for (List<Synset> s1Path : s1) {
-                // lcs is at the end of both paths, remove it from s1Path
-                s1Path.remove(s1Path.size()-1);
+            for (List<Synset> fromSynsetPath : fromSynsetToLcsPaths) {
+                // lcs is at the end of both paths, remove it from fromSynsetPath
+                fromSynsetPath.remove(fromSynsetPath.size()-1);
 
-                for (List<Synset> s2Path : s2) {
-                    List<Synset> path = new ArrayList<>();
-                    path.addAll(s1Path);
+                for (List<Synset> toSynsetPath : toSynsetToLcsPaths) {
+                    List<Synset> path = new LinkedList<>();
+                    path.addAll(fromSynsetPath);
 
-                    // s2Path is from s2 to lcs, add synsets in reverse order
-                    for (int i=s2Path.size()-1; i >=0; i--) {
-                        path.add(s2Path.get(i));
+                    // toSynsetPath is from toSynsetToLcsPaths to lcs, add synsets in reverse order
+                    for (int i=toSynsetPath.size()-1; i >=0; i--) {
+                        path.add(toSynsetPath.get(i));
                     }
-                    paths.add(path);
+
+                    SynsetPath synsetPath = new SynsetPath(fromSynset, toSynset, lcs.getLcsID(), path);
+                    paths.add(synsetPath);
                 }
             }
         }
@@ -315,7 +316,7 @@ public class SemanticUtils {
      * @param semRelMeasure similarity algorithm to use
      * @param s1 first synset
      * @param s2 second synset
-     * @param normalizedMax value to use for maximal similarity (raw value is returned if <= 0)
+     * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
      * @return The similarity using the algorithm selected - with optional normalization, or null if
      * similarity cannot be computed. See documentation of each algorithm for more information.
      */
@@ -347,7 +348,7 @@ public class SemanticUtils {
      *
      * <code>rel(s1,s2) = (MAX_SHORTEST_PATH - distance(s2,s2)) / MAX_SHORTEST_PATH</code><br><br>
      * <p>
-     * If normalizedMax is > 0, then synsets that are very similar will be close to that
+     * If normalizedMax is &gt; 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
      * <p>
      * Synsets must be in the same WordCategory. This implementation uses the
@@ -355,7 +356,7 @@ public class SemanticUtils {
      *
      * @param s1            first Synset
      * @param s2            second Synset
-     * @param normalizedMax value to use for maximal similarity (raw value is returned if <= 0)
+     * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
      * @return The similarity using a simple algorithm with optional normalization, or null if
      * the synsets do not belong to the same WordCategory.
      */
@@ -395,7 +396,7 @@ public class SemanticUtils {
      *
      * @param s1 first synset
      * @param s2 second synset
-     * @param normalizedMax value to use for maximal similarity (raw value is returned if <= 0)
+     * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
      * @return The similarity using the Wu and Palmer algorithm with optional normalization, or null if
      * the synsets do not belong to the same WordCategory.
      */
@@ -424,7 +425,7 @@ public class SemanticUtils {
     }
 
     /**
-     * Relatedness according to Leacock&Chodorow, 1998: "Combining Local Context
+     * Relatedness according to Leacock&amp;Chodorow, 1998: "Combining Local Context
      * and WordNet Relatedness for Word Sense Identification".<br>
      * <p>
      * Since GermaNet has a unique root node, the formula can be simplified to:
@@ -435,14 +436,14 @@ public class SemanticUtils {
      * when the data is loaded. The max depth values for release 14.0 of the GermaNet data are: 20 for nouns,
      * 15 for verbs, and 10 for adjectives. It is possible that these values are slightly different for other data
      * releases.<br>
-     * If normalizedMax is > 0, then synsets that are very similar will be close to that
+     * If normalizedMax is &gt; 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
      * <p>
      * Synsets must be in the same WordCategory.
      *
      * @param s1            first synset to be compared
      * @param s2            second synset to be compared
-     * @param normalizedMax value to use for maximal similarity (raw value is returned if <= 0)
+     * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
      * @return The similarity using the Leacock and Chodorow algorithm with optional normalization, or null if
      * the synsets do not belong to the same WordCategory.
      */

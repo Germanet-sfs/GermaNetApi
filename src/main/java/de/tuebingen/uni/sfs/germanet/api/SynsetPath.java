@@ -20,6 +20,7 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Simple class to store a path, using hypernym/hyponym relations, between two Synsets.
@@ -28,25 +29,25 @@ import java.util.List;
  *
  * author: Marie Hinrichs, Seminar für Sprachwissenschaft, Universität Tübingen
  */
-public class HyperHypoPath {
-    private Synset synset1;
-    private Synset synset2;
+public class SynsetPath {
+    private Synset fromSynset;
+    private Synset toSynset;
     private int lcsId;
     private List<Synset> path;
 
-    public HyperHypoPath(Synset synset1, Synset synset2, int lcsId, List<Synset> path) {
-        this.synset1 = synset1;
-        this.synset2 = synset2;
+    public SynsetPath(Synset fromSynset, Synset toSynset, int lcsId, List<Synset> path) {
+        this.fromSynset = fromSynset;
+        this.toSynset = toSynset;
         this.lcsId = lcsId;
         this.path = path;
     }
 
-    public Synset getSynset1() {
-        return synset1;
+    public Synset getFromSynset() {
+        return fromSynset;
     }
 
-    public Synset getSynset2() {
-        return synset2;
+    public Synset getToSynset() {
+        return toSynset;
     }
 
     public int getLcsId() {
@@ -55,5 +56,35 @@ public class HyperHypoPath {
 
     public List<Synset> getPath() {
         return path;
+    }
+
+    public String toString() {
+        String rval = "";
+        for (Synset synset : path) {
+            rval += synset.getId() + " -> ";
+        }
+        return rval.substring(0, rval.length()-4);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SynsetPath that = (SynsetPath) o;
+
+        if (lcsId != that.lcsId) return false;
+        if (!fromSynset.equals(that.fromSynset)) return false;
+        if (!toSynset.equals(that.toSynset)) return false;
+        return Objects.equals(path, that.path);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = fromSynset.hashCode();
+        result = 31 * result + toSynset.hashCode();
+        result = 31 * result + lcsId;
+        result = 31 * result + (path != null ? path.hashCode() : 0);
+        return result;
     }
 }

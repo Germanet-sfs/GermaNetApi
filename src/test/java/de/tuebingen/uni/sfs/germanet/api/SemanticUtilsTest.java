@@ -223,8 +223,6 @@ public class SemanticUtilsTest {
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.nomen);
 
-        LOGGER.info("actual longestShortest LCS(s) for noun: {}", actual);
-
         assertEquals(expected, actual);
     }
 
@@ -372,8 +370,8 @@ public class SemanticUtilsTest {
 
     @ParameterizedTest(name = "{0} {1} {2} PathBetweenSynsets")
     @MethodSource({"pathsBetweenSynsetsProvider"})
-    void pathsBetweenSynsetsTest(Synset synset1, Synset synset2, Set<List<Synset>> expected) {
-        Set<List<Synset>> actual = semanticUtils.getPathsBetweenSynsets(synset1, synset2);
+    void pathsBetweenSynsetsTest(Synset synset1, Synset synset2, Set<SynsetPath> expected) {
+        Set<SynsetPath> actual = semanticUtils.getPathsBetweenSynsets(synset1, synset2);
 
         assertEquals(expected, actual);
     }
@@ -392,22 +390,22 @@ public class SemanticUtilsTest {
         Synset sollen = gnetCaseSensitive.getSynsetByID(52068);
         Synset menge = gnetCaseSensitive.getSynsetByID(33224);
 
-        Set<List<Synset>> expectedChinaAllee = new HashSet<>();
+        Set<SynsetPath> expectedChinaAllee = new HashSet<>();
         List<Synset> pathChinaAllee = new ArrayList<>();
         pathChinaAllee.add(chinarindenbaum);
         pathChinaAllee.add(baum);
         pathChinaAllee.add(alleebaum);
-        expectedChinaAllee.add(pathChinaAllee);
+        expectedChinaAllee.add(new SynsetPath(chinarindenbaum, alleebaum, baum.getId(), pathChinaAllee));
 
-        Set<List<Synset>> expectedChinaAlpfel = new HashSet<>();
+        Set<SynsetPath> expectedChinaAlpfel = new HashSet<>();
         List<Synset> pathChinaApfel = new ArrayList<>();
         pathChinaApfel.add(chinarindenbaum);
         pathChinaApfel.add(baum);
         pathChinaApfel.add(obstbaum);
         pathChinaApfel.add(apfelbaum);
-        expectedChinaAlpfel.add(pathChinaApfel);
+        expectedChinaAlpfel.add(new SynsetPath(chinarindenbaum, apfelbaum, baum.getId(), pathChinaApfel));
 
-        Set<List<Synset>> expectedAlpfelGift = new HashSet<>();
+        Set<SynsetPath> expectedAlpfelGift = new HashSet<>();
         List<Synset> pathApfelGift1 = new ArrayList<>();
         pathApfelGift1.add(apfelbaum);
         pathApfelGift1.add(obstbaum);
@@ -415,7 +413,7 @@ public class SemanticUtilsTest {
         pathApfelGift1.add(kulturpflanze);
         pathApfelGift1.add(pflanze);
         pathApfelGift1.add(giftpflanze);
-        expectedAlpfelGift.add(pathApfelGift1);
+        expectedAlpfelGift.add(new SynsetPath(apfelbaum, giftpflanze, pflanze.getId(), pathApfelGift1));
         List<Synset> pathApfelGift2 = new ArrayList<>();
         pathApfelGift2.add(apfelbaum);
         pathApfelGift2.add(obstbaum);
@@ -423,12 +421,18 @@ public class SemanticUtilsTest {
         pathApfelGift2.add(holzpflanze);
         pathApfelGift2.add(pflanze);
         pathApfelGift2.add(giftpflanze);
-        expectedAlpfelGift.add(pathApfelGift2);
+        expectedAlpfelGift.add(new SynsetPath(apfelbaum, giftpflanze, pflanze.getId(), pathApfelGift2));
+
+        Set<SynsetPath> expectedBaumBaum = new HashSet<>();
+        List<Synset> pathBaumBaum = new ArrayList<>();
+        pathBaumBaum.add(baum);
+        expectedBaumBaum.add(new SynsetPath(baum, baum, baum.getId(), pathBaumBaum));
 
         return Stream.of(
                 Arguments.of(chinarindenbaum, alleebaum, expectedChinaAllee),
                 Arguments.of(chinarindenbaum, apfelbaum, expectedChinaAlpfel),
                 Arguments.of(apfelbaum, giftpflanze, expectedAlpfelGift),
+                Arguments.of(baum, baum, expectedBaumBaum),
                 Arguments.of(sollen, menge, null),
                 Arguments.of(sollen, null, null),
                 Arguments.of(null, menge, null)
