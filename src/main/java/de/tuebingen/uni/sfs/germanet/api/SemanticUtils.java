@@ -247,20 +247,8 @@ public class SemanticUtils {
             List<List<Synset>> toSynsetToLcsPaths = getPathToHypernym(toSynset, lcs.getLcsID(), toSynset.getDistanceToHypernym(lcs.getLcsID()));
 
             for (List<Synset> fromSynsetPath : fromSynsetToLcsPaths) {
-                // lcs is at the end of both paths, remove it from fromSynsetPath
-                fromSynsetPath.remove(fromSynsetPath.size()-1);
-
                 for (List<Synset> toSynsetPath : toSynsetToLcsPaths) {
-                    List<Synset> path = new LinkedList<>();
-                    path.addAll(fromSynsetPath);
-
-                    // toSynsetPath is from toSynsetToLcsPaths to lcs, add synsets in reverse order
-                    for (int i=toSynsetPath.size()-1; i >=0; i--) {
-                        path.add(toSynsetPath.get(i));
-                    }
-
-                    SynsetPath synsetPath = new SynsetPath(fromSynset, toSynset, lcs.getLcsID(), path);
-                    paths.add(synsetPath);
+                    paths.add(new SynsetPath(fromSynset, toSynset, lcs.getLcsID(), fromSynsetPath, toSynsetPath));
                 }
             }
         }

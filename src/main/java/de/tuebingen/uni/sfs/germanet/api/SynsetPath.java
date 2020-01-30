@@ -20,10 +20,18 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Simple class to store a path, using hypernym/hyponym relations, between two Synsets.
+ * The path between Synsets is stored as two ordered Lists: </br></br>
+ *
+ * The list of Synsets on the path from <code>fromSynset</code> to a least common subsumer of the two Synsets</br>
+ * The list of Synsets on the path from <code>toSynset</code> to a least common subsumer of the two Synsets</br>
+ *
+ * Both lists have the originating Synset at index 0, and the least common subsumer as the last element.
+ * The least common subsumer of two Synsets is the closest Synset that can be reached by both originating
+ * Synsets using hypernym relations.
+ *
  * This class does not perform any calculations, it is designed to only store path information.
  * Getters are available for all fields.
  *
@@ -33,13 +41,15 @@ public class SynsetPath {
     private Synset fromSynset;
     private Synset toSynset;
     private int lcsId;
-    private List<Synset> path;
+    private List<Synset> fromLcsPath;
+    private List<Synset> toLcsPath;
 
-    public SynsetPath(Synset fromSynset, Synset toSynset, int lcsId, List<Synset> path) {
+    public SynsetPath(Synset fromSynset, Synset toSynset, int lcsId, List<Synset> fromLcsPath, List<Synset> toLcsPath) {
         this.fromSynset = fromSynset;
         this.toSynset = toSynset;
         this.lcsId = lcsId;
-        this.path = path;
+        this.fromLcsPath = fromLcsPath;
+        this.toLcsPath = toLcsPath;
     }
 
     public Synset getFromSynset() {
@@ -54,16 +64,23 @@ public class SynsetPath {
         return lcsId;
     }
 
-    public List<Synset> getPath() {
-        return path;
+    public List<Synset> getFromLcsPath() {
+        return fromLcsPath;
     }
 
+    public List<Synset> getToLcsPath() {
+        return toLcsPath;
+    }
+
+    @Override
     public String toString() {
-        String rval = "";
-        for (Synset synset : path) {
-            rval += synset.getId() + " -> ";
-        }
-        return rval.substring(0, rval.length()-4);
+        return "SynsetPath{" +
+                "fromSynset=" + fromSynset +
+                ", toSynset=" + toSynset +
+                ", lcsId=" + lcsId +
+                ", fromLcsPath=" + fromLcsPath +
+                ", toLcsPath=" + toLcsPath +
+                '}';
     }
 
     @Override
@@ -76,7 +93,8 @@ public class SynsetPath {
         if (lcsId != that.lcsId) return false;
         if (!fromSynset.equals(that.fromSynset)) return false;
         if (!toSynset.equals(that.toSynset)) return false;
-        return Objects.equals(path, that.path);
+        if (!fromLcsPath.equals(that.fromLcsPath)) return false;
+        return toLcsPath.equals(that.toLcsPath);
     }
 
     @Override
@@ -84,7 +102,8 @@ public class SynsetPath {
         int result = fromSynset.hashCode();
         result = 31 * result + toSynset.hashCode();
         result = 31 * result + lcsId;
-        result = 31 * result + (path != null ? path.hashCode() : 0);
+        result = 31 * result + fromLcsPath.hashCode();
+        result = 31 * result + toLcsPath.hashCode();
         return result;
     }
 }

@@ -390,43 +390,49 @@ public class SemanticUtilsTest {
         Synset sollen = gnetCaseSensitive.getSynsetByID(52068);
         Synset menge = gnetCaseSensitive.getSynsetByID(33224);
 
+        // Chinarindenbaum - Alleebaum (Baum)
         Set<SynsetPath> expectedChinaAllee = new HashSet<>();
-        List<Synset> pathChinaAllee = new ArrayList<>();
-        pathChinaAllee.add(chinarindenbaum);
-        pathChinaAllee.add(baum);
-        pathChinaAllee.add(alleebaum);
-        expectedChinaAllee.add(new SynsetPath(chinarindenbaum, alleebaum, baum.getId(), pathChinaAllee));
+        List<Synset> pathChinaBaum = new ArrayList<>();
+        pathChinaBaum.add(chinarindenbaum);
+        pathChinaBaum.add(baum);
+        List<Synset> pathAleeBaum = new ArrayList<>();
+        pathAleeBaum.add(alleebaum);
+        pathAleeBaum.add(baum);
+        expectedChinaAllee.add(new SynsetPath(chinarindenbaum, alleebaum, baum.getId(), pathChinaBaum, pathAleeBaum));
 
+        // Chinarindenbaum - Apfelbaum (Baum)
         Set<SynsetPath> expectedChinaAlpfel = new HashSet<>();
-        List<Synset> pathChinaApfel = new ArrayList<>();
-        pathChinaApfel.add(chinarindenbaum);
-        pathChinaApfel.add(baum);
-        pathChinaApfel.add(obstbaum);
-        pathChinaApfel.add(apfelbaum);
-        expectedChinaAlpfel.add(new SynsetPath(chinarindenbaum, apfelbaum, baum.getId(), pathChinaApfel));
+        List<Synset> pathApfelBaum = new ArrayList<>();
+        pathApfelBaum.add(apfelbaum);
+        pathApfelBaum.add(obstbaum);
+        pathApfelBaum.add(baum);
+        expectedChinaAlpfel.add(new SynsetPath(chinarindenbaum, apfelbaum, baum.getId(), pathChinaBaum, pathApfelBaum));
 
+        // Apfelbaum - Giftpflanze (Pflanze) 2 lcs
         Set<SynsetPath> expectedAlpfelGift = new HashSet<>();
-        List<Synset> pathApfelGift1 = new ArrayList<>();
-        pathApfelGift1.add(apfelbaum);
-        pathApfelGift1.add(obstbaum);
-        pathApfelGift1.add(nutzpflanze);
-        pathApfelGift1.add(kulturpflanze);
-        pathApfelGift1.add(pflanze);
-        pathApfelGift1.add(giftpflanze);
-        expectedAlpfelGift.add(new SynsetPath(apfelbaum, giftpflanze, pflanze.getId(), pathApfelGift1));
-        List<Synset> pathApfelGift2 = new ArrayList<>();
-        pathApfelGift2.add(apfelbaum);
-        pathApfelGift2.add(obstbaum);
-        pathApfelGift2.add(baum);
-        pathApfelGift2.add(holzpflanze);
-        pathApfelGift2.add(pflanze);
-        pathApfelGift2.add(giftpflanze);
-        expectedAlpfelGift.add(new SynsetPath(apfelbaum, giftpflanze, pflanze.getId(), pathApfelGift2));
+        List<Synset> pathApfelPflanze1 = new ArrayList<>();
+        pathApfelPflanze1.add(apfelbaum);
+        pathApfelPflanze1.add(obstbaum);
+        pathApfelPflanze1.add(nutzpflanze);
+        pathApfelPflanze1.add(kulturpflanze);
+        pathApfelPflanze1.add(pflanze);
+        List<Synset> pathGiftPflanze = new ArrayList<>();
+        pathGiftPflanze.add(giftpflanze);
+        pathGiftPflanze.add(pflanze);
+        expectedAlpfelGift.add(new SynsetPath(apfelbaum, giftpflanze, pflanze.getId(), pathApfelPflanze1, pathGiftPflanze));
+
+        List<Synset> pathApfelPflanze2 = new ArrayList<>();
+        pathApfelPflanze2.add(apfelbaum);
+        pathApfelPflanze2.add(obstbaum);
+        pathApfelPflanze2.add(baum);
+        pathApfelPflanze2.add(holzpflanze);
+        pathApfelPflanze2.add(pflanze);
+        expectedAlpfelGift.add(new SynsetPath(apfelbaum, giftpflanze, pflanze.getId(), pathApfelPflanze2, pathGiftPflanze));
 
         Set<SynsetPath> expectedBaumBaum = new HashSet<>();
         List<Synset> pathBaumBaum = new ArrayList<>();
         pathBaumBaum.add(baum);
-        expectedBaumBaum.add(new SynsetPath(baum, baum, baum.getId(), pathBaumBaum));
+        expectedBaumBaum.add(new SynsetPath(baum, baum, baum.getId(), pathBaumBaum, pathBaumBaum));
 
         return Stream.of(
                 Arguments.of(chinarindenbaum, alleebaum, expectedChinaAllee),
