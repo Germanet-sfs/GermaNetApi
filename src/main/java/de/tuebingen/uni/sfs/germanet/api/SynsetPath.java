@@ -23,14 +23,14 @@ import java.util.List;
 
 /**
  * Simple class to store a path, using hypernym/hyponym relations, between two Synsets.
- * The path between Synsets is stored as two ordered Lists: </br></br>
+ * The path between Synsets is stored as two ordered Lists: <br><br>
  *
- * The list of Synsets on the path from <code>fromSynset</code> to a least common subsumer of the two Synsets</br>
- * The list of Synsets on the path from <code>toSynset</code> to a least common subsumer of the two Synsets</br>
+ * The list of Synsets on the path from <code>fromSynset</code> to a least common subsumer of the two Synsets<br>
+ * The list of Synsets on the path from <code>toSynset</code> to a least common subsumer of the two Synsets<br>
  *
  * Both lists have the originating Synset at index 0, and the least common subsumer as the last element.
  * The least common subsumer of two Synsets is the closest Synset that can be reached by both originating
- * Synsets using hypernym relations.
+ * Synsets using hypernym relations.<br>
  *
  * This class does not perform any calculations, it is designed to only store path information.
  * Getters are available for all fields.
