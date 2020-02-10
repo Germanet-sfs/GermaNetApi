@@ -278,7 +278,6 @@ public class GermaNet {
 
         long endTime = System.currentTimeMillis();
         double processingTime = (double) (endTime - startTime) / 1000;
-        //DecimalFormat dec = new DecimalFormat("#0.00");
         LOGGER.info("Done loading GermaNet data ({} seconds).", processingTime);
     }
 
@@ -998,21 +997,7 @@ public class GermaNet {
         for (LexUnit lu : lexUnits) {
             boolean hit = false;
             for (OrthFormVariant variant : orthFormVariants) {
-                String toMatch = null;
-                switch (variant) {
-                    case orthForm:
-                        toMatch = lu.getOrthForm();
-                        break;
-                    case orthVar:
-                        toMatch = lu.getOrthVar();
-                        break;
-                    case oldOrthForm:
-                        toMatch = lu.getOldOrthForm();
-                        break;
-                    case oldOrthVar:
-                        toMatch = lu.getOldOrthVar();
-                        break;
-                }
+                String toMatch = lu.getOrthForm(variant);
                 if (toMatch != null) {
                     int editDist = filter.getEditDistance();
                     if (!filter.isRegEx() && editDist > 0) {

@@ -38,7 +38,7 @@ import java.util.*;
  * <p>
  * The orthographic form can be retrieved:<br>
  * <code>
- * &nbsp;&nbsp;&nbsp;String orthForm = aLexUnit.getSearchString();<br><br>
+ * &nbsp;&nbsp;&nbsp;String orthForm = aLexUnit.getOrthForm();<br><br>
  * </code>
  * <p>
  * The orthographic form, and (if existent) the orthographic variant, the old
@@ -212,6 +212,28 @@ public class LexUnit {
      */
     public String getOldOrthVar() {
         return oldOrthVar;
+    }
+
+    /**
+     * Return the orthForm variant specified by <code>variant</code>.
+     * Can be null if <code>variant</code> is not defined for this <code>LexUnit</code>.
+     *
+     * @param variant the orthForm variant to get
+     * @return the orthForm variant specified by <code>variant</code>
+     */
+    public String getOrthForm(OrthFormVariant variant) {
+        switch (variant) {
+            case orthForm:
+                return getOrthForm();
+            case orthVar:
+                return getOrthVar();
+            case oldOrthForm:
+                return getOldOrthForm();
+            case oldOrthVar:
+                return getOldOrthVar();
+            default:
+                return null;
+        }
     }
 
     /**

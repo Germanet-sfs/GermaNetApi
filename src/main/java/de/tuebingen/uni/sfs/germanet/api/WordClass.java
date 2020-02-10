@@ -64,4 +64,22 @@ public enum WordClass {
     Schoepfung,
     Veraenderung,
     Verbrauch;
+
+    /**
+     * Returns true if the given <code>wordClassName</code> represents a valid
+     * <code>WordClass</code>, otherwise false.
+     *
+     * @param wordClassName the name of the wordClass to verify
+     * @return true if the given <code>wordClassName</code> represents a valid <code>WordClass</code>
+     */
+    public static boolean isWordClass(String wordClassName) {
+        WordClass[] vals = values();
+
+        for (int i = 0; i < vals.length; i++) {
+            if (vals[i].toString().equals(wordClassName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

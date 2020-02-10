@@ -205,7 +205,7 @@ public class Synset implements Comparable {
     }
 
     /**
-     * Returns a <code>List</code> of all (old) orthographic forms and variants
+     * Returns a <code>List</code> of all orthographic forms and variants
      * contained in all <code>LexUnits</code> of this <code>Synset</code>.
      * This <code>List</code> is never empty as the <code>List</code> of
      * <code>LexUnits</code> is never empty.
@@ -220,6 +220,27 @@ public class Synset implements Comparable {
             allOrthForms.addAll(lu.getOrthForms());
         }
         return new ArrayList<>(allOrthForms);
+    }
+
+    /**
+     * Returns a non-null <code>List</code> of orthographic variants contained in all
+     * <code>LexUnit</code>s of this <code>Synset</code>. May be empty if no
+     * <code>LexUnit</code> contains the given <code>variant</code>.
+     *
+     * @param variant the <code>OrthFormVariant</code> to get
+     * @return a non-null, but possibly empty <code>List</code> of orthographic <code>variant</code>s contained in all
+     * <code>LexUnit</code>s of this <code>Synset</code>
+     */
+    public List<String> getOrthForms(OrthFormVariant variant) {
+        Set<String> orthForms = new HashSet<>();
+
+        for (LexUnit lu : lexUnits) {
+            String orthForm = lu.getOrthForm(variant);
+            if (orthForm != null) {
+                orthForms.add(orthForm);
+            }
+        }
+        return new ArrayList<>(orthForms);
     }
 
     /**
