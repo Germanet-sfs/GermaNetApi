@@ -176,8 +176,6 @@ public class GermaNet {
     InputStream relsInputStream;
     String relsXmlName;
     private boolean ignoreCase;
-    private static final int MAX_LEVENSHTEIN_DIST = 30;
-    private LevenshteinDistance levenshteinDistance;
 
     // semanticUtils
     private Map<WordCategory, Integer> catMaxHypernymDistanceMap;
@@ -248,7 +246,6 @@ public class GermaNet {
         this.wordCategoryMap = new EnumMap<>(WordCategory.class);
         this.wordCategoryMapAllOrthForms = new EnumMap<>(WordCategory.class);
         this.lowerToUpperMap = new HashMap<>();
-        this.levenshteinDistance = new LevenshteinDistance(MAX_LEVENSHTEIN_DIST);
         semanticUtils = null;
 
         long startTime = System.currentTimeMillis();
@@ -498,50 +495,16 @@ public class GermaNet {
      * is an empty <code>List</code>.
      */
     public List<Synset> getSynsets(FilterConfig filter) {
-        return getSynsets(filter, getSynsets());
-    }
-
-    /**
-     * Returns a <code>List</code> of <code>Synsets</code> in the given <code>Collection</code> of <code>Synset</code>
-     * that satisfy the specified <code>FilterConfig</code>.
-     *
-     * @param filter  a <code>FilterConfig</code> to use for the search
-     * @param synsets a <code>Collection</code> of <code>Synset</code> to search
-     * @return a <code>List</code> of <code>Synset</code> in the given <code>Collection</code> of <code>Synset</code>
-     * that satisfy the specified <code>FilterConfig</code>. If no <code>Synsets</code> were found, this
-     * is an empty <code>List</code>.
-     */
-    public List<Synset> getSynsets(FilterConfig filter, Collection<Synset> synsets) {
         List<Synset> rval = new ArrayList<>();
 
-        Pattern pattern;
-        String searchString = filter.getSearchString();
-        Set<WordCategory> wordCategories = filter.getWordCategories();
-        Set<WordClass> wordClasses = filter.getWordClasses();
-        Set<OrthFormVariant> orthFormVariants = filter.getOrthFormVariants();
-
-        // can't do anything with a null or empty searchString
-        // or if any of the sets are null or empty
-        if (searchString == null || searchString.isEmpty()
-                || wordCategories == null || wordCategories.isEmpty()
-                || wordClasses == null || wordClasses.isEmpty()
-                || orthFormVariants == null || orthFormVariants.isEmpty()) {
-            return rval;
+        List<LexUnit> lexUnits = getLexUnits(filter);
+        Set<Synset> synsets = new HashSet<>();
+        for (LexUnit lexUnit : lexUnits) {
+            synsets.add(lexUnit.getSynset());
         }
-
-        pattern = compilePattern(filter);
-
-        for (Synset synset : synsets) {
-            if (wordCategories.contains(synset.getWordCategory())
-                    && wordClasses.contains(synset.getWordClass())) {
-                List<LexUnit> lexUnitList = matchLexUnits(synset.getLexUnits(), filter, pattern);
-                if (!lexUnitList.isEmpty()) {
-                    rval.add(synset);
-                }
-            }
-        }
-
+        rval.addAll(synsets);
         return rval;
+        //return getSynsets(filter, getSynsets());
     }
 
     /**
@@ -927,7 +890,62 @@ public class GermaNet {
      * is an empty <code>List</code>.
      */
     public List<LexUnit> getLexUnits(FilterConfig filter) {
-        return getLexUnits(filter, getLexUnits());
+        if (filter == null) {
+            return new ArrayList<>();
+        }
+
+        String searchString = filter.getSearchString();
+        Set<WordCategory> wordCategories = filter.getWordCategories();
+        Set<WordClass> wordClasses = filter.getWordClasses();
+        Set<OrthFormVariant> orthFormVariants = filter.getOrthFormVariants();
+
+        // can't do anything with a null or empty searchString
+        // or if any of the sets are null or empty
+        if (searchString == null || searchString.isEmpty()
+                || wordCategories == null || wordCategories.isEmpty()
+                || wordClasses == null || wordClasses.isEmpty()
+                || orthFormVariants == null || orthFormVariants.isEmpty()) {
+            return new ArrayList<LexUnit>();
+        }
+
+        List<LexUnit> lexUnits = getLexUnits();
+
+        // every lexunit must be inspected if it's a regEx or editDist
+        if (filter.isRegEx() || filter.getEditDistance() > 0) {
+            return  getLexUnits(filter, lexUnits);
+        }
+
+        // if it's a literal search string and not using edit distance
+        // limit the lexunit list
+        List<LexUnit> partiallyFilteredLexUnits = new ArrayList<>();
+        Map<String, Set<LexUnit>> formLexUnitMap;
+        Set<LexUnit> tmpLexUnitSet;
+        Set<String> mapForms;
+
+        if (filter.isIgnoreCase()) {
+            // get all possible orthForms that would match ignoring case
+            // including all orthFormVariants
+            mapForms = lowerToUpperMap.get(searchString.toLowerCase());
+            mapForms = (mapForms == null) ? new HashSet<>(0) : mapForms;
+        } else {
+            // search for the search term exactly
+            mapForms = new HashSet<>(1);
+            mapForms.add(searchString);
+        }
+
+        // extract lexunits containing any of the forms as any orthFormVariant
+        // that belong to any of the WordCategories in the filter
+        for (String form : mapForms) {
+            for (WordCategory wordCategory : filter.getWordCategories()) {
+                formLexUnitMap = wordCategoryMapAllOrthForms.get(wordCategory);
+
+                tmpLexUnitSet = formLexUnitMap.get(form);
+                if (tmpLexUnitSet != null) {
+                    partiallyFilteredLexUnits.addAll(tmpLexUnitSet);
+                }
+            }
+        }
+        return getLexUnits(filter, partiallyFilteredLexUnits);
     }
 
     /**
@@ -941,83 +959,61 @@ public class GermaNet {
      * is an empty <code>List</code>.
      */
     public List<LexUnit> getLexUnits(FilterConfig filter, Collection<LexUnit> lexUnits) {
-
-        Pattern pattern;
         List<LexUnit> rval = new ArrayList<>();
+
+        if (filter == null) {
+            return rval;
+        }
+
         String searchString = filter.getSearchString();
         Set<WordCategory> wordCategories = filter.getWordCategories();
         Set<WordClass> wordClasses = filter.getWordClasses();
         Set<OrthFormVariant> orthFormVariants = filter.getOrthFormVariants();
+        int editDist = filter.getEditDistance();
+        boolean regEx = filter.isRegEx();
+        boolean calcEditDist = (!regEx && editDist > 0);
+        Pattern pattern = null;
+        LevenshteinDistance levenshteinDistance = null;
 
-        // can't do anything with a null or empty searchString
-        // or if any of the sets are null or empty
-        if (searchString == null || searchString.isEmpty()
-                || wordCategories == null || wordCategories.isEmpty()
-                || wordClasses == null || wordClasses.isEmpty()
-                || orthFormVariants == null || orthFormVariants.isEmpty()) {
-            return rval;
+        // Only need one of pattern || levenshtein for a filter
+        if (calcEditDist) {
+            levenshteinDistance = new LevenshteinDistance(editDist);
+        } else {
+            pattern = compilePattern(filter);
         }
-
-        // check WordCategory and WordClass:
-        // matchLexUnits() does not check Cat or Class
-        List<LexUnit> catClassFilteredLexUnits = new ArrayList<>();
-        for (LexUnit lexUnit : lexUnits) {
-            if (filter.getWordCategories().contains(lexUnit.getWordCategory())
-                    && filter.getWordClasses().contains(lexUnit.getWordClass())) {
-                catClassFilteredLexUnits.add(lexUnit);
-            }
-        }
-
-        pattern = compilePattern(filter);
-        rval = matchLexUnits(catClassFilteredLexUnits, filter, pattern);
-
-        if (rval == null) {
-            rval = new ArrayList<>();
-        }
-        return rval;
-    }
-
-    /**
-     * Return a <code>List</code> of <code>LexUnit</code>s within the given <code>Collection</code>
-     * of <code>LexUnit</code>s that match the given precompiled <code>Pattern</code>, taking the filter's
-     * edit distance into account if the search term is not a regular expression.
-     *
-     * @param lexUnits the <code>Collection</code> of <code>LexUnit</code>s to match
-     * @param filter   the <code>FilterConfig</code> to use
-     * @param pattern  a precompiled <code>Pattern</code>
-     * @return a <code>List</code> of <code>LexUnit</code>s within the given <code>Collection</code>
-     * of <code>LexUnit</code>s that match the given precompiled <code>Pattern</code>, taking the filter's
-     * edit distance into account if the search term is not a regular expression. If no matches are found, an
-     * empty <code>List</code> is returned.
-     */
-    private List<LexUnit> matchLexUnits(Collection<LexUnit> lexUnits, FilterConfig filter, Pattern pattern) {
-        Set<OrthFormVariant> orthFormVariants = filter.getOrthFormVariants();
-        List<LexUnit> rval = new ArrayList<>();
 
         for (LexUnit lu : lexUnits) {
-            boolean hit = false;
-            for (OrthFormVariant variant : orthFormVariants) {
-                String toMatch = lu.getOrthForm(variant);
-                if (toMatch != null) {
-                    int editDist = filter.getEditDistance();
-                    if (!filter.isRegEx() && editDist > 0) {
-                        String searchString = filter.getSearchString();
-                        if (filter.isIgnoreCase()) {
-                            searchString = searchString.toLowerCase();
-                        }
-                        int actualDist = levenshteinDistance.apply(searchString, toMatch);
-                        if ((actualDist >= 0) && (actualDist <= editDist)) {
+
+            // check WordCategory and WordClass
+            if (wordCategories.contains(lu.getWordCategory())
+                    && wordClasses.contains(lu.getWordClass())) {
+
+                // check all required orthFormVariants
+                boolean hit = false;
+                for (OrthFormVariant variant : orthFormVariants) {
+                    String toMatch = lu.getOrthForm(variant);
+                    if (toMatch != null) {
+                        // pattern will also check for case, but it has to be done
+                        // separately when editDistance is used
+                        if (calcEditDist) {
+                            if (filter.isIgnoreCase()) {
+                                searchString = searchString.toLowerCase();
+                                toMatch = toMatch.toLowerCase();
+                            }
+                            int actualDist = levenshteinDistance.apply(searchString, toMatch);
+                            if (actualDist >= 0) {
+                                hit = true;
+                                break; // found a match in this LexUnit, stop looking
+                            }
+                        } else if (pattern.matcher(toMatch).matches()) {
                             hit = true;
                             break; // found a match in this LexUnit, stop looking
                         }
-                    } else if (pattern.matcher(toMatch).matches()) {
-                        hit = true;
-                        break; // found a match in this LexUnit, stop looking
                     }
                 }
-            }
-            if (hit) {
-                rval.add(lu);
+                if (hit) {
+                    rval.add(lu);
+                }
             }
         }
         return rval;

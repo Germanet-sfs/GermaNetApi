@@ -1017,11 +1017,11 @@ class GermaNetTest {
                 Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(13943, 13952, 13953, 13966, 13969, 14004, 108169, 122501))),
                 Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(13943, 13952, 13953, 13966, 13969, 14004, 108169, 122501))),
 
-                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189))),
-                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189))),
+                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(6011, 17941, 21263, 21276, 28692, 42555, 51189, 80636, 112175))),
+                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(6011, 17941, 21263, 21276, 28692, 42555, 51189, 80636, 112175))),
 
-                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189))),
-                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(28692, 6011, 42555, 51189)))
+                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(6011, 17941, 21263, 21276, 28692, 42555, 51189, 80636, 112175))),
+                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(6011, 17941, 21263, 21276, 28692, 42555, 51189, 80636, 112175)))
         );
     }
 
@@ -1078,11 +1078,11 @@ class GermaNetTest {
                 Arguments.of(filterConfig3, ignoreCase, new ArrayList<>(Arrays.asList(19319, 19330, 19331, 19344, 19347, 19387, 143622, 161172))),
                 Arguments.of(filterConfig3, caseSensitive, new ArrayList<>(Arrays.asList(19319, 19330, 19331, 19344, 19347, 19387, 143622, 161172))),
 
-                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425))),
-                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425))),
+                Arguments.of(filterConfig4, ignoreCase, new ArrayList<>(Arrays.asList(8893, 24911, 29280, 29305, 62042, 72381, 103425, 109078, 148719))),
+                Arguments.of(filterConfig4, caseSensitive, new ArrayList<>(Arrays.asList(8893, 24911, 29280, 29305, 62042, 72381, 103425, 109078, 148719))),
 
-                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425))),
-                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(8893, 62042, 72381, 103425)))
+                Arguments.of(filterConfig5, ignoreCase, new ArrayList<>(Arrays.asList(8893, 24911, 29280, 29305, 62042, 72381, 103425, 109078, 148719))),
+                Arguments.of(filterConfig5, caseSensitive, new ArrayList<>(Arrays.asList(8893, 24911, 29280, 29305, 62042, 72381, 103425, 109078, 148719)))
         );
     }
 
