@@ -1191,9 +1191,20 @@ public class GermaNet {
         }
     }
 
-    public SemanticUtils getSemanticUtils() {
+    /**
+     * Get the <code>SemanticUtils</code> object, which can be used to calculate semantic relatedness
+     * based on several algorithms. Some algorithms require frequency lists for each word category.
+     *
+     * @param nounFreqPath path to a frequency list for nouns
+     * @param verbFreqPath path to a frequency list for verbs
+     * @param adjFreqPath path to a frequency list for adjectives
+     * @return the <code>SemanticUtils</code> object
+     * @throws IOException if any of the frequency list files do not exist or can not be read
+     */
+    public SemanticUtils getSemanticUtils(String nounFreqPath, String verbFreqPath, String adjFreqPath) throws IOException {
         if (semanticUtils == null) {
-            semanticUtils = new SemanticUtils(catMaxHypernymDistanceMap, this);
+            semanticUtils = new SemanticUtils(catMaxHypernymDistanceMap, this,
+                    nounFreqPath, verbFreqPath, adjFreqPath);
         }
         return semanticUtils;
     }

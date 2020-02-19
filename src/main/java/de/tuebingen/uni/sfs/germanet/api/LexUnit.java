@@ -69,6 +69,7 @@ public class LexUnit {
     private boolean styleMarking, artificial, namedEntity;
     private Synset synset;
     private String orthForm, orthVar, oldOrthForm, oldOrthVar;
+    private List<String> allOrthForms;
     private int sense;
     private ArrayList<Frame> frames;
     private ArrayList<Example> examples;
@@ -112,6 +113,18 @@ public class LexUnit {
         this.examples = new ArrayList<>();
         this.iliRecords = new ArrayList<>();
         this.wiktionaryParaphrases = new ArrayList<>();
+
+        allOrthForms = new ArrayList<>();
+        allOrthForms.add(orthForm);
+        if (orthVar != null) {
+            allOrthForms.add(orthVar);
+        }
+        if (oldOrthForm != null) {
+            allOrthForms.add(oldOrthForm);
+        }
+        if (oldOrthVar != null) {
+            allOrthForms.add(oldOrthVar);
+        }
     }
 
     /**
@@ -246,22 +259,7 @@ public class LexUnit {
      * <code>orthVar</code>, <code>oldOrthForm</code>, and <code>oldOrthVar</code>)
      */
     public List<String> getOrthForms() {
-        Set<String> allOrthForms = new HashSet<>();
-        allOrthForms.add(orthForm);
-
-        if (getOrthVar() != null) {
-            allOrthForms.add(orthVar);
-        }
-
-        if (getOldOrthForm() != null) {
-            allOrthForms.add(oldOrthForm);
-        }
-
-        if (getOldOrthVar() != null) {
-            allOrthForms.add(oldOrthVar);
-        }
-
-        return new ArrayList<>(allOrthForms);
+        return allOrthForms;
     }
 
     /**

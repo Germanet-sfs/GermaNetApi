@@ -22,6 +22,9 @@ package de.tuebingen.uni.sfs.germanet.api;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -36,18 +39,169 @@ public class SemanticUtils {
     private Map<WordCategory, Set<LeastCommonSubsumer>> catLongestLCSMap;
     private Map<WordCategory, Integer> catMaxDepthMap;
     private Map<WordCategory, Map<SemRelMeasure, List<Double>>> catNormalizationMap;
+    private Map<WordCategory, Map<Integer, Double>> catICMap;
     private GermaNet gnet;
 
-    SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap, GermaNet gnet) {
+    SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap, GermaNet gnet,
+                  String nounFreqPath, String verbFreqPath, String adjFreqPath) throws IOException {
         this.catMaxHypernymDistanceMap = catMaxHypernymDistanceMap;
         this.gnet = gnet;
         catMaxDepthMap = new HashMap<>(WordCategory.values().length);
         catNormalizationMap = new HashMap<>(WordCategory.values().length);
+        catICMap = new HashMap<>(WordCategory.values().length);
+
         LOGGER.info("Initializing SemanticUtils object...");
         initCatLongestLCSMap();
         initMaxDepthMap();
-        initMinMaxNormalizationValues();
+
+        LOGGER.info("Initializing normalization values for Path algorithms...");
+        initPathNormalizationValues();
+
+        LOGGER.info("Initializing Information Content values and normalization values...");
+        initICMap(nounFreqPath, verbFreqPath, adjFreqPath);
+
         LOGGER.info("Done initializing SemanticUtils object.");
+    }
+
+    private void initICMap(String nounFreqPath, String verbFreqPath, String adjFreqPath) throws IOException {
+        Map<WordCategory, Map<String, Long>> formFreqMaps = new HashMap<>(WordCategory.values().length);
+        Map<WordCategory, Map<Integer, Long>> cumulativeFreqMaps = new HashMap<>(WordCategory.values().length);
+
+        LOGGER.info("Loading frequency lists...");
+        formFreqMaps.put(WordCategory.nomen, loadFreqData(nounFreqPath));
+        formFreqMaps.put(WordCategory.verben, loadFreqData(verbFreqPath));
+        formFreqMaps.put(WordCategory.adj, loadFreqData(adjFreqPath));
+
+        // make a first pass over all synsets to calculate their cumulative frequencies
+        for (WordCategory wordCategory : WordCategory.values()) {
+            Map<String, Long> formFreqMap = formFreqMaps.get(wordCategory);
+            Map<Integer, Long> cumulativeFreqMap = initCumulativeFreqMap(wordCategory, formFreqMap);
+            cumulativeFreqMaps.put(wordCategory, cumulativeFreqMap);
+            LOGGER.info("Cumulative frequency for root ({}): {}", wordCategory, cumulativeFreqMap.get(GermaNet.GNROOT_ID));
+        }
+
+        // make a second pass over all synsets to calculate their ICs
+        // keep track of min and max IC values and add them to the normalization map
+        for (WordCategory wordCategory : WordCategory.values()) {
+
+            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
+            Map<Integer, Long> cumulativeFreqMap = cumulativeFreqMaps.get(wordCategory);
+            Long cumFreqRoot = cumulativeFreqMap.get(GermaNet.GNROOT_ID);
+            Map<Integer, Double> icMap = new HashMap<>(synsetsByWordCat.size());
+
+            Double minIC = Double.MAX_VALUE;
+            Double maxIC = Double.MIN_VALUE;
+
+            for (Synset synset : synsetsByWordCat) {
+                int synsetID = synset.getId();
+                Long cumulativeFreq = cumulativeFreqMap.get(synsetID);
+
+                Double ic = null;
+                if (cumulativeFreq > 0) {
+                    ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
+                    if (Double.compare(ic, minIC) < 0) {
+                        minIC = ic;
+                    }
+                    if (Double.compare(ic, maxIC) > 0) {
+                        maxIC = ic;
+                    }
+                }
+                icMap.put(synsetID, ic);
+            }
+            catICMap.put(wordCategory, icMap);
+
+            // put the min/max IC values in the normalization map for this wordCategory
+            // the min/max values can be used for all of the IC measures
+            Map<SemRelMeasure, List<Double>> normMap = catNormalizationMap.get(wordCategory);
+            List<Double> minMaxList = new ArrayList<>();
+            minMaxList.add(minIC);
+            minMaxList.add(maxIC);
+            normMap.put(SemRelMeasure.Resnik, minMaxList);
+            normMap.put(SemRelMeasure.JiangAndConrath, minMaxList);
+            normMap.put(SemRelMeasure.Lin, minMaxList);
+            catNormalizationMap.put(wordCategory, normMap);
+        }
+
+        /*
+        try {
+            Files.write(Paths.get("/Users/meh/tmp/adj-freq.txt"), idIndividualFreqMaps.get(WordCategory.adj).toString().getBytes());
+            Files.write(Paths.get("/Users/meh/tmp/verb-freq.txt"), idIndividualFreqMaps.get(WordCategory.verben).toString().getBytes());
+            Files.write(Paths.get("/Users/meh/tmp/noun-freq.txt"), idIndividualFreqMaps.get(WordCategory.nomen).toString().getBytes());
+        } catch (IOException ex) {
+            LOGGER.info("error");
+        }
+        */
+    }
+
+    private Map<String, Long> loadFreqData(String fileName) throws IOException {
+        Map<String, Long> freqMap = new HashMap<>();
+        Files.lines(Paths.get(fileName))
+                .map(line -> line.split("\\s+"))
+                .forEach(splits -> {
+                    String word = splits[0];
+                    Long freq = Long.valueOf(splits[1]);
+                    Long curFreq = freqMap.get(word);
+                    if (curFreq != null) {
+                        freq += curFreq;
+                    }
+                    freqMap.put(word, freq);
+                });
+        return freqMap;
+    }
+
+    private Map<Integer, Long> initCumulativeFreqMap(WordCategory wordCategory, Map<String, Long> formFreqMap) {
+        Map<Integer, Long> individualFreqMap = new HashMap<>();
+        Map<Integer, Long> cumulativeFreqMap = new HashMap<>();
+        List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
+
+        for (Synset synset : synsetsByWordCat) {
+            Integer synsetID = synset.getId();
+            if (cumulativeFreqMap.get(synsetID) == null) {
+                calcCumulativeSynsetFreq(synset, formFreqMap, individualFreqMap, cumulativeFreqMap);
+            }
+        }
+
+        // add an entry for ROOT
+        calcCumulativeSynsetFreq(gnet.getSynsetByID(GermaNet.GNROOT_ID), formFreqMap, individualFreqMap, cumulativeFreqMap);
+        return cumulativeFreqMap;
+    }
+
+    private Long calcCumulativeSynsetFreq(Synset synset, Map<String, Long> formFreqMap, Map<Integer, Long> individualFreqMap, Map<Integer, Long> cumulativeFreqMap) {
+
+        // See if we already calculated the cumulative frequency of the synset
+        Integer synsetID = synset.getId();
+        Long cumulativeFreq = cumulativeFreqMap.get(synsetID);
+        if (cumulativeFreq != null) {
+            return cumulativeFreq;
+        }
+
+        // Calculate and store cumulative freq for this synset and all its hyponyms (transitive)
+        Long individualFreq = individualFreqMap.get(synsetID); // Long.valueOf(0);
+        if (individualFreq == null) {
+            individualFreq = calcSynsetFreq(synset, formFreqMap);
+        }
+
+        // ToDo: synset's own freq is included in its cumulativeFreq - check if this is right
+        cumulativeFreq = individualFreq;
+        List<Synset> hyponyms = synset.getRelatedSynsets(ConRel.has_hyponym);
+        for (Synset hyponym : hyponyms) {
+            cumulativeFreq += calcCumulativeSynsetFreq(hyponym, formFreqMap, individualFreqMap, cumulativeFreqMap);
+        }
+        cumulativeFreqMap.put(synsetID, cumulativeFreq);
+        return cumulativeFreq;
+    }
+
+    private Long calcSynsetFreq(Synset synset, Map<String, Long> formFreqMap) {
+        Long totalFreq = Long.valueOf(0);
+
+        List<String> allOrthForms = synset.getAllOrthForms();
+        for (String orthForm : allOrthForms) {
+            Long orthFormFreq = formFreqMap.get(orthForm);
+            if (orthFormFreq != null) {
+                totalFreq += orthFormFreq;
+            }
+        }
+        return totalFreq;
     }
 
     private void initMaxDepthMap() {
@@ -71,42 +225,39 @@ public class SemanticUtils {
     /**
      * Initialize the normalization values for each word category and each relatedness measure.
      */
-    private void initMinMaxNormalizationValues() {
+    private void initPathNormalizationValues() {
         for (WordCategory wordCategory : WordCategory.values()) {
             Map<SemRelMeasure, List<Double>> normalizeMinMaxValues = new HashMap<>();
 
             for (SemRelMeasure semRelMeasure : SemRelMeasure.values()) {
-                // min at index1, max at index2
-                List<Double> maxMin = new ArrayList<>(2); // min at index 0, max at index 1
-                List<Integer> maxDistantSynsetIds = Lists.newArrayList(catLongestLCSMap.get(wordCategory).iterator().next().getFromToSynsetIDs());
-                Synset synset1 = gnet.getSynsetByID(maxDistantSynsetIds.get(0));
-                Synset synset2 = gnet.getSynsetByID(maxDistantSynsetIds.get(1));
+                // min at index0, max at index1
+                List<Double> minMax = new ArrayList<>(2); // min at index 0, max at index 1
+                Synset synset1;
+                Synset synset2;
                 double minVal = 0;
                 double maxVal = 1;
 
                 switch (semRelMeasure) {
                     case SimplePath:
-                        minVal = getSimilaritySimplePath(synset1, synset2, 0); // least similar, lowest value, not normalized
-                        maxVal = getSimilaritySimplePath(synset1, synset1, 0); // most similar, highest value, not normalized
-                        break;
-
                     case LeacockAndChodorow:
-                        minVal = getSimilarityLeacockChodorow(synset1, synset2, 0); // least similar, lowest value, not normalized
-                        maxVal = getSimilarityLeacockChodorow(synset1, synset1, 0); // most similar, highest value, not normalized
-                        break;
-
                     case WuAndPalmer:
-                        minVal = getSimilarityWuAndPalmer(synset1, synset2, 0); // least similar, lowest value, not normalized
-                        maxVal = getSimilarityWuAndPalmer(synset1, synset1, 0); // most similar, highest value, not normalized
+                        // Maximally distant synsets using path algorithms are those with the longest LCSs
+                        List<Integer> maxDistantSynsetIds = Lists.newArrayList(catLongestLCSMap.get(wordCategory).iterator().next().getFromToSynsetIDs());
+                        synset1 = gnet.getSynsetByID(maxDistantSynsetIds.get(0));
+                        synset2 = gnet.getSynsetByID(maxDistantSynsetIds.get(1));
+
+                        minVal = getSimilarity(semRelMeasure, synset1, synset2, 0); // least similar, lowest value, not normalized
+                        maxVal = getSimilarity(semRelMeasure, synset1, synset1, 0); // most similar, highest value, not normalized
                         break;
 
                     default:
+                        // IC measures fill the normalization maps during initialization
                         break;
                 }
 
-                maxMin.add(minVal);
-                maxMin.add(maxVal);
-                normalizeMinMaxValues.put(semRelMeasure, maxMin);
+                minMax.add(minVal);
+                minMax.add(maxVal);
+                normalizeMinMaxValues.put(semRelMeasure, minMax);
             }
             catNormalizationMap.put(wordCategory, normalizeMinMaxValues);
         }
@@ -324,6 +475,10 @@ public class SemanticUtils {
                 rval = getSimilarityWuAndPalmer(s1, s2, normalizedMax);
                 break;
 
+            case Resnik:
+                rval = getSimilarityResnik(s1, s2, normalizedMax);
+                break;
+
             default:
                 rval = null;
         }
@@ -449,6 +604,35 @@ public class SemanticUtils {
 
         double rawValue = -Math.log10(pathLength / (2.0 * maxDepth));
         return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.LeacockAndChodorow, rawValue, normalizedMax) : rawValue;
+    }
+
+    public Double getSimilarityResnik(Synset s1, Synset s2, int normalizedMax) {
+        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
+            return null;
+        }
+
+        Set<LeastCommonSubsumer> leastCommonSubsumers = getLeastCommonSubsumers(s1, s2);
+        Map<Integer, Double> icMap = catICMap.get(s1.getWordCategory());
+        Double curIC;
+        Double prevIC = null;
+        Double maxIC = null;
+        Double epsilon = 0.00001;
+
+        for (LeastCommonSubsumer leastCommonSubsumer : leastCommonSubsumers) {
+            int lcsID = leastCommonSubsumer.getLcsID();
+            curIC = icMap.get(lcsID);
+
+            if (prevIC == null) {
+                maxIC = curIC;
+            } else {
+                double diff = curIC - prevIC;
+                if (diff > epsilon) {
+                    maxIC = curIC;
+                }
+            }
+            prevIC = curIC;
+        }
+        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.Resnik, maxIC, normalizedMax) : maxIC;
     }
 
     /**

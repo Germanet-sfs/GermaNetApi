@@ -75,6 +75,7 @@ public class Synset implements Comparable {
     private Map<Integer, Integer> distanceMap;
     private int maxDistance; // to any hypernym on path to root
     private int depth; // distance from root
+    private Double infoContent;
 
     // Relations of this Synset
     private EnumMap<ConRel, Set<Synset>> relations;
@@ -96,6 +97,7 @@ public class Synset implements Comparable {
         maxDistance = 0;
         distanceMap = new HashMap<>();
         distanceMap.put(id, 0);
+        infoContent = 0.0;
     }
 
     /**

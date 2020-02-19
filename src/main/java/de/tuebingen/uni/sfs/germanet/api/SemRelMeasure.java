@@ -23,12 +23,56 @@ package de.tuebingen.uni.sfs.germanet.api;
  * author: Marie Hinrichs, Seminar für Sprachwissenschaft, Universität Tübingen
  */
 public enum SemRelMeasure {
-    SimplePath,
-    LeacockAndChodorow,
-    WuAndPalmer,
-    Lin,
-    Lesk,
-    HirstAndStOnge,
-    Resnik,
-    JiangAndConrath
+    SimplePath(MeasureType.Path),
+    LeacockAndChodorow(MeasureType.Path),
+    WuAndPalmer(MeasureType.Path),
+    Resnik(MeasureType.InformationContent),
+    Lin(MeasureType.InformationContent),
+    JiangAndConrath(MeasureType.InformationContent);
+
+    private MeasureType measureType;
+
+    private SemRelMeasure(MeasureType measureType) {
+        this.measureType = measureType;
+    }
+
+    /**
+     * Returns true if the <code>String</code> <code>measureName</code> represents a
+     * valid <code>SemRelMeasure</code>.
+     * @param measureName the name of the measure to verify
+     * @return true if the <code>String measureName</code> represents a valid
+     * <code>SemRelMeasure</code>
+     */
+    public static boolean isSemRelMeasure(String measureName) {
+        SemRelMeasure[] vals = values();
+
+        for (int i = 0; i < vals.length; i++) {
+            if (vals[i].toString().equals(measureName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the type of this <code>SemRelMeasure</code>.
+     * @return the type of this <code>SemRelMeasure</code>.
+     */
+    public MeasureType getMeasureType() {
+        return measureType;
+    }
+
+    /**
+     * Returns true if this <code>SemRelMeasure</code> is the given type.
+     * @param type the <code>MeasureType</code> to check for
+     * @return true if this <code>SemRelMeasure</code> is the given type
+     */
+    public boolean isMeasureType(MeasureType type) {
+        return measureType == type;
+    }
+
+    public enum MeasureType {
+        Path,
+        InformationContent
+    }
 }

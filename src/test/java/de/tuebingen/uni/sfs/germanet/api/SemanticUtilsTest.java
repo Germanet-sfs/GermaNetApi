@@ -31,10 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
@@ -61,9 +58,13 @@ public class SemanticUtilsTest {
             String sep = System.getProperty("file.separator");
             dataPath = userHome + sep + "Data" + sep;
             String goodDataPath = dataPath + "GN-XML-ForApiUnitTesting/";
+            String freqListDir = dataPath + "GN-FreqLists-ForApiUnitTesting" + sep;
+            String nounFreqListPath = freqListDir + "noun_freqs_decow14_16.txt";
+            String verbFreqListPath = freqListDir + "verb_freqs_decow14_16.txt";
+            String adjFreqListPath = freqListDir + "adj_freqs_decow14_16.txt";
 
             gnetCaseSensitive = new GermaNet(goodDataPath, false);
-            semanticUtils = gnetCaseSensitive.getSemanticUtils();
+            semanticUtils = gnetCaseSensitive.getSemanticUtils(nounFreqListPath, verbFreqListPath, adjFreqListPath);
         } catch (IOException ex) {
             LOGGER.error("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
             System.exit(0);
@@ -445,16 +446,19 @@ public class SemanticUtilsTest {
         );
     }
 
-    @ParameterizedTest(name = "{0} {1} {2} SimplePath")
-    @MethodSource({"simplePathProvider"})
-    void simplePathTest(Integer sID1, Integer sID2, int normalizedMax, Double expected) {
+    @ParameterizedTest(name = "{0} {1} {2} {3}")
+    @MethodSource({"simplePathProvider",
+            "leacockChodorowProvider",
+            "wuAndPalmerProvider",
+            "resnikProvider"})
+    void similarityMeasuresTest(SemRelMeasure semRelMeasure, Integer sID1, Integer sID2, int normalizedMax, Double expected) {
         Synset synset1, synset2;
 
         synset1 = (sID1 == null) ? null : gnetCaseSensitive.getSynsetByID(sID1);
         synset2 = (sID2 == null) ? null : gnetCaseSensitive.getSynsetByID(sID2);
 
         double epsilon = 0.0001; // tolerance for working with doubles
-        Double actual = semanticUtils.getSimilaritySimplePath(synset1, synset2, normalizedMax);
+        Double actual = semanticUtils.getSimilarity(semRelMeasure, synset1, synset2, normalizedMax);
 
         if (sID1 == null || sID2 == null) {
             assertNull(actual);
@@ -490,36 +494,18 @@ public class SemanticUtilsTest {
         double normalized10Expected = 8.5714;
 
         return Stream.of(
-                Arguments.of(bambusID, veilchenID, 0, bambusVeilchenExpected),
-                Arguments.of(kleinesJohanniswürmchenID, lebertransplantationID, 0, unsimilarExpected),
-                Arguments.of(bemehlenID, anmusternID, 0, unsimilarExpected),
-                Arguments.of(bemehlenID, bemehlenID, 0, identityExpected),
-                Arguments.of(blasphemischID, regressivID, 0, unsimilarExpected),
-                Arguments.of(blasphemischID, regressivID, 10, unsimilarExpected),
-                Arguments.of(blasphemischID, blasphemischID, 0, identityExpected),
-                Arguments.of(blasphemischID, blasphemischID, 10, 10.0),
-                Arguments.of(apfelbaumId, giftpflanzeId, 10, normalized10Expected),
-                Arguments.of(apfelbaumId, null, 10, null),
-                Arguments.of(null, giftpflanzeId, 10, null)
+                Arguments.of(SemRelMeasure.SimplePath, bambusID, veilchenID, 0, bambusVeilchenExpected),
+                Arguments.of(SemRelMeasure.SimplePath, kleinesJohanniswürmchenID, lebertransplantationID, 0, unsimilarExpected),
+                Arguments.of(SemRelMeasure.SimplePath, bemehlenID, anmusternID, 0, unsimilarExpected),
+                Arguments.of(SemRelMeasure.SimplePath, bemehlenID, bemehlenID, 0, identityExpected),
+                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, regressivID, 0, unsimilarExpected),
+                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, regressivID, 10, unsimilarExpected),
+                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, blasphemischID, 0, identityExpected),
+                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, blasphemischID, 10, 10.0),
+                Arguments.of(SemRelMeasure.SimplePath, apfelbaumId, giftpflanzeId, 10, normalized10Expected),
+                Arguments.of(SemRelMeasure.SimplePath, apfelbaumId, null, 10, null),
+                Arguments.of(SemRelMeasure.SimplePath, null, giftpflanzeId, 10, null)
         );
-    }
-
-    @ParameterizedTest(name = "{0} {1} {2} Leacock and Chodorow")
-    @MethodSource({"leacockChodorowProvider"})
-    void leacockChodorowTest(Integer sID1, Integer sID2, int normalizedMax, Double expected) {
-        Synset synset1, synset2;
-
-        synset1 = (sID1 == null) ? null : gnetCaseSensitive.getSynsetByID(sID1);
-        synset2 = (sID2 == null) ? null : gnetCaseSensitive.getSynsetByID(sID2);
-
-        double epsilon = 0.0001; // tolerance for working with doubles
-        Double actual = semanticUtils.getSimilarityLeacockChodorow(synset1, synset2, normalizedMax);
-
-        if (sID1 == null || sID2 == null) {
-            assertNull(actual);
-        } else {
-            assertEquals(expected, actual, epsilon);
-        }
     }
 
     private static Stream<Arguments> leacockChodorowProvider() {
@@ -560,46 +546,28 @@ public class SemanticUtilsTest {
 
 
         return Stream.of(
-                Arguments.of(bambusID, veilchenID, 0, bambusVeilchenRawExpected),
-                Arguments.of(bambusID, veilchenID, 10, bambusVeilchenNormalized10Expected),
-                Arguments.of(bambusID, bambusID, 10, normalized10EdentityExpected),
-                Arguments.of(veilchenID, veilchenID, 0, identityExpectedNounRaw),
-                Arguments.of(kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10EdentityExpected),
-                Arguments.of(lebertransplantationID, lebertransplantationID, 0, identityExpectedNounRaw),
-                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 0, kJohannisLebertransExpected),
-                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 10, kJohannisLebertransNorm10Expected),
-                Arguments.of(bemehlenID, anmusternID, 0, bemAnmustRawExpected),
-                Arguments.of(bemehlenID, anmusternID, 10, bemAnmustNorm10Expected),
-                Arguments.of(bemehlenID, bemehlenID, 0, identityExpectedVerbRaw),
-                Arguments.of(blasphemischID, regressivID, 0, blasRegRawExpected),
-                Arguments.of(blasphemischID, regressivID, 10, blasRegNorm10Expected),
-                Arguments.of(blasphemischID, blasphemischID, 0, identityExpectedAdjRaw),
-                Arguments.of(blasphemischID, blasphemischID, 10, 10.0),
-                Arguments.of(apfelbaumId, giftpflanzeId, 0, abaumGiftpRawExpected),
-                Arguments.of(apfelbaumId, giftpflanzeId, 10, normalized10Expected),
-                Arguments.of(giftpflanzeId, apfelbaumId, 0, abaumGiftpRawExpected),
-                Arguments.of(giftpflanzeId, apfelbaumId, 10, normalized10Expected),
-                Arguments.of(apfelbaumId, null, 10, null),
-                Arguments.of(null, giftpflanzeId, 10, null)
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, bambusID, veilchenID, 0, bambusVeilchenRawExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, bambusID, veilchenID, 10, bambusVeilchenNormalized10Expected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, bambusID, bambusID, 10, normalized10EdentityExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, veilchenID, veilchenID, 0, identityExpectedNounRaw),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10EdentityExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, lebertransplantationID, lebertransplantationID, 0, identityExpectedNounRaw),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, kleinesJohanniswuermchenID, lebertransplantationID, 0, kJohannisLebertransExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, kleinesJohanniswuermchenID, lebertransplantationID, 10, kJohannisLebertransNorm10Expected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, bemehlenID, anmusternID, 0, bemAnmustRawExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, bemehlenID, anmusternID, 10, bemAnmustNorm10Expected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, bemehlenID, bemehlenID, 0, identityExpectedVerbRaw),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, blasphemischID, regressivID, 0, blasRegRawExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, blasphemischID, regressivID, 10, blasRegNorm10Expected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, blasphemischID, blasphemischID, 0, identityExpectedAdjRaw),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, blasphemischID, blasphemischID, 10, 10.0),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, apfelbaumId, giftpflanzeId, 0, abaumGiftpRawExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, apfelbaumId, giftpflanzeId, 10, normalized10Expected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, giftpflanzeId, apfelbaumId, 0, abaumGiftpRawExpected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, giftpflanzeId, apfelbaumId, 10, normalized10Expected),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, apfelbaumId, null, 10, null),
+                Arguments.of(SemRelMeasure.LeacockAndChodorow, null, giftpflanzeId, 10, null)
         );
-    }
-
-    @ParameterizedTest(name = "{0} {1} {2} Wu and Palmer")
-    @MethodSource({"wuAndPalmerProvider"})
-    void wuAndPalmerTest(Integer sID1, Integer sID2, int normalizedMax, Double expected) {
-        Synset synset1, synset2;
-
-        synset1 = (sID1 == null) ? null : gnetCaseSensitive.getSynsetByID(sID1);
-        synset2 = (sID2 == null) ? null : gnetCaseSensitive.getSynsetByID(sID2);
-
-        double epsilon = 0.0001; // tolerance for working with doubles
-        Double actual = semanticUtils.getSimilarityWuAndPalmer(synset1, synset2, normalizedMax);
-
-        if (sID1 == null || sID2 == null) {
-            assertNull(actual);
-        } else {
-            assertEquals(expected, actual, epsilon);
-        }
     }
 
     private static Stream<Arguments> wuAndPalmerProvider() {
@@ -638,25 +606,62 @@ public class SemanticUtilsTest {
 
 
         return Stream.of(
-                Arguments.of(bambusID, veilchenID, 0, bambusVeilchenRawExpected),
-                Arguments.of(bambusID, veilchenID, 10, bambusVeilchenNormalized10Expected),
-                Arguments.of(bambusID, bambusID, 10, normalized10EdentityExpected),
-                Arguments.of(veilchenID, veilchenID, 0, identityExpectedRaw),
-                Arguments.of(kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10EdentityExpected),
-                Arguments.of(lebertransplantationID, lebertransplantationID, 0, identityExpectedRaw),
-                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 0, kJohannisLebertransExpected),
-                Arguments.of(kleinesJohanniswuermchenID, lebertransplantationID, 10, kJohannisLebertransNorm10Expected),
-                Arguments.of(bemehlenID, anmusternID, 0, bemAnmustRawExpected),
-                Arguments.of(bemehlenID, anmusternID, 10, bemAnmustNorm10Expected),
-                Arguments.of(bemehlenID, bemehlenID, 0, identityExpectedRaw),
-                Arguments.of(blasphemischID, regressivID, 0, blasRegRawExpected),
-                Arguments.of(blasphemischID, regressivID, 10, blasRegNorm10Expected),
-                Arguments.of(blasphemischID, blasphemischID, 0, identityExpectedRaw),
-                Arguments.of(blasphemischID, blasphemischID, 10, normalized10EdentityExpected),
-                Arguments.of(apfelbaumId, giftpflanzeId, 0, abaumGiftpRawExpected),
-                Arguments.of(apfelbaumId, giftpflanzeId, 10, normalized10Expected),
-                Arguments.of(apfelbaumId, null, 10, null),
-                Arguments.of(null, giftpflanzeId, 10, null)
+                Arguments.of(SemRelMeasure.WuAndPalmer, bambusID, veilchenID, 0, bambusVeilchenRawExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, bambusID, veilchenID, 10, bambusVeilchenNormalized10Expected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, bambusID, bambusID, 10, normalized10EdentityExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, veilchenID, veilchenID, 0, identityExpectedRaw),
+                Arguments.of(SemRelMeasure.WuAndPalmer, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10EdentityExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, lebertransplantationID, lebertransplantationID, 0, identityExpectedRaw),
+                Arguments.of(SemRelMeasure.WuAndPalmer, kleinesJohanniswuermchenID, lebertransplantationID, 0, kJohannisLebertransExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, kleinesJohanniswuermchenID, lebertransplantationID, 10, kJohannisLebertransNorm10Expected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, bemehlenID, anmusternID, 0, bemAnmustRawExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, bemehlenID, anmusternID, 10, bemAnmustNorm10Expected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, bemehlenID, bemehlenID, 0, identityExpectedRaw),
+                Arguments.of(SemRelMeasure.WuAndPalmer, blasphemischID, regressivID, 0, blasRegRawExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, blasphemischID, regressivID, 10, blasRegNorm10Expected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, blasphemischID, blasphemischID, 0, identityExpectedRaw),
+                Arguments.of(SemRelMeasure.WuAndPalmer, blasphemischID, blasphemischID, 10, normalized10EdentityExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, apfelbaumId, giftpflanzeId, 0, abaumGiftpRawExpected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, apfelbaumId, giftpflanzeId, 10, normalized10Expected),
+                Arguments.of(SemRelMeasure.WuAndPalmer, apfelbaumId, null, 10, null),
+                Arguments.of(SemRelMeasure.WuAndPalmer, null, giftpflanzeId, 10, null)
+        );
+    }
+
+    private static Stream<Arguments> resnikProvider() {
+
+        // Noun cumFreqRoot = 4883027056
+        // Kümmel - Salbei
+        int kuemmelID = 39479;
+        double kuemmelIC = 5.536095053;  // cumFreq = 14210;
+        int salbeiID = 39471;
+        double salbeiIC = 5.502722238; // cumFreq = 15345
+        //double kuemmelSalbeiRawExpected =
+
+        // fließen - purzeln
+        int fliessenID = 57726;
+        int purzelnID = 58043;
+        double fliessenPurzelnRawExpected = 0.0;
+
+        // Pflanze - Naturmedizin
+        int pflanzeID = 44960;
+        int naturmedizinID = 48523;
+        double pflanzeNaturmedidzinRawExpected = 0.0;
+
+        // Bambus - Veilchen, pathlength = 4
+        int bambusID = 46047;
+        int veilchenID = 45380;
+        double bambusVeilchenRawExpected = 0.75;
+        double bambusVeilchenNormalized10Expected = 7.5;
+        double identityExpectedRaw = 1.0;
+        double normalized10EdentityExpected = 10.0;
+
+
+        return Stream.of(
+                Arguments.of(SemRelMeasure.Resnik, pflanzeID, naturmedizinID, 0, pflanzeNaturmedidzinRawExpected),
+                Arguments.of(SemRelMeasure.Resnik, fliessenID, purzelnID, 0, fliessenPurzelnRawExpected),
+                Arguments.of(SemRelMeasure.Resnik, pflanzeID, naturmedizinID, 1, pflanzeNaturmedidzinRawExpected),
+                Arguments.of(SemRelMeasure.Resnik, fliessenID, purzelnID, 1, fliessenPurzelnRawExpected)
         );
     }
 
@@ -709,6 +714,27 @@ public class SemanticUtilsTest {
             }
         }
         LOGGER.info("{} instances of noun that does not match WordClass of its hypernym.", cnt);
+    }
+
+    @Test
+    // Find synsets that have the same orthForm multiple times
+    void duplicateOrthFormsTest() {
+        List<String> allOrthFormsSet;
+        List<String> allOrthFormsList;
+        List<Synset> allSynsets = gnetCaseSensitive.getSynsets();
+
+        for (Synset synset : allSynsets) {
+            allOrthFormsSet = synset.getAllOrthForms(); // uses a Set
+            allOrthFormsList = new ArrayList<>();
+            for (LexUnit lexUnit : synset.getLexUnits()) {
+                allOrthFormsList.addAll(lexUnit.getOrthForms()); // uses a List
+            }
+            if (allOrthFormsSet.size() != allOrthFormsList.size()) {
+                Collections.sort(allOrthFormsList);
+                Collections.sort(allOrthFormsSet);
+                LOGGER.warn("Synset {} \tcontains duplicate orthForms\n\t{}\n\t{}", synset.getId(), allOrthFormsSet, allOrthFormsList);
+            }
+        }
     }
 
     //@Test
