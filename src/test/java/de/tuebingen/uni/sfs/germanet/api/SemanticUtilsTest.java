@@ -63,8 +63,8 @@ public class SemanticUtilsTest {
             String verbFreqListPath = freqListDir + "verb_freqs_decow14_16.txt";
             String adjFreqListPath = freqListDir + "adj_freqs_decow14_16.txt";
 
-            gnetCaseSensitive = new GermaNet(goodDataPath, false);
-            semanticUtils = gnetCaseSensitive.getSemanticUtils(nounFreqListPath, verbFreqListPath, adjFreqListPath);
+            gnetCaseSensitive = new GermaNet(goodDataPath, nounFreqListPath, verbFreqListPath, adjFreqListPath);
+            semanticUtils = gnetCaseSensitive.getSemanticUtils();
         } catch (IOException ex) {
             LOGGER.error("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
             System.exit(0);
@@ -291,8 +291,6 @@ public class SemanticUtilsTest {
         assertEquals(expected, actual);
     }
 
-    // ToDo: fix maxDepth tests
-
     @Test
     void maxDepthNounTest() {
 
@@ -514,7 +512,7 @@ public class SemanticUtilsTest {
         int bambusID = 46047;
         int veilchenID = 45380;
         double bambusVeilchenRawExpected = 0.92428;
-        double bambusVeilchenNormalized10Expected = 5.69401;
+        double bambusVeilchenNormalized10Expected = 5.50877;
         double identityExpectedNounRaw = 1.62325;
         double normalized10EdentityExpected = 10.0;
 
@@ -522,27 +520,27 @@ public class SemanticUtilsTest {
         int kleinesJohanniswuermchenID = 49774;
         int lebertransplantationID = 83979;
         double kJohannisLebertransExpected = 0.066946;
-        double kJohannisLebertransNorm10Expected = 0.4124;
+        double kJohannisLebertransNorm10Expected = 0.0;
 
         // Apfelbaum - Giftpflanze
         int apfelbaumId = 46683;
         int giftpflanzeId = 46650;
         double abaumGiftpRawExpected = 0.84509;
-        double normalized10Expected = 5.20616;
+        double normalized10Expected = 5.0;
 
         // bemehlen - anmustern
         int bemehlenID = 57534;
         int anmusternID = 119463;
         double identityExpectedVerbRaw = 1.50515;
         double bemAnmustRawExpected = 0.042752;
-        double bemAnmustNorm10Expected = 0.28404;
+        double bemAnmustNorm10Expected = 0.0;
 
         // blasphemisch - regressiv
         int blasphemischID = 94396;
         int regressivID = 94411;
         double identityExpectedAdjRaw = 1.342423;
         double blasRegRawExpected = 0.020203;
-        double blasRegNorm10Expected = 0.150499;
+        double blasRegNorm10Expected = 0.0;
 
 
         return Stream.of(
@@ -630,38 +628,16 @@ public class SemanticUtilsTest {
 
     private static Stream<Arguments> resnikProvider() {
 
-        // Noun cumFreqRoot = 4883027056
-        // Kümmel - Salbei
-        int kuemmelID = 39479;
-        double kuemmelIC = 5.536095053;  // cumFreq = 14210;
-        int salbeiID = 39471;
-        double salbeiIC = 5.502722238; // cumFreq = 15345
-        //double kuemmelSalbeiRawExpected =
+        long cumFreqRootVerb = 9180532734L;
 
-        // fließen - purzeln
-        int fliessenID = 57726;
-        int purzelnID = 58043;
-        double fliessenPurzelnRawExpected = 0.0;
-
-        // Pflanze - Naturmedizin
-        int pflanzeID = 44960;
-        int naturmedizinID = 48523;
-        double pflanzeNaturmedidzinRawExpected = 0.0;
-
-        // Bambus - Veilchen, pathlength = 4
-        int bambusID = 46047;
-        int veilchenID = 45380;
-        double bambusVeilchenRawExpected = 0.75;
-        double bambusVeilchenNormalized10Expected = 7.5;
-        double identityExpectedRaw = 1.0;
-        double normalized10EdentityExpected = 10.0;
-
+        // anmustern - bewerben
+        int anmusternID = 119463;
+        int bewerbenID = 81102;
+        int cumFreqWerben = 347754;
+        double icWerben = -Math.log10((double) cumFreqWerben / cumFreqRootVerb);
 
         return Stream.of(
-                Arguments.of(SemRelMeasure.Resnik, pflanzeID, naturmedizinID, 0, pflanzeNaturmedidzinRawExpected),
-                Arguments.of(SemRelMeasure.Resnik, fliessenID, purzelnID, 0, fliessenPurzelnRawExpected),
-                Arguments.of(SemRelMeasure.Resnik, pflanzeID, naturmedizinID, 1, pflanzeNaturmedidzinRawExpected),
-                Arguments.of(SemRelMeasure.Resnik, fliessenID, purzelnID, 1, fliessenPurzelnRawExpected)
+                Arguments.of(SemRelMeasure.Resnik, anmusternID, bewerbenID, 0, icWerben)
         );
     }
 

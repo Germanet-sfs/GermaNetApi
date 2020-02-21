@@ -167,6 +167,9 @@ public class GermaNet {
     private Map<Integer, LexUnit> lexUnitIDMap;
     private Map<Integer, Synset> synsetIDMap;
     private File dir = null;
+    private File nounFreqFile;
+    private File verbFreqFile;
+    private File adjFreqFile;
     List<InputStream> inputStreams;
     List<String> xmlNames;
     List<InputStream> wiktInputStreams;
@@ -195,6 +198,26 @@ public class GermaNet {
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
+     * files in the specified directory/archive path name. Use <code>FilterConfig</code>
+     * to configure search options. Frequency file paths are required for
+     * constructing a <code>SemanticUtils</code> object.
+     *
+     * @param dirName the directory where the GermaNet data files are located
+     * @param nounFreqPath full path to the noun frequency file
+     * @param verbFreqPath full path to the verb frequency file
+     * @param adjFreqPath full path to the adj frequency file
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
+     */
+    public GermaNet(String dirName, String nounFreqPath, String verbFreqPath, String adjFreqPath) throws IOException, XMLStreamException {
+        this(new File(dirName), false);
+        this.nounFreqFile = new File(nounFreqPath);
+        this.verbFreqFile = new File(verbFreqPath);
+        this.adjFreqFile = new File(adjFreqPath);
+    }
+
+    /**
+     * Constructs a new <code>GermaNet</code> object by loading the the data
      * files in the specified directory/archive path name.
      *
      * @param dirName    the directory where the GermaNet data files are located
@@ -217,6 +240,26 @@ public class GermaNet {
      */
     public GermaNet(File dir) throws XMLStreamException, IOException {
         this(dir, false);
+    }
+
+    /**
+     * Constructs a new <code>GermaNet</code> object by loading the the data
+     * files in the specified directory/archive File.  Use <code>FilterConfig</code>
+     * to configure search options. Frequency file paths are required for
+     * constructing a <code>SemanticUtils</code> object.
+     *
+     * @param dir location of the GermaNet data files
+     * @param nounFreqFile  noun frequency file
+     * @param verbFreqFile verb frequency file
+     * @param adjFreqFile adj frequency file
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
+     */
+    public GermaNet(File dir, File nounFreqFile, File verbFreqFile, File adjFreqFile) throws XMLStreamException, IOException {
+        this(dir, false);
+        this.nounFreqFile = nounFreqFile;
+        this.verbFreqFile = verbFreqFile;
+        this.adjFreqFile = adjFreqFile;
     }
 
     /**
@@ -1194,17 +1237,15 @@ public class GermaNet {
     /**
      * Get the <code>SemanticUtils</code> object, which can be used to calculate semantic relatedness
      * based on several algorithms. Some algorithms require frequency lists for each word category.
+     * These frequency files should be specified in the <code>GermaNet</code> constructor.
      *
-     * @param nounFreqPath path to a frequency list for nouns
-     * @param verbFreqPath path to a frequency list for verbs
-     * @param adjFreqPath path to a frequency list for adjectives
      * @return the <code>SemanticUtils</code> object
      * @throws IOException if any of the frequency list files do not exist or can not be read
      */
-    public SemanticUtils getSemanticUtils(String nounFreqPath, String verbFreqPath, String adjFreqPath) throws IOException {
+    public SemanticUtils getSemanticUtils() throws IOException {
         if (semanticUtils == null) {
             semanticUtils = new SemanticUtils(catMaxHypernymDistanceMap, this,
-                    nounFreqPath, verbFreqPath, adjFreqPath);
+                    nounFreqFile, verbFreqFile, adjFreqFile);
         }
         return semanticUtils;
     }
