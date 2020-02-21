@@ -105,11 +105,7 @@ public class SemanticUtils {
                 // If there are no entries in the frequency list for this synset,
                 // the IC will be null
                 if (cumulativeFreq > 0) {
-                    if (cumulativeFreq == cumFreqRoot) {
-                        ic = 0.0;  // avoid -0.0 when calculating log10(1)
-                    } else {
-                        ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
-                    }
+                    ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
                     // update min / max IC if necessary
                     if (Double.compare(ic, minIC) < 0) {
                         minIC = ic;
@@ -120,6 +116,10 @@ public class SemanticUtils {
                 }
                 icMap.put(synsetID, ic);
             }
+
+            // the root node will always have IC = 0.0
+            // add an entry for root to the icMap for each WordCategory
+            icMap.put(GermaNet.GNROOT_ID, 0.0);
             catICMap.put(wordCategory, icMap);
 
             // put the min/max IC values in the normalization map for this wordCategory
@@ -268,15 +268,17 @@ public class SemanticUtils {
 
     /**
      * Normalize the relatedness value, taking into consideration the WordCategory, algorithm, and upper bound.
-     * The lower bound is 0.0.
      *
      * @param wordCategory  the WordCategory
      * @param semRelMeasure the algorithm
      * @param rawValue      raw value of the algorithm
      * @param normalizedMax upper bound on normalization range (lower bound is 0)
-     * @return the normalized value, taking into consideration the WordCategory, algorithm, and requested upper bound
+     * @return the normalized value, taking into consideration the WordCategory, algorithm, and requested upper bound.
+     * If rawValue is null, this method returns null.
      */
-    private double normalize(WordCategory wordCategory, SemRelMeasure semRelMeasure, double rawValue, int normalizedMax) {
+    private Double normalize(WordCategory wordCategory, SemRelMeasure semRelMeasure, Double rawValue, int normalizedMax) {
+        if (rawValue == null)
+            return null;
         double minVal = catNormalizationMap.get(wordCategory).get(semRelMeasure).get(0);
         double maxVal = catNormalizationMap.get(wordCategory).get(semRelMeasure).get(1);
 
@@ -659,15 +661,17 @@ public class SemanticUtils {
             int lcsID = leastCommonSubsumer.getLcsID();
             curIC = icMap.get(lcsID);
 
-            if (prevIC == null) {
-                maxIC = curIC;
-            } else {
-                double diff = curIC - prevIC;
-                if (diff > epsilon) {
+            if (curIC != null) {
+                if (prevIC == null) {
                     maxIC = curIC;
+                } else {
+                    double diff = curIC - prevIC;
+                    if (diff > epsilon) {
+                        maxIC = curIC;
+                    }
                 }
+                prevIC = curIC;
             }
-            prevIC = curIC;
         }
         return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.Resnik, maxIC, normalizedMax) : maxIC;
     }

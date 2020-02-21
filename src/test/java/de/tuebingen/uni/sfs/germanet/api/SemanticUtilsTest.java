@@ -636,8 +636,14 @@ public class SemanticUtilsTest {
         int cumFreqWerben = 347754;
         double icWerben = -Math.log10((double) cumFreqWerben / cumFreqRootVerb);
 
+        // regressiv - denunziatorisch
+        int regID = 94411;
+        int denID = 94543;
+        double regDenRawExpected = 0.73614;
+
         return Stream.of(
-                Arguments.of(SemRelMeasure.Resnik, anmusternID, bewerbenID, 0, icWerben)
+                Arguments.of(SemRelMeasure.Resnik, anmusternID, bewerbenID, 0, icWerben),
+                Arguments.of(SemRelMeasure.Resnik, regID, denID, 0, regDenRawExpected)
         );
     }
 
