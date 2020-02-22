@@ -86,7 +86,8 @@ public class SemanticUtils {
         }
 
         // make a second pass over all synsets to calculate their ICs
-        // keep track of min and max IC values and add them to the normalization map
+        // keep track of max IC values for the normalization map
+        // min IC is always 0.0 (value for root)
         LOGGER.info("Calculating Information Content values and normalization values...");
         for (WordCategory wordCategory : WordCategory.values()) {
             List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
@@ -94,7 +95,6 @@ public class SemanticUtils {
             Long cumFreqRoot = cumulativeFreqMap.get(GermaNet.GNROOT_ID);
             Map<Integer, Double> icMap = new HashMap<>(synsetsByWordCat.size());
 
-            Double minIC = Double.MAX_VALUE;
             Double maxIC = Double.MIN_VALUE;
 
             for (Synset synset : synsetsByWordCat) {
@@ -102,14 +102,11 @@ public class SemanticUtils {
                 Long cumulativeFreq = cumulativeFreqMap.get(synsetID);
 
                 Double ic = null;
-                // If there are no entries in the frequency list for this synset,
+                // If there are no entries in the cumulative frequency list for this synset,
                 // the IC will be null
                 if (cumulativeFreq > 0) {
                     ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
-                    // update min / max IC if necessary
-                    if (Double.compare(ic, minIC) < 0) {
-                        minIC = ic;
-                    }
+                    // update max IC if necessary
                     if (Double.compare(ic, maxIC) > 0) {
                         maxIC = ic;
                     }
@@ -126,7 +123,7 @@ public class SemanticUtils {
             // the min/max values can be used for all of the IC measures
             Map<SemRelMeasure, List<Double>> normMap = catNormalizationMap.get(wordCategory);
             List<Double> minMaxList = new ArrayList<>();
-            minMaxList.add(minIC);
+            minMaxList.add(0.0);
             minMaxList.add(maxIC);
             normMap.put(SemRelMeasure.Resnik, minMaxList);
             normMap.put(SemRelMeasure.JiangAndConrath, minMaxList);

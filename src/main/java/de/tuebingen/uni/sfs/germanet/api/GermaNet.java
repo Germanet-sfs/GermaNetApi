@@ -422,6 +422,12 @@ public class GermaNet {
         synsets.add(synset);
         synsetIDMap.put(synset.getId(), synset);
 
+        // Don't add Root or its LexUnit to any of the
+        // WordCategory or orthForm maps
+        if (synset.getId() == GNROOT_ID) {
+            return;
+        }
+
         // add synset to its wordCategory map
         map = wordCategoryMap.get(synset.getWordCategory());
         mapAllOrthForms = wordCategoryMapAllOrthForms.get(synset.getWordCategory());

@@ -630,6 +630,11 @@ public class SemanticUtilsTest {
 
         long cumFreqRootVerb = 9180532734L;
 
+        // laufen - fahren
+        int laufenID = 57780;
+        int fahrenID = 57299;
+        double icLaufenFahren = 0.0;
+
         // anmustern - bewerben
         int anmusternID = 119463;
         int bewerbenID = 81102;
@@ -642,6 +647,7 @@ public class SemanticUtilsTest {
         double regDenRawExpected = 0.73614;
 
         return Stream.of(
+                Arguments.of(SemRelMeasure.Resnik, laufenID, fahrenID, 10, icLaufenFahren),
                 Arguments.of(SemRelMeasure.Resnik, anmusternID, bewerbenID, 0, icWerben),
                 Arguments.of(SemRelMeasure.Resnik, regID, denID, 0, regDenRawExpected)
         );
@@ -857,5 +863,33 @@ public class SemanticUtilsTest {
             }
         }
         LOGGER.info("{} instances of adj that does not match WordClass of any of its hypernyms.", cnt);
+    }
+
+    //@Test
+    // Find synsets with multiple LCSs and path lengths between 2 and 5
+    // For information only
+    void multLCSTest() {
+        for (WordCategory wordCategory : WordCategory.values()) {
+            LOGGER.info("\n\t{}\n", wordCategory);
+            int minDist = 2;
+            int maxDist = 5;
+            List<Synset> synsets = gnetCaseSensitive.getSynsets(wordCategory);
+            int i=0;
+            int j=synsets.size()-1;
+            for (; i < j; i++) {
+                for (; j > i; j--) {
+                    Synset s1 = synsets.get(i);
+                    Synset s2 = synsets.get(j);
+                    Set<LeastCommonSubsumer> leastCommonSubsumers = semanticUtils.getLeastCommonSubsumers(s1, s2);
+
+                    if (leastCommonSubsumers.size() > 1) {
+                        int dist = leastCommonSubsumers.iterator().next().getDistance();
+                        if (dist >= minDist && dist <= maxDist) {
+                            System.out.println(leastCommonSubsumers + "\n");
+                        }
+                    }
+                }
+            }
+        }
     }
 }
