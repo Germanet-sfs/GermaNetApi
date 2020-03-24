@@ -42,6 +42,12 @@ public class SemanticUtils {
     private Map<WordCategory, Integer> catMaxDepthMap;
     private Map<WordCategory, Map<SemRelMeasure, List<Double>>> catNormalizationMap;
     private Map<WordCategory, Map<Integer, Double>> catICMap;
+
+    // used only during construction to generate IC maps
+    Map<WordCategory, Map<String, Long>> formFreqMaps;
+    Map<WordCategory, Map<Integer, Long>> individualFreqMaps;
+    Map<WordCategory, Map<Integer, Long>> cumulativeFreqMaps;
+
     private GermaNet gnet;
 
     SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap, GermaNet gnet,
@@ -51,6 +57,9 @@ public class SemanticUtils {
         catMaxDepthMap = new HashMap<>(WordCategory.values().length);
         catNormalizationMap = new HashMap<>(WordCategory.values().length);
         catICMap = new HashMap<>(WordCategory.values().length);
+        formFreqMaps = new HashMap<>(WordCategory.values().length);
+        individualFreqMaps = new HashMap<>(WordCategory.values().length);
+        cumulativeFreqMaps = new HashMap<>(WordCategory.values().length);
 
         long startTime = System.currentTimeMillis();
         LOGGER.info("Initializing SemanticUtils object...");
@@ -60,40 +69,52 @@ public class SemanticUtils {
         LOGGER.info("Initializing normalization values for Path algorithms...");
         initPathNormalizationValues();
 
-        initICMap(nounFreqFile, verbFreqFile, adjFreqFile);
+        LOGGER.info("Loading frequency lists...");
+        formFreqMaps.put(WordCategory.nomen, loadFreqData(nounFreqFile));
+        formFreqMaps.put(WordCategory.verben, loadFreqData(verbFreqFile));
+        formFreqMaps.put(WordCategory.adj, loadFreqData(adjFreqFile));
+
+        // initialize individual frequency maps
+        LOGGER.info("Calculating individual frequencies...");
+        initIndividualFreqMaps();
+
+
+        // calculate cumulative frequency of each synset
+        LOGGER.info("Calculating cumulative frequencies...");
+        initCumulativeFreqMaps();
+
+        List<Synset> rootHyponyms = gnet.getSynsetByID(GermaNet.GNROOT_ID).getRelatedSynsets(ConRel.has_hyponym);
+        for (Synset hypo : rootHyponyms) {
+            Map<Integer, Long> individualFreqMap = individualFreqMaps.get(hypo.getWordCategory());
+            Map<Integer, Long> cumulativeFreqMap = cumulativeFreqMaps.get(hypo.getWordCategory());
+            System.out.println(hypo.getWordCategory() + " : " + hypo.getId() + " : " + individualFreqMap.get(hypo.getId()) + " : " + cumulativeFreqMap.get(hypo.getId()));
+        }
+
+        // calculate the Information Content of each synset and normalization values for each word category
+        LOGGER.info("Calculating Information Content values and normalization values...");
+        initICMaps();
+
+        // Delete maps that are not needed any more
+        formFreqMaps = null;
+        individualFreqMaps = null;
+        cumulativeFreqMaps = null;
 
         long endTime = System.currentTimeMillis();
         double processingTime = (double) (endTime - startTime) / 1000;
         LOGGER.info("Done initializing SemanticUtils object ({} seconds).", processingTime);
     }
 
-    private void initICMap(File nounFreqFile, File verbFreqFile, File adjFreqFile) throws IOException {
-        Map<WordCategory, Map<String, Long>> formFreqMaps = new HashMap<>(WordCategory.values().length);
-        Map<WordCategory, Map<Integer, Long>> cumulativeFreqMaps = new HashMap<>(WordCategory.values().length);
+    private void initICMaps() throws IOException {
 
-        LOGGER.info("Loading frequency lists...");
-        formFreqMaps.put(WordCategory.nomen, loadFreqData(nounFreqFile));
-        formFreqMaps.put(WordCategory.verben, loadFreqData(verbFreqFile));
-        formFreqMaps.put(WordCategory.adj, loadFreqData(adjFreqFile));
-
-        // make a first pass over all synsets to calculate their cumulative frequencies
-        LOGGER.info("Calculating cumulative frequencies...");
         for (WordCategory wordCategory : WordCategory.values()) {
-            Map<String, Long> formFreqMap = formFreqMaps.get(wordCategory);
-            Map<Integer, Long> cumulativeFreqMap = initCumulativeFreqMap(wordCategory, formFreqMap);
-            cumulativeFreqMaps.put(wordCategory, cumulativeFreqMap);
-            LOGGER.info("Cumulative frequency for root ({}): {}", wordCategory, cumulativeFreqMap.get(GermaNet.GNROOT_ID));
-        }
+            // calculate the Information Content of each synset in wordCategory
+            // keep track of max IC values for the normalization map
+            // min IC is always 0.0 (value for root)
 
-        // make a second pass over all synsets to calculate their ICs
-        // keep track of max IC values for the normalization map
-        // min IC is always 0.0 (value for root)
-        LOGGER.info("Calculating Information Content values and normalization values...");
-        for (WordCategory wordCategory : WordCategory.values()) {
-            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
+            Map<Integer, Double> icMap = new HashMap<>();
             Map<Integer, Long> cumulativeFreqMap = cumulativeFreqMaps.get(wordCategory);
+            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
             Long cumFreqRoot = cumulativeFreqMap.get(GermaNet.GNROOT_ID);
-            Map<Integer, Double> icMap = new HashMap<>(synsetsByWordCat.size());
 
             Double maxIC = Double.MIN_VALUE;
 
@@ -104,6 +125,7 @@ public class SemanticUtils {
                 Double ic = null;
                 // If there are no entries in the cumulative frequency list for this synset,
                 // the IC will be null
+                // ToDo: what is IC if cum. freq is 0?
                 if (cumulativeFreq > 0) {
                     ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
                     // update max IC if necessary
@@ -148,24 +170,72 @@ public class SemanticUtils {
         return freqMap;
     }
 
-    private Map<Integer, Long> initCumulativeFreqMap(WordCategory wordCategory, Map<String, Long> formFreqMap) {
-        Map<Integer, Long> individualFreqMap = new HashMap<>();
-        Map<Integer, Long> cumulativeFreqMap = new HashMap<>();
-        List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
+    private void initIndividualFreqMaps() {
 
-        for (Synset synset : synsetsByWordCat) {
-            Integer synsetID = synset.getId();
-            if (cumulativeFreqMap.get(synsetID) == null) {
-                calcCumulativeSynsetFreq(synset, formFreqMap, individualFreqMap, cumulativeFreqMap);
+        for (WordCategory wordCategory : WordCategory.values()) {
+            Map<Integer, Long> individualFreqMap = new HashMap<>();
+            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
+            Map<String, Long> formFreqMap = formFreqMaps.get(wordCategory);
+
+            for (Synset synset : synsetsByWordCat) {
+                Integer synsetID = synset.getId();
+
+                Long totalFreq = 1L;
+                List<String> allOrthForms = synset.getAllOrthForms();
+                for (String orthForm : allOrthForms) {
+                    Long orthFormFreq = formFreqMap.get(orthForm);
+                    if (orthFormFreq != null) {
+                        totalFreq += orthFormFreq;
+                    }
+                }
+                individualFreqMap.put(synsetID, totalFreq);
             }
-        }
 
-        // add an entry for ROOT
-        calcCumulativeSynsetFreq(gnet.getSynsetByID(GermaNet.GNROOT_ID), formFreqMap, individualFreqMap, cumulativeFreqMap);
-        return cumulativeFreqMap;
+            // add freq of 0 for root
+            individualFreqMap.put(GermaNet.GNROOT_ID, 1L);
+
+            individualFreqMaps.put(wordCategory, individualFreqMap);
+        }
     }
 
-    private Long calcCumulativeSynsetFreq(Synset synset, Map<String, Long> formFreqMap, Map<Integer, Long> individualFreqMap, Map<Integer, Long> cumulativeFreqMap) {
+    private void initCumulativeFreqMaps() {
+
+        for (WordCategory wordCategory : WordCategory.values()) {
+
+            Map<Integer, Long> cumulativeFreqMap = new HashMap<>();
+            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
+
+            for (Synset synset : synsetsByWordCat) {
+                Integer synsetID = synset.getId();
+
+                // ROOT is a special case that is handled separately
+                // its word category is noun, but it has hyponyms of all word categories
+                if (synsetID == GermaNet.GNROOT_ID) {
+                    continue;
+                }
+                if (cumulativeFreqMap.get(synsetID) == null) {
+                    calcCumulativeSynsetFreq(synset, cumulativeFreqMap);
+                }
+            }
+
+            // add an entry for ROOT
+            // count only cum freqs of hyponyms with the same word category
+            List<Synset>  rootHyponyms = gnet.getSynsetByID(GermaNet.GNROOT_ID).getRelatedSynsets(ConRel.has_hyponym);
+            Long rootCumFreq = Long.valueOf(0);
+            for (Synset hyponym : rootHyponyms) {
+                if (hyponym.getWordCategory() == wordCategory) {
+                    rootCumFreq += cumulativeFreqMap.get(hyponym.getId());
+                }
+            }
+            cumulativeFreqMap.put(GermaNet.GNROOT_ID, rootCumFreq);
+
+            cumulativeFreqMaps.put(wordCategory, cumulativeFreqMap);
+            LOGGER.info("Cumulative frequency for root ({}): {}", wordCategory, cumulativeFreqMap.get(GermaNet.GNROOT_ID));
+        }
+    }
+
+    // recursively fill in the cumulativeFreqMap
+    private Long calcCumulativeSynsetFreq(Synset synset, Map<Integer, Long> cumulativeFreqMap) {
 
         // See if we already calculated the cumulative frequency of the synset
         Integer synsetID = synset.getId();
@@ -174,33 +244,19 @@ public class SemanticUtils {
             return cumulativeFreq;
         }
 
-        // Calculate and store cumulative freq for this synset and all its hyponyms (transitive)
-        Long individualFreq = individualFreqMap.get(synsetID); // Long.valueOf(0);
-        if (individualFreq == null) {
-            individualFreq = calcSynsetFreq(synset, formFreqMap);
-        }
+        // Calculate and store cumulative freq for this synset (ie freq of this synset plus all its hyponyms (transitive))
+        Map<Integer, Long> individualFreqMap = individualFreqMaps.get(synset.getWordCategory());
+        Long individualFreq = individualFreqMap.get(synsetID); // this should never be null
 
         // include synset's own freq in its cumulativeFreq
         cumulativeFreq = individualFreq;
         List<Synset> hyponyms = synset.getRelatedSynsets(ConRel.has_hyponym);
         for (Synset hyponym : hyponyms) {
-            cumulativeFreq += calcCumulativeSynsetFreq(hyponym, formFreqMap, individualFreqMap, cumulativeFreqMap);
+            cumulativeFreq += calcCumulativeSynsetFreq(hyponym, cumulativeFreqMap);
         }
         cumulativeFreqMap.put(synsetID, cumulativeFreq);
+
         return cumulativeFreq;
-    }
-
-    private Long calcSynsetFreq(Synset synset, Map<String, Long> formFreqMap) {
-        Long totalFreq = Long.valueOf(0);
-
-        List<String> allOrthForms = synset.getAllOrthForms();
-        for (String orthForm : allOrthForms) {
-            Long orthFormFreq = formFreqMap.get(orthForm);
-            if (orthFormFreq != null) {
-                totalFreq += orthFormFreq;
-            }
-        }
-        return totalFreq;
     }
 
     private void initMaxDepthMap() {
