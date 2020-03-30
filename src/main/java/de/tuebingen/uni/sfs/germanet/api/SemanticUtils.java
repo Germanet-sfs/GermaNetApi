@@ -22,7 +22,6 @@ package de.tuebingen.uni.sfs.germanet.api;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -82,13 +81,6 @@ public class SemanticUtils {
         // calculate cumulative frequency of each synset
         LOGGER.info("Calculating cumulative frequencies...");
         initCumulativeFreqMaps();
-
-        List<Synset> rootHyponyms = gnet.getSynsetByID(GermaNet.GNROOT_ID).getRelatedSynsets(ConRel.has_hyponym);
-        for (Synset hypo : rootHyponyms) {
-            Map<Integer, Long> individualFreqMap = individualFreqMaps.get(hypo.getWordCategory());
-            Map<Integer, Long> cumulativeFreqMap = cumulativeFreqMaps.get(hypo.getWordCategory());
-            System.out.println(hypo.getWordCategory() + " : " + hypo.getId() + " : " + individualFreqMap.get(hypo.getId()) + " : " + cumulativeFreqMap.get(hypo.getId()));
-        }
 
         // calculate the Information Content of each synset and normalization values for each word category
         LOGGER.info("Calculating Information Content values and normalization values...");
@@ -191,7 +183,7 @@ public class SemanticUtils {
                 individualFreqMap.put(synsetID, totalFreq);
             }
 
-            // add freq of 0 for root
+            // add freq of 1 for root
             individualFreqMap.put(GermaNet.GNROOT_ID, 1L);
 
             individualFreqMaps.put(wordCategory, individualFreqMap);
@@ -221,7 +213,7 @@ public class SemanticUtils {
             // add an entry for ROOT
             // count only cum freqs of hyponyms with the same word category
             List<Synset>  rootHyponyms = gnet.getSynsetByID(GermaNet.GNROOT_ID).getRelatedSynsets(ConRel.has_hyponym);
-            Long rootCumFreq = Long.valueOf(0);
+            Long rootCumFreq = 1L;
             for (Synset hyponym : rootHyponyms) {
                 if (hyponym.getWordCategory() == wordCategory) {
                     rootCumFreq += cumulativeFreqMap.get(hyponym.getId());

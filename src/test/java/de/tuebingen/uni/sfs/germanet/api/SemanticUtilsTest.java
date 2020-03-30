@@ -628,7 +628,7 @@ public class SemanticUtilsTest {
 
     private static Stream<Arguments> resnikProvider() {
 
-        long cumFreqRootVerb = 9180532734L;
+        long cumFreqRootVerb = 9155698519L;
 
         // laufen - fahren
         int laufenID = 57780;
@@ -641,10 +641,10 @@ public class SemanticUtilsTest {
         int cumFreqWerben = 347754;
         double icWerben = -Math.log10((double) cumFreqWerben / cumFreqRootVerb);
 
-        // regressiv - denunziatorisch
+        // regressiv - denunziatorisch (IC of klassenuerbergreifend)
         int regID = 94411;
         int denID = 94543;
-        double regDenRawExpected = 0.73614;
+        double regDenRawExpected = 0.71371;
 
         return Stream.of(
                 Arguments.of(SemRelMeasure.Resnik, laufenID, fahrenID, 10, icLaufenFahren),
@@ -891,5 +891,26 @@ public class SemanticUtilsTest {
                 }
             }
         }
+    }
+
+    //@Test
+    // Find all synsets that are of a different WordCategory as their hypernyms
+    // For informational purposes only.
+    void wordCatMismatchTest() {
+        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+
+        int cnt = 0;
+        for (Synset synset : synsetList) {
+            List<Synset> hypernyms = synset.getRelatedSynsets(ConRel.has_hypernym);
+            if (!hypernyms.isEmpty()) {
+                for (Synset hyper : hypernyms) {
+                    if (!hyper.inWordCategory(synset.getWordCategory())) {
+                        LOGGER.info("WordCategory mismatch: {} {} to hypernym {} {}", synset.getId(), synset.getAllOrthForms(), hyper.getId(), hyper.getAllOrthForms());
+                        cnt++;
+                    }
+                }
+            }
+        }
+        LOGGER.info("{} instances of WordCategory mismatches.", cnt);
     }
 }
