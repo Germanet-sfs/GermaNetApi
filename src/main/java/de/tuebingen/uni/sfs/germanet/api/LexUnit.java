@@ -76,7 +76,8 @@ public class LexUnit {
     private ArrayList<IliRecord> iliRecords;
     private ArrayList<WiktionaryParaphrase> wiktionaryParaphrases;
     // Relations of this LexUnit
-    private EnumMap<LexRel, List<LexUnit>> relations;
+    private EnumMap<LexRel, Set<LexUnit>> outgoingRelations;
+    private EnumMap<LexRel, Set<LexUnit>> incomingRelations;
     private CompoundInfo compoundInfo;
 
     /**
@@ -108,7 +109,8 @@ public class LexUnit {
         this.oldOrthVar = oldOrthVar;
         this.namedEntity = namedEntity;
         this.source = source;
-        this.relations = new EnumMap<>(LexRel.class);
+        this.outgoingRelations = new EnumMap<>(LexRel.class);
+        this.incomingRelations = new EnumMap<>(LexRel.class);
         this.frames = new ArrayList<>();
         this.examples = new ArrayList<>();
         this.iliRecords = new ArrayList<>();
@@ -263,24 +265,33 @@ public class LexUnit {
     }
 
     /**
-     * Adds a relation of the specified type to the target <code>LexUnit</code>.
+     * If <code>direction</code> is <code>RelDirection.outgoing</code>, add an
+     * outgoing relation of the specified type to this <code>LexUnit</code>.
+     * If <code>direction</code> is <code>RelDirection.incoming</code>, add an
+     * incoming relation of the specified type to this <code>LexUnit</code>.
      *
      * @param type   the type of relation (eg. <code>LexRel.antonymy</code>)
      * @param target the target <code>LexUnit</code>
+     * @param direction the direction of the relation.
      */
-    void addRelation(LexRel type, LexUnit target) {
-        List<LexUnit> relationList = relations.get(type);
+    void addRelation(LexRel type, LexUnit target, RelDirection direction) {
+        EnumMap<LexRel, Set<LexUnit>> relations;
 
-        if (relationList == null) {
-            relationList = new ArrayList<>(1);
+        relations =  (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
+        Set<LexUnit> related = relations.get(type);
+
+        if (related == null) {
+            related = new HashSet<>(1);
         }
-        relationList.add(target);
-        relations.put(type, relationList);
+        related.add(target);
+        relations.put(type, related);
     }
 
     /**
-     * Returns a <code>List</code> of <code>LexUnits</code> that have the
-     * relation <code>type</code> to this <code>LexUnit</code>.
+     * Returns a <code>List</code> of <code>LexUnits</code> for which this
+     * <code>LexUnit</code> has an outgoing <code>type</code> relation.
+     * Same as calling:
+     * <code>getRelatedLexUnits(type, RelDirection.outgoing)</code>.
      *
      * @param type type of relation to retrieve
      * @return a <code>List</code> of <code>LexUnits</code> that have the
@@ -290,13 +301,29 @@ public class LexUnit {
      */
     @SuppressWarnings("unchecked")
     public List<LexUnit> getRelatedLexUnits(LexRel type) {
-        ArrayList<LexUnit> rval = null;
-        List<LexUnit> rels;
+        return getRelatedLexUnits(type, RelDirection.outgoing);
+    }
 
+    /**
+     * Returns a <code>List</code> of <code>LexUnits</code> with a
+     * lexical relation of type <code>type</code> in direction <code>direction</code>
+     * to this <code>LexUnit</code>.
+     * Outgoing relations are from this <code>LexUnit</code> to another <code>LexUnit</code>.
+     * Incoming relations are from another <code>LexUnit</code> to this <code>LexUnit</code>.
+     *
+     * @param type type of relation to retrieve
+     * @param direction direction of the relation (incoming or outgoing)
+     * @return
+     */
+    public List<LexUnit> getRelatedLexUnits(LexRel type, RelDirection direction) {
+        ArrayList<LexUnit> rval = null;
+        Set<LexUnit> rels;
+
+        // direction doesn't matter for synonyms
         if (type.equals(LexRel.has_synonym)) {
             return getSynonyms();
         } else {
-            rels = relations.get(type);
+            rels = (direction == RelDirection.outgoing) ? outgoingRelations.get(type) : incomingRelations.get(type);
             if (rels == null) {
                 rval = new ArrayList<>(0);
             } else {
@@ -322,17 +349,39 @@ public class LexUnit {
 
     /**
      * Returns a <code>List</code> of all of the <code>LexUnits</code> that this
-     * <code>LexUnit</code> has any relation to.
-     *
+     * <code>LexUnit</code> has any outgoing relation to.
+     * Same as calling:
+     * <code>getRelatedLexUnits(RelDirection.outgoing)</code>
      * @return a <code>List</code> of all of the <code>LexUnits</code> that this
-     * <code>LexUnit</code> has any relation to
+     * <code>LexUnit</code> has any outgoing relation to
      */
     public List<LexUnit> getRelatedLexUnits() {
-        List<LexUnit> rval = new ArrayList<>();
+        return getRelatedLexUnits(RelDirection.outgoing);
+    }
 
-        for (Map.Entry<LexRel, List<LexUnit>> entry : relations.entrySet()) {
+    /**
+     * Returns a <code>List</code> of all of the <code>LexUnits</code> that this
+     * <code>LexUnit</code> has any relation to, in the given direction.
+     * Outgoing relations are from this <code>LexUnit</code> to another <code>LexUnit</code>.
+     * Incoming relation are from another <code>LexUnit</code> to this <code>LexUnit</code>.
+     *
+     * @param direction the direction of the relation (incoming or outgoing)
+     * @return a <code>List</code> of all of the <code>LexUnits</code> that this
+     * <code>LexUnit</code> has any relation to, in the given direction.
+     */
+    public List<LexUnit> getRelatedLexUnits(RelDirection direction) {
+        List<LexUnit> rval = new ArrayList<>();
+        Map<LexRel, Set<LexUnit>> relations;
+
+        relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
+
+        for (Map.Entry<LexRel, Set<LexUnit>> entry : relations.entrySet()) {
             rval.addAll(entry.getValue());
         }
+
+        // include synonyms
+        rval.addAll(getSynonyms());
+
         return rval;
     }
 

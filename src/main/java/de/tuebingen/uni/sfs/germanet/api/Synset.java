@@ -78,7 +78,8 @@ public class Synset implements Comparable {
     private Double infoContent;
 
     // Relations of this Synset
-    private EnumMap<ConRel, Set<Synset>> relations;
+    private EnumMap<ConRel, Set<Synset>> outgoingRelations;
+    private EnumMap<ConRel, Set<Synset>> incomingRelations;
 
     /**
      * Constructs a <code>Synset</code> with the specified attributes.
@@ -93,7 +94,8 @@ public class Synset implements Comparable {
         this.wordClass = wordClass;
         lexUnits = new HashSet<>(0);
         paraphrase = "";
-        relations = new EnumMap<>(ConRel.class);
+        outgoingRelations = new EnumMap<>(ConRel.class);
+        incomingRelations = new EnumMap<>(ConRel.class);
         maxDistance = 0;
         distanceMap = new HashMap<>();
         distanceMap.put(id, 0);
@@ -278,23 +280,33 @@ public class Synset implements Comparable {
     }
 
     /**
-     * Add a relation of the specified type to target <code>Synset</code>.
+     * If <code>direction</code> is <code>RelDirection.outgoing</code>, add an
+     * outgoing relation of the specified type to this <code>Synset</code>.
+     * If <code>direction</code> is <code>RelDirection.incoming</code>, add an
+     * incoming relation of the specified type to this <code>Synset</code>.
      *
      * @param type   the type of relation (eg. <code>ConRel.has_hypernym</code>)
      * @param target the target <code>Synset</code>
+     * @param direction the direction of the relation.
      */
-    void addRelation(ConRel type, Synset target) {
-        Set<Synset> relList = relations.get(type);
-        if (relList == null) {
-            relList = new HashSet<>(1);
+    void addRelation(ConRel type, Synset target, RelDirection direction) {
+        EnumMap<ConRel, Set<Synset>> relations;
+
+        relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
+
+        Set<Synset> related = relations.get(type);
+        if (related == null) {
+            related = new HashSet<>(1);
         }
-        relList.add(target);
-        relations.put(type, relList);
+        related.add(target);
+        relations.put(type, related);
     }
 
     /**
-     * Returns a <code>List</code> of this <code>Synset</code>'s relations of
-     * type <code>type</code>.
+     * Returns a <code>List</code> of <code>Synsets</code> for which this
+     * <code>Synset</code> has an outgoing <code>type</code> relation.
+     * Same as calling:
+     * <code>getRelatedSynsets(type, RelDirection.outgoing)</code>.
      *
      * @param type type of relations to retrieve
      * @return a <code>List</code> of this <code>Synset</code>'s relations of
@@ -303,8 +315,27 @@ public class Synset implements Comparable {
      * the type <code>ConRel.has_hypernym</code>
      */
     public List<Synset> getRelatedSynsets(ConRel type) {
-        Set<Synset> rels = relations.get(type);
+        return getRelatedSynsets(type, RelDirection.outgoing);
+    }
+
+    /**
+     * Returns a <code>List</code> of <code>Synsets</code> with a conceptual
+     * relation of type <code>type</code> in the given <code>direction</code>
+     * to this <code>Synset</code>.
+     * Outgoing relations are from this <code>Synset</code> to another <code>Synset</code>.
+     * Incoming relation are from another <code>Synset</code> to this <code>Synset</code>.
+     *
+     * @param type the type of relation to retrieve
+     * @param direction direction of the relation (incoming or outgoing)
+     * @return a <code>List</code> of <code>Synset</code>s with a conceptual
+     * relation of type <code>type</code> in the given <code>direction</code>
+     * to this <code>Synset</code>.
+     */
+    public List<Synset> getRelatedSynsets(ConRel type, RelDirection direction) {
+        Set<Synset> rels;
         ArrayList<Synset> rval;
+
+        rels = (direction == RelDirection.outgoing) ? outgoingRelations.get(type) : incomingRelations.get(type);
 
         if (rels == null) {
             rval = new ArrayList<>(0);
@@ -324,6 +355,8 @@ public class Synset implements Comparable {
      * depth. The size of the <code>List</code> returned indicates the maximum
      * depth.<br>
      * Returns an empty <code>List</code> if type is not transitive.
+     * Same as calling:
+     * <code>getTransRelatedSynsets(type, RelDirection.outgoing)</code>
      *
      * @param type the <code>type</code> of relation (e.g.
      *             <code>ConRel.has_hypernym</code>).
@@ -331,6 +364,30 @@ public class Synset implements Comparable {
      * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
      */
     public List<List<Synset>> getTransRelatedSynsets(ConRel type) {
+        return getTransRelatedSynsets(type, RelDirection.outgoing);
+    }
+
+    /**
+     * Returns the transitive closure of all relations of type <code>type</code>
+     * to this <code>Synset</code>, in the given direction. The direction indicates
+     * whether the relations to consider are coming into this <code>Synset</code>, or
+     * going out of this <code>Synset</code>.
+     * A <code>List</code> of <code>Lists</code> of
+     * <code>Synsets</code> is returned, where the <code>List</code> at
+     * position 0 contains this <code>Synset</code>, the <code>List</code> at
+     * position 1 contains the relations at depth 1, the <code>List</code> at
+     * position 2 contains the relations at depth 2, and so on up to the maximum
+     * depth. The size of the <code>List</code> returned indicates the maximum
+     * depth.<br>
+     * Returns an empty <code>List</code> if type is not transitive.
+     *
+     * @param type the <code>type</code> of relation (e.g.
+     *             <code>ConRel.has_hypernym</code>).
+     * @param direction the direction of the relations (incoming or outgoing)
+     * @return the transitive closure of all relations of type <code>type</code>
+     * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
+     */
+    public List<List<Synset>> getTransRelatedSynsets(ConRel type, RelDirection direction) {
         List<List<Synset>> result = new ArrayList<>();
         List<Synset> resultPrevDepth = new ArrayList<>(1);
         List<Synset> resultCurDepth;
@@ -343,7 +400,7 @@ public class Synset implements Comparable {
         while (resultPrevDepth.size() > 0) {
             resultCurDepth = new ArrayList<>();
             for (Synset sset : resultPrevDepth) {
-                List<Synset> ssetRels = sset.getRelatedSynsets(type);
+                List<Synset> ssetRels = sset.getRelatedSynsets(type, direction);
                 resultCurDepth.addAll(ssetRels);
             }
             if (resultCurDepth.size() > 0) {
@@ -356,13 +413,31 @@ public class Synset implements Comparable {
 
     /**
      * Returns a <code>List</code> of all of the <code>Synsets</code> that this
-     * <code>Synset</code> has any relation to.
+     * <code>Synset</code> has any outgoing relation to.
+     * Same as calling:
+     * <code>getRelatedSynsets(RelDirection.outgoing)</code>
      *
      * @return a <code>List</code> of all of the <code>Synsets</code> that this
      * <code>Synset</code> has any relation to
      */
     public List<Synset> getRelatedSynsets() {
+        return getRelatedSynsets(RelDirection.outgoing);
+    }
+
+    /**
+     * Returns a <code>List</code> of all of the <code>Synsets</code> that this
+     * <code>Synset</code> has any relation to, in the given direction.
+     * Outgoing relations are from this <code>Synset</code> to another <code>Synset</code>.
+     * Incoming relation are from another <code>Synset</code> to this <code>Synset</code>.
+     *
+     * @return a <code>List</code> of all of the <code>Synsets</code> that this
+     * <code>Synset</code> has any relation to, in the given direction.
+     */
+    public List<Synset> getRelatedSynsets(RelDirection direction) {
         List<Synset> rval = new ArrayList<Synset>();
+        Map<ConRel, Set<Synset>> relations;
+
+        relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
 
         for (Map.Entry<ConRel, Set<Synset>> entry : relations.entrySet()) {
             rval.addAll(entry.getValue());

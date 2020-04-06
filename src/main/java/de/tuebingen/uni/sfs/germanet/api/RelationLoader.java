@@ -113,6 +113,7 @@ class RelationLoader {
 
         // get all the attributes
         name = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_NAME);
+        LexRel rel = LexRel.valueOf(name);
         direction = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_DIR);
         fromLexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
         toLexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
@@ -121,15 +122,20 @@ class RelationLoader {
         fromLexUnit = germaNet.getLexUnitByID(fromLexUnitId);
         toLexUnit = germaNet.getLexUnitByID(toLexUnitId);
 
-        // add relation from "from" to "to"
-        fromLexUnit.addRelation(LexRel.valueOf(name), toLexUnit);
+        // add outgoing relation "from" -> "to"
+        fromLexUnit.addRelation(rel, toLexUnit, RelDirection.outgoing);
+
+        // add incoming relation "to" <- "from"
+        toLexUnit.addRelation(rel, fromLexUnit, RelDirection.incoming);
 
         // add the inverse relation, if any
         if (direction.equals(DIR_BOTH)) {
-            toLexUnit.addRelation(LexRel.valueOf(name), fromLexUnit);
+            toLexUnit.addRelation(rel, fromLexUnit, RelDirection.outgoing);
+            fromLexUnit.addRelation(rel, toLexUnit, RelDirection.incoming);
         } else if (direction.equals(DIR_REVERT)) {
             invRel = LexRel.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_INV));
-            toLexUnit.addRelation(invRel, fromLexUnit);
+            toLexUnit.addRelation(invRel, fromLexUnit, RelDirection.outgoing);
+            fromLexUnit.addRelation(invRel, toLexUnit, RelDirection.incoming);
         }
     }
 
@@ -146,6 +152,7 @@ class RelationLoader {
 
         // get all the attributes
         name = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_NAME);
+        ConRel rel = ConRel.valueOf(name);
         direction = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_DIR);
         fromSynsetId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
         toSynsetId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
@@ -154,16 +161,20 @@ class RelationLoader {
         fromSynset = germaNet.getSynsetByID(fromSynsetId);
         toSynset = germaNet.getSynsetByID(toSynsetId);
 
-        // add relation from "from" to "to"
-        fromSynset.addRelation(ConRel.valueOf(name), toSynset);
+        // add outgoing relation "from" -> "to"
+        fromSynset.addRelation(rel, toSynset, RelDirection.outgoing);
+
+        // add incoming relation "to" <- "from"
+        toSynset.addRelation(rel, fromSynset, RelDirection.incoming);
 
         // add the inverse relation, if any
         if (direction.equals(DIR_BOTH)) {
-            toSynset.addRelation(ConRel.valueOf(name), fromSynset);
+            toSynset.addRelation(rel, fromSynset, RelDirection.outgoing);
+            fromSynset.addRelation(rel, toSynset, RelDirection.incoming);
         } else if (direction.equals(DIR_REVERT)) {
-            invRel = ConRel.valueOf(
-                    parser.getAttributeValue(namespace, GermaNet.XML_RELATION_INV));
-            toSynset.addRelation(invRel, fromSynset);
+            invRel = ConRel.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_INV));
+            toSynset.addRelation(invRel, fromSynset, RelDirection.outgoing);
+            fromSynset.addRelation(invRel, toSynset, RelDirection.incoming);
         }
     }
 }
