@@ -313,7 +313,9 @@ public class LexUnit {
      *
      * @param type type of relation to retrieve
      * @param direction direction of the relation (incoming or outgoing)
-     * @return
+     * @return a <code>List</code> of <code>LexUnits</code> with a
+     * lexical relation of type <code>type</code> in direction <code>direction</code>
+     * to this <code>LexUnit</code>
      */
     public List<LexUnit> getRelatedLexUnits(LexRel type, RelDirection direction) {
         ArrayList<LexUnit> rval = null;

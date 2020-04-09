@@ -43,9 +43,9 @@ public class SemanticUtils {
     private Map<WordCategory, Map<Integer, Double>> catICMap;
 
     // used only during construction to generate IC maps
-    Map<WordCategory, Map<String, Long>> formFreqMaps;
-    Map<WordCategory, Map<Integer, Long>> individualFreqMaps;
-    Map<WordCategory, Map<Integer, Long>> cumulativeFreqMaps;
+    private Map<WordCategory, Map<String, Long>> formFreqMaps;
+    private Map<WordCategory, Map<Integer, Long>> individualFreqMaps;
+    private Map<WordCategory, Map<Integer, Long>> cumulativeFreqMaps;
 
     private GermaNet gnet;
 
@@ -114,17 +114,15 @@ public class SemanticUtils {
                 int synsetID = synset.getId();
                 Long cumulativeFreq = cumulativeFreqMap.get(synsetID);
 
+                // calculate the IC for this synset
                 Double ic = null;
-                // If there are no entries in the cumulative frequency list for this synset,
-                // the IC will be null
-                // ToDo: what is IC if cum. freq is 0?
-                if (cumulativeFreq > 0) {
-                    ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
-                    // update max IC if necessary
-                    if (Double.compare(ic, maxIC) > 0) {
-                        maxIC = ic;
-                    }
+                ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
+
+                // update max IC if this IC is larger than any seen so far
+                if (Double.compare(ic, maxIC) > 0) {
+                    maxIC = ic;
                 }
+
                 icMap.put(synsetID, ic);
             }
 
@@ -133,14 +131,30 @@ public class SemanticUtils {
             icMap.put(GermaNet.GNROOT_ID, 0.0);
             catICMap.put(wordCategory, icMap);
 
+            // for each of the IC measures,
             // put the min/max IC values in the normalization map for this wordCategory
-            // the min/max values can be used for all of the IC measures
             Map<SemRelMeasure, List<Double>> normMap = catNormalizationMap.get(wordCategory);
+
+            // Resnik: min 0.0, max maxIC
             List<Double> minMaxList = new ArrayList<>();
             minMaxList.add(0.0);
             minMaxList.add(maxIC);
             normMap.put(SemRelMeasure.Resnik, minMaxList);
+
+            // JiangAndConrath: min 0.0, max 2 * -log10(1.0 / cumFreqRoot)
+            minMaxList = new ArrayList<>();
+            Double min = 0.0;
+            Double max = 2 * -Math.log10(1.0 / cumFreqRoot);
+            minMaxList.add(min);
+            minMaxList.add(max);
             normMap.put(SemRelMeasure.JiangAndConrath, minMaxList);
+
+            // Lin: min 0.0, max 1.0
+            minMaxList = new ArrayList<>();
+            min = 0.0;
+            max = 1.0;
+            minMaxList.add(min);
+            minMaxList.add(max);
             normMap.put(SemRelMeasure.Lin, minMaxList);
             catNormalizationMap.put(wordCategory, normMap);
         }
@@ -270,7 +284,7 @@ public class SemanticUtils {
     }
 
     /**
-     * Initialize the normalization values for each word category and each relatedness measure.
+     * Initialize the normalization values for each word category and each path-based relatedness measure.
      */
     private void initPathNormalizationValues() {
         for (WordCategory wordCategory : WordCategory.values()) {
@@ -312,7 +326,8 @@ public class SemanticUtils {
     }
 
     /**
-     * Normalize the relatedness value, taking into consideration the WordCategory, algorithm, and upper bound.
+     * Normalize the relatedness value, taking into consideration the WordCategory, algorithm,
+     * and lower and upper bounds.
      *
      * @param wordCategory  the WordCategory
      * @param semRelMeasure the algorithm
@@ -529,6 +544,14 @@ public class SemanticUtils {
                 rval = getSimilarityResnik(s1, s2, normalizedMax);
                 break;
 
+            case JiangAndConrath:
+                rval = getSimilarityJiangAndConrath(s1, s2, normalizedMax);
+                break;
+
+            case Lin:
+                rval = getSimilarityLin(s1, s2, normalizedMax);
+                break;
+
             default:
                 rval = null;
         }
@@ -672,7 +695,7 @@ public class SemanticUtils {
      *
      * This method returns the IC value Least Common Subsumer (LCS) of the two input <code>Synset</code>s.
      * <br>
-     *     If more than one LCS exists, the highest IC value is returned.
+     * If more than one LCS exists, the highest IC value is returned.
      * <br>
      * Note that with Resnik's measure, it is possible for a synset to be 'more
      * related' to a different synset (one with a larger IC)
@@ -695,6 +718,95 @@ public class SemanticUtils {
             return null;
         }
 
+        Double maxIC = getMaxICofLCSs(s1, s2);
+        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.Resnik, maxIC, normalizedMax) : maxIC;
+    }
+
+    /**
+     * Relatedness according to Jiang and Conrath 1997: "Semantic Relatedness
+     * Based on Corpus Statistics and Lexical Taxonomy"<br>
+     *
+     * The distance measure presented in the paper is turned into a relatedness
+     * measure by subtracting the distance measure from the maximum possible 'distance' between
+     * two synsets in the wordnet.<br>
+     *
+     * <code>rel(s1,s2) = max_dist - dist(s1,s2)</code><br>
+     * <code>dist(s1,s2) = IC(s1) + IC(s2) - 2 * IC(LCS)</code><br>
+     * <code>max_dist = 2 * -log(1 / rootFrequency) = 2 * max_IC</code><br>
+     *
+     * If normalizedMax is &gt; 0, then synsets that are very similar will be close to that
+     * value, and dissimilar synsets will have a value close to 0.0.<br><br>
+     *
+     * Synsets must be in the same WordCategory.
+     *
+     * @param s1 first synset to be compared
+     * @param s2 second synset to be compared
+     * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
+     * @return The similarity using the Jiang and Conrath algorithm with optional normalization, or null if
+     * the synsets do not belong to the same WordCategory, or if there is not enough information to
+     * calculate the similarity.
+     */
+    public Double getSimilarityJiangAndConrath(Synset s1, Synset s2, int normalizedMax) {
+        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
+            return null;
+        }
+
+        WordCategory cat = s1.getWordCategory();
+        Map<Integer, Double> icMap = catICMap.get(cat);
+        Double lcsIC = getMaxICofLCSs(s1, s2);
+
+        double icS1 = icMap.get(s1.getId());
+        double icS2 = icMap.get(s2.getId());
+        double jcnMaxDist = catNormalizationMap.get(cat).get(SemRelMeasure.JiangAndConrath).get(1);
+        double jcnDist = icS1 + icS2 - (2 * lcsIC);
+
+        double sim = jcnMaxDist - jcnDist;
+        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.JiangAndConrath, sim, normalizedMax) : sim;
+    }
+
+    /**
+     * Relatedness according to Lin 1998: "An Information-Theoretic Definition of Similarity"<br>
+     *
+     * <code>sim(s1,s2) = (2 * IC(LCS)) / (IC(s1) + IC(s2))</code><br>
+     *
+     * If normalizedMax is &gt; 0, then synsets that are very similar will be close to that
+     * value, and dissimilar synsets will have a value close to 0.0.<br><br>
+     *
+     * Synsets must be in the same WordCategory.
+     *
+     * @param s1 first synset to be compared
+     * @param s2 second synset to be compared
+     * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
+     * @return The similarity using the Lin algorithm with optional normalization, or null if
+     * the synsets do not belong to the same WordCategory, or if there is not enough information to
+     * calculate the similarity.
+     */
+    public Double getSimilarityLin(Synset s1, Synset s2, int normalizedMax) {
+        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
+            return null;
+        }
+
+        WordCategory cat = s1.getWordCategory();
+        Map<Integer, Double> icMap = catICMap.get(cat);
+        Double lcsIC = getMaxICofLCSs(s1, s2);
+
+        double icS1 = icMap.get(s1.getId());
+        double icS2 = icMap.get(s2.getId());
+
+        double sim = (2 * lcsIC) / (icS1 + icS2);
+        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.Lin, sim, normalizedMax) : sim;
+    }
+
+
+    /**
+     * Return the maximum Information Content (IC) value of the Least Common Subsumer(s) of s1 and s2.
+     * Helper method for the IC-based similarity measures.
+     *
+     * @param s1 first synset
+     * @param s2 second synset
+     * @return the maximum Information Content (IC) value of the Least Common Subsumer(s) of s1 and s2.
+     */
+    private Double getMaxICofLCSs(Synset s1, Synset s2) {
         Set<LeastCommonSubsumer> leastCommonSubsumers = getLeastCommonSubsumers(s1, s2);
         Map<Integer, Double> icMap = catICMap.get(s1.getWordCategory());
         Double curIC;
@@ -718,7 +830,7 @@ public class SemanticUtils {
                 prevIC = curIC;
             }
         }
-        return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.Resnik, maxIC, normalizedMax) : maxIC;
+        return maxIC;
     }
 
     /**

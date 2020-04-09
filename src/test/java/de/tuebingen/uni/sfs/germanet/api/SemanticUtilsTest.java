@@ -51,6 +51,64 @@ public class SemanticUtilsTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SemanticUtilsTest.class);
 
+    // nouns: synset IDs
+    static int alleebaumID = 100607;
+    static int apfelbaumId = 46683;
+    static int apfelID = 39494;
+    static int bambusID = 46047;
+    static int baumID = 46042;
+    static int birneID = 39495;
+    static int chinarindenbaumID = 46665;
+    static int fussreflexzonenmassageID = 138670;
+    static int giftpflanzeId = 46650;
+    static int heilpflanzeID = 46659;
+    static int herztransplantationID = 20561;
+    static int holzpflanzeID = 46041;
+    static int kernobstID = 39491;
+    static int kleinesjohanniswuermchenID = 49774;
+    static int kleinesJohanniswuermchenID = 49774;
+    static int kompresseID = 7922;
+    static int krautID = 46657;
+    static int kulturpflanzeID = 44965;
+    static int lebertransplantationID = 83979;
+    static int medizinischerArtikelID = 7917;
+    static int mengeID = 33224;
+    static int nierentransplantationID = 20560;
+    static int nutzpflanzeID = 46311;
+    static int objektID = 50981;
+    static int obstbaumID = 46682;
+    static int pferdAnimalID = 50869;
+    static int pferdChessID = 11106;
+    static int pflanzeID = 44960;
+    static int veilchenID = 45380;
+
+    // verbs: synset IDs
+    static int anmusternID = 119463;
+    static int auftunID = 61151;
+    static int bemehlenID = 57534;
+    static int bewerbenID = 81102;
+    static int einkaufenID = 107484;
+    static int einstuelpenID = 120154;
+    static int fahrenID = 57299;
+    static int gebenID = 52270;
+    static int hochrutschenID = 123240;
+    static int hochschlagenID = 123246;
+    static int laufenID = 57835;
+    static int riechenID = 58565;
+    static int schmeckenID = 58578;
+    static int sollenID = 52068;
+    static int springenID = 57328;
+    static int verlautenID = 106731;
+
+    // adj: synset IDs
+    static int blasphemischID = 94396;
+    static int denunziatorischID = 94543;
+    static int gotteslaesterlichID = 95987;
+    static int regressivID = 94411;
+    static int rueckgebildetID = 95326;
+
+
+
     @BeforeAll
     static void setUp() {
         try {
@@ -85,44 +143,32 @@ public class SemanticUtilsTest {
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumers(synset1, synset2);
 
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, orthforms);
     }
 
     private static Stream<Arguments> lcsNounProvider() {
 
         // Apfel - Birne -> Kernobst
-        int apfelID = 39494;
-        int birneID = 39495;
-        int kernobstID = 39491;
         Set<LeastCommonSubsumer> apfelBirneExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(kernobstID, Sets.newHashSet(apfelID, birneID), 2)
         );
 
         // Apfel - Baum -> Objekt
-        int baumID = 46042;
-        int objektID = 50981;
         Set<LeastCommonSubsumer> apfelBaumExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(objektID, Sets.newHashSet(apfelID, baumID), 11)
         );
 
         // Pferd (animal) - Pferd (Chess) -> Objekt
-        int pferdAnimalID = 50869;
-        int pferdChessID = 11106;
         Set<LeastCommonSubsumer> pferdExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(objektID, Sets.newHashSet(pferdAnimalID, pferdChessID), 20)
         );
 
         // Chinarindenbaum - Kompresse -> Medizinischer Artikel
-        int chinarindenbaumID = 46665;
-        int kompresseID = 7922;
-        int medizinischerArtikelID = 7917;
         Set<LeastCommonSubsumer> chinarindenbaumKompresseExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(medizinischerArtikelID, Sets.newHashSet(chinarindenbaumID, kompresseID), 6)
         );
 
         // Kraut - Heilpflanze -> Kraut (Kraut is the direct hypernym of Heilpflanze)
-        int krautID = 46657;
-        int heilpflanzeID = 46659;
         Set<LeastCommonSubsumer> krautHeilpflanzeExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(krautID, Sets.newHashSet(krautID, heilpflanzeID), 1)
         );
@@ -139,9 +185,6 @@ public class SemanticUtilsTest {
     private static Stream<Arguments> lcsVerbProvider() {
 
         // einkaufen - auftun -> geben
-        int einkaufenID = 107484;
-        int auftunID = 61151;
-        int gebenID = 52270;
         Set<LeastCommonSubsumer> einkaufenAuftunExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(gebenID, Sets.newHashSet(einkaufenID, auftunID), 7)
         );
@@ -155,15 +198,12 @@ public class SemanticUtilsTest {
     private static Stream<Arguments> lcsAdjProvider() {
 
         // regressiv - denunziatorisch -> GNROOT
-        int regressivID = 94411;
-        int denunziatorischID = 94543;
         Set<LeastCommonSubsumer> regressivDenunziatorischExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(0, Sets.newHashSet(regressivID, denunziatorischID), 18),
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(regressivID, denunziatorischID), 18)
         );
 
         // regressiv - blasphemisch -> GNROOT
-        int blasphemischID = 94396;
         Set<LeastCommonSubsumer> regressivBlasphemischExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(regressivID, blasphemischID), 20)
         );
@@ -177,26 +217,21 @@ public class SemanticUtilsTest {
     private static Stream<Arguments> lcsLongestShortestNounProvider() {
 
         // Kleines Johanniswürmchen - Lebertransplantation -> GNROOT
-        int kleinesjohanniswuermchenID = 49774;
-        int lebertransplantationID = 83979;
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenLebertransplantationExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, lebertransplantationID), 35)
         );
 
         // Kleines Johanniswürmchen - Nierentransplantation -> GNROOT
-        int nierentransplantationID = 20560;
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenNierentransplantationExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, nierentransplantationID), 35)
         );
 
         // Kleines Johanniswürmchen - Herztransplantation -> GNROOT
-        int herztransplantationID = 20561;
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenHerztransplantationExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, herztransplantationID), 35)
         );
 
         // Kleines Johanniswürmchen - Fußreflexzonenmassage -> GNROOT
-        int fussreflexzonenmassageID = 138670;
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenFussreflexzonenmassageExpected = Sets.newHashSet(
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, fussreflexzonenmassageID), 35)
         );
@@ -216,10 +251,10 @@ public class SemanticUtilsTest {
         // Kleines Johanniswürmchen - Herztransplantation
         // Kleines Johanniswürmchen - Fußreflexzonenmassage
         Set<LeastCommonSubsumer> expected = Sets.newHashSet(
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(49774, 83979), 35),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(49774, 20560), 35),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(49774, 20561), 35),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(49774, 138670), 35)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, lebertransplantationID), 35),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, nierentransplantationID), 35),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, herztransplantationID), 35),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, fussreflexzonenmassageID), 35)
         );
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.nomen);
@@ -229,8 +264,6 @@ public class SemanticUtilsTest {
 
     @Test
     void lcsNullTest() {
-        int laufenID = 57835;
-        int heilpflanzeID = 46659;
 
         Synset synset1 = gnetCaseSensitive.getSynsetByID(laufenID); // laufen
         Synset synset2 = gnetCaseSensitive.getSynsetByID(heilpflanzeID); // Heilpflanze
@@ -243,24 +276,16 @@ public class SemanticUtilsTest {
 
     @Test
     void longestShortestVerbTest() {
-        // verlauten - hochschlagen
-        // verlauten - einstülpen
-        // verlauten - bemehlen
-        // verlauten - hochrutschen
-        // anmustern - einstülpen
-        // anmustern - bemehlen
-        // anmustern - hochrutschen
-        // anmustern - hochschlagen
         Set<LeastCommonSubsumer> expected = Sets.newHashSet(
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(106731, 123246), 28),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(106731, 120154), 28),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(106731, 57534), 28),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(106731, 123240), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(verlautenID, hochschlagenID), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(verlautenID, einstuelpenID), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(verlautenID, bemehlenID), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(verlautenID, hochrutschenID), 28),
 
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(119463, 120154), 28),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(119463, 57534), 28),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(119463, 123240), 28),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(119463, 123246), 28)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, einstuelpenID), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, bemehlenID), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, hochrutschenID), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, hochschlagenID), 28)
         );
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.verben);
@@ -273,15 +298,11 @@ public class SemanticUtilsTest {
     @Test
     void longestShortestAdjTest() {
 
-        // rückgebildet - gotteslästerlich
-        // rückgebildet - blasphemisch
-        // regressiv - gotteslästerlich
-        // regressiv - blasphemisch
         Set<LeastCommonSubsumer> expected = Sets.newHashSet(
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(95326, 95987), 20),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(95326, 94396), 20),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(94411, 95987), 20),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(94411, 94396), 20)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(rueckgebildetID, gotteslaesterlichID), 20),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(rueckgebildetID, blasphemischID), 20),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(regressivID, gotteslaesterlichID), 20),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(regressivID, blasphemischID), 20)
         );
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.adj);
@@ -350,12 +371,12 @@ public class SemanticUtilsTest {
     }
 
     private static Stream<Arguments> distanceBetweenSynsetsProvider() {
-        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(46665);
-        Synset alleebaum = gnetCaseSensitive.getSynsetByID(100607);
-        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(46683);
-        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(46650);
-        Synset sollen = gnetCaseSensitive.getSynsetByID(52068);
-        Synset menge = gnetCaseSensitive.getSynsetByID(33224);
+        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(chinarindenbaumID);
+        Synset alleebaum = gnetCaseSensitive.getSynsetByID(alleebaumID);
+        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(apfelbaumId);
+        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(giftpflanzeId);
+        Synset sollen = gnetCaseSensitive.getSynsetByID(sollenID);
+        Synset menge = gnetCaseSensitive.getSynsetByID(mengeID);
 
         return Stream.of(
                 Arguments.of(chinarindenbaum, alleebaum, 2),
@@ -376,18 +397,18 @@ public class SemanticUtilsTest {
     }
 
     private static Stream<Arguments> pathsBetweenSynsetsProvider() {
-        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(46665);
-        Synset alleebaum = gnetCaseSensitive.getSynsetByID(100607);
-        Synset baum = gnetCaseSensitive.getSynsetByID(46042);
-        Synset obstbaum = gnetCaseSensitive.getSynsetByID(46682);
-        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(46683);
-        Synset holzpflanze = gnetCaseSensitive.getSynsetByID(46041);
-        Synset pflanze = gnetCaseSensitive.getSynsetByID(44960);
-        Synset nutzpflanze = gnetCaseSensitive.getSynsetByID(46311);
-        Synset kulturpflanze = gnetCaseSensitive.getSynsetByID(44965);
-        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(46650);
-        Synset sollen = gnetCaseSensitive.getSynsetByID(52068);
-        Synset menge = gnetCaseSensitive.getSynsetByID(33224);
+        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(chinarindenbaumID);
+        Synset alleebaum = gnetCaseSensitive.getSynsetByID(alleebaumID);
+        Synset baum = gnetCaseSensitive.getSynsetByID(baumID);
+        Synset obstbaum = gnetCaseSensitive.getSynsetByID(obstbaumID);
+        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(apfelbaumId);
+        Synset holzpflanze = gnetCaseSensitive.getSynsetByID(holzpflanzeID);
+        Synset pflanze = gnetCaseSensitive.getSynsetByID(pflanzeID);
+        Synset nutzpflanze = gnetCaseSensitive.getSynsetByID(nutzpflanzeID);
+        Synset kulturpflanze = gnetCaseSensitive.getSynsetByID(kulturpflanzeID);
+        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(giftpflanzeId);
+        Synset sollen = gnetCaseSensitive.getSynsetByID(sollenID);
+        Synset menge = gnetCaseSensitive.getSynsetByID(mengeID);
 
         // Chinarindenbaum - Alleebaum (Baum)
         Set<SynsetPath> expectedChinaAllee = new HashSet<>();
@@ -448,7 +469,9 @@ public class SemanticUtilsTest {
     @MethodSource({"simplePathProvider",
             "leacockChodorowProvider",
             "wuAndPalmerProvider",
-            "resnikProvider"})
+            "resnikProvider",
+            "jiangAndConrathProvider",
+            "linProvider"})
     void similarityMeasuresTest(SemRelMeasure semRelMeasure, Integer sID1, Integer sID2, int normalizedMax, Double expected) {
         Synset synset1, synset2;
 
@@ -459,48 +482,47 @@ public class SemanticUtilsTest {
         Double actual = semanticUtils.getSimilarity(semRelMeasure, synset1, synset2, normalizedMax);
 
         if (sID1 == null || sID2 == null) {
+            //LOGGER.info("{} {} {}, normMax: {}, exp: {}\n", semRelMeasure, sID1, sID2, normalizedMax, expected);
             assertNull(actual);
         } else {
-            assertEquals(expected, actual, epsilon);
+            //LOGGER.info("{} {} {}, {} {}, normMax: {}, actual: {}", semRelMeasure, sID1, synset1.getAllOrthForms(), sID2, synset2.getAllOrthForms(), normalizedMax, actual);
+            assertEquals(expected, actual, epsilon,
+                    "\n" + sID1 + " " + synset1.getAllOrthForms() + "\n" + sID2 + " " + synset2.getAllOrthForms() + "\n" + normalizedMax);
         }
     }
 
     private static Stream<Arguments> simplePathProvider() {
 
-        // Bambus - Veilchen
-        int bambusID = 46047;
-        int veilchenID = 45380;
-        double bambusVeilchenExpected = 0.88571;
-
-        // Kleines Johanniswürmchen - Lebertransplantation
-        int kleinesJohanniswürmchenID = 49774;
-        int lebertransplantationID = 83979;
+        double bambusVeilchenRawExpected = 0.88571;
+        double bambusVeilchen10Expected = 8.8571;
         double unsimilarExpected = 0.0;
-        double identityExpected = 1.0;
-
-        // bemehlen - anmustern
-        int bemehlenID = 57534;
-        int anmusternID = 119463;
-
-        // blasphemisch - regressiv
-        int blasphemischID = 94396;
-        int regressivID = 94411;
-
-        // Apfelbaum - Giftpflanze
-        int apfelbaumId = 46683;
-        int giftpflanzeId = 46650;
+        double identityRawExpected = 1.0;
+        double identity10Expected = 10.0;
         double normalized10Expected = 8.5714;
 
         return Stream.of(
-                Arguments.of(SemRelMeasure.SimplePath, bambusID, veilchenID, 0, bambusVeilchenExpected),
-                Arguments.of(SemRelMeasure.SimplePath, kleinesJohanniswürmchenID, lebertransplantationID, 0, unsimilarExpected),
+                Arguments.of(SemRelMeasure.SimplePath, bambusID, veilchenID, 0, bambusVeilchenRawExpected),
+                Arguments.of(SemRelMeasure.SimplePath, kleinesJohanniswuermchenID, lebertransplantationID, 0, unsimilarExpected),
+
                 Arguments.of(SemRelMeasure.SimplePath, bemehlenID, anmusternID, 0, unsimilarExpected),
-                Arguments.of(SemRelMeasure.SimplePath, bemehlenID, bemehlenID, 0, identityExpected),
+                Arguments.of(SemRelMeasure.SimplePath, bemehlenID, bemehlenID, 0, identityRawExpected),
+
                 Arguments.of(SemRelMeasure.SimplePath, blasphemischID, regressivID, 0, unsimilarExpected),
+                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, blasphemischID, 0, identityRawExpected),
+
+
+                Arguments.of(SemRelMeasure.SimplePath, bambusID, veilchenID, 10, bambusVeilchen10Expected),
+                Arguments.of(SemRelMeasure.SimplePath, kleinesJohanniswuermchenID, lebertransplantationID, 10, unsimilarExpected),
+
+                Arguments.of(SemRelMeasure.SimplePath, bemehlenID, anmusternID, 10, unsimilarExpected),
+                Arguments.of(SemRelMeasure.SimplePath, bemehlenID, bemehlenID, 10, identity10Expected),
+
                 Arguments.of(SemRelMeasure.SimplePath, blasphemischID, regressivID, 10, unsimilarExpected),
-                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, blasphemischID, 0, identityExpected),
-                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, blasphemischID, 10, 10.0),
+                Arguments.of(SemRelMeasure.SimplePath, blasphemischID, blasphemischID, 10, identity10Expected),
+
+
                 Arguments.of(SemRelMeasure.SimplePath, apfelbaumId, giftpflanzeId, 10, normalized10Expected),
+
                 Arguments.of(SemRelMeasure.SimplePath, apfelbaumId, null, 10, null),
                 Arguments.of(SemRelMeasure.SimplePath, null, giftpflanzeId, 10, null)
         );
@@ -509,35 +531,25 @@ public class SemanticUtilsTest {
     private static Stream<Arguments> leacockChodorowProvider() {
 
         // Bambus - Veilchen, pathlength = 4
-        int bambusID = 46047;
-        int veilchenID = 45380;
         double bambusVeilchenRawExpected = 0.92428;
         double bambusVeilchenNormalized10Expected = 5.50877;
         double identityExpectedNounRaw = 1.62325;
         double normalized10EdentityExpected = 10.0;
 
         // Kleines Johanniswürmchen - Lebertransplantation
-        int kleinesJohanniswuermchenID = 49774;
-        int lebertransplantationID = 83979;
         double kJohannisLebertransExpected = 0.066946;
         double kJohannisLebertransNorm10Expected = 0.0;
 
         // Apfelbaum - Giftpflanze
-        int apfelbaumId = 46683;
-        int giftpflanzeId = 46650;
         double abaumGiftpRawExpected = 0.84509;
         double normalized10Expected = 5.0;
 
         // bemehlen - anmustern
-        int bemehlenID = 57534;
-        int anmusternID = 119463;
         double identityExpectedVerbRaw = 1.50515;
         double bemAnmustRawExpected = 0.042752;
         double bemAnmustNorm10Expected = 0.0;
 
         // blasphemisch - regressiv
-        int blasphemischID = 94396;
-        int regressivID = 94411;
         double identityExpectedAdjRaw = 1.342423;
         double blasRegRawExpected = 0.020203;
         double blasRegNorm10Expected = 0.0;
@@ -571,34 +583,24 @@ public class SemanticUtilsTest {
     private static Stream<Arguments> wuAndPalmerProvider() {
 
         // Bambus - Veilchen, pathlength = 4
-        int bambusID = 46047;
-        int veilchenID = 45380;
         double bambusVeilchenRawExpected = 0.75;
         double bambusVeilchenNormalized10Expected = 7.5;
         double identityExpectedRaw = 1.0;
         double normalized10EdentityExpected = 10.0;
 
         // Kleines Johanniswürmchen - Lebertransplantation
-        int kleinesJohanniswuermchenID = 49774;
-        int lebertransplantationID = 83979;
         double kJohannisLebertransExpected = 0.0;
         double kJohannisLebertransNorm10Expected = 0.0;
 
         // Apfelbaum - Giftpflanze
-        int apfelbaumId = 46683;
-        int giftpflanzeId = 46650;
         double abaumGiftpRawExpected = 0.70588;
         double normalized10Expected = 7.0588;
 
         // bemehlen - anmustern
-        int bemehlenID = 57534;
-        int anmusternID = 119463;
         double bemAnmustRawExpected = 0.0;
         double bemAnmustNorm10Expected = 0.0;
 
         // blasphemisch - regressiv
-        int blasphemischID = 94396;
-        int regressivID = 94411;
         double blasRegRawExpected = 0.0;
         double blasRegNorm10Expected = 0.0;
 
@@ -628,30 +630,98 @@ public class SemanticUtilsTest {
 
     private static Stream<Arguments> resnikProvider() {
 
-        long cumFreqRootVerb = 9155698519L;
-
-        // laufen - fahren
-        int laufenID = 57780;
-        int fahrenID = 57299;
-        double icLaufenFahren = 0.0;
-
-        // anmustern - bewerben
-        int anmusternID = 119463;
-        int bewerbenID = 81102;
-        int cumFreqWerben = 347754;
-        double icWerben = -Math.log10((double) cumFreqWerben / cumFreqRootVerb);
-
-        // regressiv - denunziatorisch (IC of klassenuerbergreifend)
-        int regID = 94411;
-        int denID = 94543;
-        double regDenRawExpected = 0.71371;
-
         return Stream.of(
-                Arguments.of(SemRelMeasure.Resnik, laufenID, fahrenID, 10, icLaufenFahren),
-                Arguments.of(SemRelMeasure.Resnik, anmusternID, bewerbenID, 0, icWerben),
-                Arguments.of(SemRelMeasure.Resnik, regID, denID, 0, regDenRawExpected)
+                Arguments.of(SemRelMeasure.Resnik, bambusID, veilchenID, 0, 2.56616),
+                Arguments.of(SemRelMeasure.Resnik, bambusID, veilchenID, 10, 2.6046),
+                Arguments.of(SemRelMeasure.Resnik, bambusID, bambusID, 10, 5.51242),
+                Arguments.of(SemRelMeasure.Resnik, veilchenID, veilchenID, 0, 5.18204),
+                Arguments.of(SemRelMeasure.Resnik, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, 10.0),
+                Arguments.of(SemRelMeasure.Resnik, lebertransplantationID, lebertransplantationID, 0, 6.36496),
+                Arguments.of(SemRelMeasure.Resnik, kleinesJohanniswuermchenID, lebertransplantationID, 0, 0.0),
+                Arguments.of(SemRelMeasure.Resnik, kleinesJohanniswuermchenID, lebertransplantationID, 10, 0.0),
+                Arguments.of(SemRelMeasure.Resnik, bemehlenID, anmusternID, 0, 0.0),
+                Arguments.of(SemRelMeasure.Resnik, bemehlenID, anmusternID, 10, 0.0),
+                Arguments.of(SemRelMeasure.Resnik, bemehlenID, bemehlenID, 0, 7.51298),
+                Arguments.of(SemRelMeasure.Resnik, blasphemischID, regressivID, 0, 0.0),
+                Arguments.of(SemRelMeasure.Resnik, blasphemischID, regressivID, 10, 0.0),
+                Arguments.of(SemRelMeasure.Resnik, blasphemischID, blasphemischID, 0, 6.03333),
+                Arguments.of(SemRelMeasure.Resnik, blasphemischID, blasphemischID, 10, 6.47042),
+                Arguments.of(SemRelMeasure.Resnik, apfelbaumId, giftpflanzeId, 0, 2.56616),
+                Arguments.of(SemRelMeasure.Resnik, apfelbaumId, giftpflanzeId, 10, 2.60464),
+                Arguments.of(SemRelMeasure.Resnik, giftpflanzeId, apfelbaumId, 0, 2.56616),
+                Arguments.of(SemRelMeasure.Resnik, giftpflanzeId, apfelbaumId, 10, 2.60464),
+                Arguments.of(SemRelMeasure.Resnik, riechenID, schmeckenID, 0, 1.35137),
+                Arguments.of(SemRelMeasure.Resnik, laufenID, springenID, 10, 1.53634),
+                Arguments.of(SemRelMeasure.Resnik, apfelbaumId, null, 10, null),
+                Arguments.of(SemRelMeasure.Resnik, null, giftpflanzeId, 10, null)
         );
     }
+
+    private static Stream<Arguments> jiangAndConrathProvider() {
+
+        double identityExpectedNounRaw = 19.70449;
+        double identityExpectedAdjRaw = 18.64896;
+        double normalized10IdentityExpected = 10.0;
+
+        return Stream.of(
+                Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, veilchenID, 0, 14.22379),
+                Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, veilchenID, 10, 7.21855),
+                Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, bambusID, 10, normalized10IdentityExpected),
+                Arguments.of(SemRelMeasure.JiangAndConrath, veilchenID, veilchenID, 0, identityExpectedNounRaw),
+                Arguments.of(SemRelMeasure.JiangAndConrath, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10IdentityExpected),
+                Arguments.of(SemRelMeasure.JiangAndConrath, lebertransplantationID, lebertransplantationID, 0, identityExpectedNounRaw),
+                Arguments.of(SemRelMeasure.JiangAndConrath, kleinesJohanniswuermchenID, lebertransplantationID, 0, 3.48727),
+                Arguments.of(SemRelMeasure.JiangAndConrath, kleinesJohanniswuermchenID, lebertransplantationID, 10, 1.76978),
+                Arguments.of(SemRelMeasure.JiangAndConrath, bemehlenID, anmusternID, 0, 4.37298),
+                Arguments.of(SemRelMeasure.JiangAndConrath, bemehlenID, anmusternID, 10, 2.19490),
+                Arguments.of(SemRelMeasure.JiangAndConrath, bemehlenID, bemehlenID, 0, 19.92338),
+                Arguments.of(SemRelMeasure.JiangAndConrath, blasphemischID, regressivID, 0, 6.78404),
+                Arguments.of(SemRelMeasure.JiangAndConrath, blasphemischID, regressivID, 10, 3.63776),
+                Arguments.of(SemRelMeasure.JiangAndConrath, blasphemischID, blasphemischID, 0, identityExpectedAdjRaw),
+                Arguments.of(SemRelMeasure.JiangAndConrath, blasphemischID, blasphemischID, 10, normalized10IdentityExpected),
+                Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, giftpflanzeId, 0, 14.95433),
+                Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, giftpflanzeId, 10, 7.58930),
+                Arguments.of(SemRelMeasure.JiangAndConrath, giftpflanzeId, apfelbaumId, 0, 14.95433),
+                Arguments.of(SemRelMeasure.JiangAndConrath, giftpflanzeId, apfelbaumId, 10, 7.58930),
+                Arguments.of(SemRelMeasure.JiangAndConrath, riechenID, schmeckenID, 0, 14.7336),
+                Arguments.of(SemRelMeasure.JiangAndConrath, laufenID, springenID, 10, 7.74654),
+                Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, null, 10, null),
+                Arguments.of(SemRelMeasure.JiangAndConrath, null, giftpflanzeId, 10, null)
+        );
+    }
+
+    private static Stream<Arguments> linProvider() {
+
+        double identityExpectedAllRaw = 1.0;
+        double normalized10IdentityExpected = 10.0;
+
+        return Stream.of(
+                Arguments.of(SemRelMeasure.Lin, bambusID, veilchenID, 0, 0.48358),
+                Arguments.of(SemRelMeasure.Lin, bambusID, veilchenID, 10, 4.83587),
+                Arguments.of(SemRelMeasure.Lin, bambusID, bambusID, 10, normalized10IdentityExpected),
+                Arguments.of(SemRelMeasure.Lin, veilchenID, veilchenID, 0, identityExpectedAllRaw),
+                Arguments.of(SemRelMeasure.Lin, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10IdentityExpected),
+                Arguments.of(SemRelMeasure.Lin, lebertransplantationID, lebertransplantationID, 0, identityExpectedAllRaw),
+                Arguments.of(SemRelMeasure.Lin, kleinesJohanniswuermchenID, lebertransplantationID, 0, 0.0),
+                Arguments.of(SemRelMeasure.Lin, kleinesJohanniswuermchenID, lebertransplantationID, 10, 0.0),
+                Arguments.of(SemRelMeasure.Lin, bemehlenID, anmusternID, 0, 0.0),
+                Arguments.of(SemRelMeasure.Lin, bemehlenID, anmusternID, 10, 0.0),
+                Arguments.of(SemRelMeasure.Lin, bemehlenID, bemehlenID, 0, identityExpectedAllRaw),
+                Arguments.of(SemRelMeasure.Lin, blasphemischID, regressivID, 0, 0.0),
+                Arguments.of(SemRelMeasure.Lin, blasphemischID, regressivID, 10, 0.0),
+                Arguments.of(SemRelMeasure.Lin, blasphemischID, blasphemischID, 0, identityExpectedAllRaw),
+                Arguments.of(SemRelMeasure.Lin, blasphemischID, blasphemischID, 10, 10.0),
+                Arguments.of(SemRelMeasure.Lin, riechenID, schmeckenID, 0, 0.34244),
+                Arguments.of(SemRelMeasure.Lin, laufenID, springenID, 10, 4.05390),
+                Arguments.of(SemRelMeasure.Lin, apfelbaumId, giftpflanzeId, 0, 0.51933),
+                Arguments.of(SemRelMeasure.Lin, apfelbaumId, giftpflanzeId, 10, 5.19335),
+                Arguments.of(SemRelMeasure.Lin, giftpflanzeId, apfelbaumId, 0, 0.51933),
+                Arguments.of(SemRelMeasure.Lin, giftpflanzeId, apfelbaumId, 10, 5.19335),
+                Arguments.of(SemRelMeasure.Lin, apfelbaumId, null, 10, null),
+                Arguments.of(SemRelMeasure.Lin, null, giftpflanzeId, 10, null)
+        );
+    }
+
 
 
     // Find all synsets whose wordCategory does not match that of all its direct hypernyms.
