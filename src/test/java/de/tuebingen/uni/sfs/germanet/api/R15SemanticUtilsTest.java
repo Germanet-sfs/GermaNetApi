@@ -20,6 +20,7 @@
 package de.tuebingen.uni.sfs.germanet.api;
 
 import com.google.common.collect.Sets;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -44,12 +45,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * @author Marie Hinrichs, Seminar für Sprachwissenschaft, Universität Tübingen
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SemanticUtilsTest {
-    static GermaNet gnetCaseSensitive;
+public class R15SemanticUtilsTest {
+    static GermaNet gnet;
     static SemanticUtils semanticUtils;
     static String dataPath;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SemanticUtilsTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(R14SemanticUtilsTest.class);
 
     // nouns: synset IDs
     static int alleebaumID = 100607;
@@ -59,18 +60,19 @@ public class SemanticUtilsTest {
     static int baumID = 46042;
     static int birneID = 39495;
     static int chinarindenbaumID = 46665;
-    static int fussreflexzonenmassageID = 138670;
+    static int fussreflexzonenmassage1ID = 138670; // Fußreflexzonenmassage - Fußmassage
+    static int fussreflexzonenmassage2ID = 145392; // Fußreflexzonenmassage - Reflexzonenmassage
     static int giftpflanzeId = 46650;
     static int heilpflanzeID = 46659;
     static int herztransplantationID = 20561;
     static int holzpflanzeID = 46041;
     static int kernobstID = 39491;
-    static int kleinesjohanniswuermchenID = 49774;
     static int kleinesJohanniswuermchenID = 49774;
     static int kompresseID = 7922;
     static int krautID = 46657;
     static int kulturpflanzeID = 44965;
     static int lebertransplantationID = 83979;
+    static int lungentransplantationID = 147253;
     static int medizinischerArtikelID = 7917;
     static int mengeID = 33224;
     static int nierentransplantationID = 20560;
@@ -84,6 +86,7 @@ public class SemanticUtilsTest {
 
     // verbs: synset IDs
     static int anmusternID = 119463;
+    static int aufkrempelnID = 150086;
     static int auftunID = 61151;
     static int bemehlenID = 57534;
     static int bewerbenID = 81102;
@@ -112,24 +115,30 @@ public class SemanticUtilsTest {
     @BeforeAll
     static void setUp() {
         try {
+            String release = "15";
             String userHome = System.getProperty("user.home");
             String sep = System.getProperty("file.separator");
-            dataPath = userHome + sep + "Data" + sep;
-            String goodDataPath = dataPath + "GN-XML-ForApiUnitTesting/";
-            String freqListDir = dataPath + "GN-FreqLists-ForApiUnitTesting" + sep;
+            dataPath = userHome + sep + "Data" + sep + "GermaNetForApiUnitTesting" + sep;
+            String goodDataPath = dataPath + "R" + release + sep + "XML-Valid" + sep;
+            String freqListDir = dataPath + "FreqLists" + sep;
             String nounFreqListPath = freqListDir + "noun_freqs_decow14_16.txt";
             String verbFreqListPath = freqListDir + "verb_freqs_decow14_16.txt";
             String adjFreqListPath = freqListDir + "adj_freqs_decow14_16.txt";
 
-            gnetCaseSensitive = new GermaNet(goodDataPath, nounFreqListPath, verbFreqListPath, adjFreqListPath);
-            semanticUtils = gnetCaseSensitive.getSemanticUtils();
+            gnet = new GermaNet(goodDataPath, nounFreqListPath, verbFreqListPath, adjFreqListPath);
+            semanticUtils = gnet.getSemanticUtils();
         } catch (IOException ex) {
-            LOGGER.error("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
+            LOGGER.error("\nGermaNet data not found at {} \nAborting...", dataPath, ex);
             System.exit(0);
         } catch (XMLStreamException ex) {
-            LOGGER.error("\nUnable to load GermaNet data at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
+            LOGGER.error("\nUnable to load GermaNet data at {} \nAborting...", dataPath, ex);
             System.exit(0);
         }
+    }
+
+    @AfterAll
+    void cleanup() {
+        gnet = null;
     }
 
     @ParameterizedTest(name = "{0} {1} {2} {3}")
@@ -138,8 +147,8 @@ public class SemanticUtilsTest {
             "lcsAdjProvider",
             "lcsLongestShortestNounProvider"})
     void lcsTest(String orthforms, int sID1, int sID2, Set<LeastCommonSubsumer> expected) {
-        Synset synset1 = gnetCaseSensitive.getSynsetByID(sID1);
-        Synset synset2 = gnetCaseSensitive.getSynsetByID(sID2);
+        Synset synset1 = gnet.getSynsetByID(sID1);
+        Synset synset2 = gnet.getSynsetByID(sID2);
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumers(synset1, synset2);
 
@@ -218,29 +227,29 @@ public class SemanticUtilsTest {
 
         // Kleines Johanniswürmchen - Lebertransplantation -> GNROOT
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenLebertransplantationExpected = Sets.newHashSet(
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, lebertransplantationID), 35)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, lebertransplantationID), 35)
         );
 
         // Kleines Johanniswürmchen - Nierentransplantation -> GNROOT
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenNierentransplantationExpected = Sets.newHashSet(
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, nierentransplantationID), 35)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, nierentransplantationID), 35)
         );
 
         // Kleines Johanniswürmchen - Herztransplantation -> GNROOT
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenHerztransplantationExpected = Sets.newHashSet(
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, herztransplantationID), 35)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, herztransplantationID), 35)
         );
 
         // Kleines Johanniswürmchen - Fußreflexzonenmassage -> GNROOT
         Set<LeastCommonSubsumer> kleinesjohanniswuermchenFussreflexzonenmassageExpected = Sets.newHashSet(
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesjohanniswuermchenID, fussreflexzonenmassageID), 35)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, fussreflexzonenmassage1ID), 35)
         );
 
         return Stream.of(
-                Arguments.of("Kleines Johanniswürmchen - Lebertransplantation -> GNROOT", kleinesjohanniswuermchenID, lebertransplantationID, kleinesjohanniswuermchenLebertransplantationExpected),
-                Arguments.of("Kleines Johanniswürmchen - Nierentransplantation -> GNROOT", kleinesjohanniswuermchenID, nierentransplantationID, kleinesjohanniswuermchenNierentransplantationExpected),
-                Arguments.of("Kleines Johanniswürmchen - Herztransplantation -> GNROOT", kleinesjohanniswuermchenID, herztransplantationID, kleinesjohanniswuermchenHerztransplantationExpected),
-                Arguments.of("Kleines Johanniswürmchen - Fußreflexzonenmassage -> GNROOT", kleinesjohanniswuermchenID, fussreflexzonenmassageID, kleinesjohanniswuermchenFussreflexzonenmassageExpected)
+                Arguments.of("Kleines Johanniswürmchen - Lebertransplantation -> GNROOT", kleinesJohanniswuermchenID, lebertransplantationID, kleinesjohanniswuermchenLebertransplantationExpected),
+                Arguments.of("Kleines Johanniswürmchen - Nierentransplantation -> GNROOT", kleinesJohanniswuermchenID, nierentransplantationID, kleinesjohanniswuermchenNierentransplantationExpected),
+                Arguments.of("Kleines Johanniswürmchen - Herztransplantation -> GNROOT", kleinesJohanniswuermchenID, herztransplantationID, kleinesjohanniswuermchenHerztransplantationExpected),
+                Arguments.of("Kleines Johanniswürmchen - Fußreflexzonenmassage -> GNROOT", kleinesJohanniswuermchenID, fussreflexzonenmassage1ID, kleinesjohanniswuermchenFussreflexzonenmassageExpected)
         );
     }
 
@@ -249,12 +258,16 @@ public class SemanticUtilsTest {
         // Kleines Johanniswürmchen - Lebertransplantation,
         // Kleines Johanniswürmchen - Nierentransplantation
         // Kleines Johanniswürmchen - Herztransplantation
-        // Kleines Johanniswürmchen - Fußreflexzonenmassage
+        // Kleines Johanniswürmchen - Fußreflexzonenmassage (1)
+        // Kleines Johanniswürmchen - Fußreflexzonenmassage (2)
+        // Kleines Johanniswürmchen - Lungentransplantation
         Set<LeastCommonSubsumer> expected = Sets.newHashSet(
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, lebertransplantationID), 35),
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, nierentransplantationID), 35),
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, herztransplantationID), 35),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, fussreflexzonenmassageID), 35)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, fussreflexzonenmassage1ID), 35),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, fussreflexzonenmassage2ID), 35),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(kleinesJohanniswuermchenID, lungentransplantationID), 35)
         );
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.nomen);
@@ -265,8 +278,8 @@ public class SemanticUtilsTest {
     @Test
     void lcsNullTest() {
 
-        Synset synset1 = gnetCaseSensitive.getSynsetByID(laufenID); // laufen
-        Synset synset2 = gnetCaseSensitive.getSynsetByID(heilpflanzeID); // Heilpflanze
+        Synset synset1 = gnet.getSynsetByID(laufenID); // laufen
+        Synset synset2 = gnet.getSynsetByID(heilpflanzeID); // Heilpflanze
 
         // different word categories - should be null
         Set<LeastCommonSubsumer> actual = semanticUtils.getLeastCommonSubsumers(synset1, synset2);
@@ -285,7 +298,10 @@ public class SemanticUtilsTest {
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, einstuelpenID), 28),
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, bemehlenID), 28),
                 new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, hochrutschenID), 28),
-                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, hochschlagenID), 28)
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(anmusternID, hochschlagenID), 28),
+
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(aufkrempelnID, anmusternID), 28),
+                new LeastCommonSubsumer(GNROOT_ID, Sets.newHashSet(aufkrempelnID, verlautenID), 28)
         );
 
         Set<LeastCommonSubsumer> actual = semanticUtils.getLongestLeastCommonSubsumers(WordCategory.verben);
@@ -315,7 +331,7 @@ public class SemanticUtilsTest {
     @Test
     void maxDepthNounTest() {
 
-        List<Synset> synsets = gnetCaseSensitive.getSynsets(WordCategory.nomen);
+        List<Synset> synsets = gnet.getSynsets(WordCategory.nomen);
         int maxDepth = 0;
 
         for (Synset synset : synsets) {
@@ -332,7 +348,7 @@ public class SemanticUtilsTest {
     @Test
     void maxDepthVerbTest() {
 
-        List<Synset> synsets = gnetCaseSensitive.getSynsets(WordCategory.verben);
+        List<Synset> synsets = gnet.getSynsets(WordCategory.verben);
         int maxDepth = 0;
 
         for (Synset synset : synsets) {
@@ -349,7 +365,7 @@ public class SemanticUtilsTest {
     @Test
     void maxDepthAdjTest() {
 
-        List<Synset> synsets = gnetCaseSensitive.getSynsets(WordCategory.adj);
+        List<Synset> synsets = gnet.getSynsets(WordCategory.adj);
         int maxDepth = 0;
 
         for (Synset synset : synsets) {
@@ -371,12 +387,12 @@ public class SemanticUtilsTest {
     }
 
     private static Stream<Arguments> distanceBetweenSynsetsProvider() {
-        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(chinarindenbaumID);
-        Synset alleebaum = gnetCaseSensitive.getSynsetByID(alleebaumID);
-        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(apfelbaumId);
-        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(giftpflanzeId);
-        Synset sollen = gnetCaseSensitive.getSynsetByID(sollenID);
-        Synset menge = gnetCaseSensitive.getSynsetByID(mengeID);
+        Synset chinarindenbaum = gnet.getSynsetByID(chinarindenbaumID);
+        Synset alleebaum = gnet.getSynsetByID(alleebaumID);
+        Synset apfelbaum = gnet.getSynsetByID(apfelbaumId);
+        Synset giftpflanze = gnet.getSynsetByID(giftpflanzeId);
+        Synset sollen = gnet.getSynsetByID(sollenID);
+        Synset menge = gnet.getSynsetByID(mengeID);
 
         return Stream.of(
                 Arguments.of(chinarindenbaum, alleebaum, 2),
@@ -397,18 +413,18 @@ public class SemanticUtilsTest {
     }
 
     private static Stream<Arguments> pathsBetweenSynsetsProvider() {
-        Synset chinarindenbaum = gnetCaseSensitive.getSynsetByID(chinarindenbaumID);
-        Synset alleebaum = gnetCaseSensitive.getSynsetByID(alleebaumID);
-        Synset baum = gnetCaseSensitive.getSynsetByID(baumID);
-        Synset obstbaum = gnetCaseSensitive.getSynsetByID(obstbaumID);
-        Synset apfelbaum = gnetCaseSensitive.getSynsetByID(apfelbaumId);
-        Synset holzpflanze = gnetCaseSensitive.getSynsetByID(holzpflanzeID);
-        Synset pflanze = gnetCaseSensitive.getSynsetByID(pflanzeID);
-        Synset nutzpflanze = gnetCaseSensitive.getSynsetByID(nutzpflanzeID);
-        Synset kulturpflanze = gnetCaseSensitive.getSynsetByID(kulturpflanzeID);
-        Synset giftpflanze = gnetCaseSensitive.getSynsetByID(giftpflanzeId);
-        Synset sollen = gnetCaseSensitive.getSynsetByID(sollenID);
-        Synset menge = gnetCaseSensitive.getSynsetByID(mengeID);
+        Synset chinarindenbaum = gnet.getSynsetByID(chinarindenbaumID);
+        Synset alleebaum = gnet.getSynsetByID(alleebaumID);
+        Synset baum = gnet.getSynsetByID(baumID);
+        Synset obstbaum = gnet.getSynsetByID(obstbaumID);
+        Synset apfelbaum = gnet.getSynsetByID(apfelbaumId);
+        Synset holzpflanze = gnet.getSynsetByID(holzpflanzeID);
+        Synset pflanze = gnet.getSynsetByID(pflanzeID);
+        Synset nutzpflanze = gnet.getSynsetByID(nutzpflanzeID);
+        Synset kulturpflanze = gnet.getSynsetByID(kulturpflanzeID);
+        Synset giftpflanze = gnet.getSynsetByID(giftpflanzeId);
+        Synset sollen = gnet.getSynsetByID(sollenID);
+        Synset menge = gnet.getSynsetByID(mengeID);
 
         // Chinarindenbaum - Alleebaum (Baum)
         Set<SynsetPath> expectedChinaAllee = new HashSet<>();
@@ -475,10 +491,10 @@ public class SemanticUtilsTest {
     void similarityMeasuresTest(SemRelMeasure semRelMeasure, Integer sID1, Integer sID2, int normalizedMax, Double expected) {
         Synset synset1, synset2;
 
-        synset1 = (sID1 == null) ? null : gnetCaseSensitive.getSynsetByID(sID1);
-        synset2 = (sID2 == null) ? null : gnetCaseSensitive.getSynsetByID(sID2);
+        synset1 = (sID1 == null) ? null : gnet.getSynsetByID(sID1);
+        synset2 = (sID2 == null) ? null : gnet.getSynsetByID(sID2);
 
-        double epsilon = 0.0001; // tolerance for working with doubles
+        double epsilon = 0.001; // tolerance for working with doubles
         Double actual = semanticUtils.getSimilarity(semRelMeasure, synset1, synset2, normalizedMax);
 
         if (sID1 == null || sID2 == null) {
@@ -631,12 +647,12 @@ public class SemanticUtilsTest {
     private static Stream<Arguments> resnikProvider() {
 
         return Stream.of(
-                Arguments.of(SemRelMeasure.Resnik, bambusID, veilchenID, 0, 2.56616),
-                Arguments.of(SemRelMeasure.Resnik, bambusID, veilchenID, 10, 2.6046),
-                Arguments.of(SemRelMeasure.Resnik, bambusID, bambusID, 10, 5.51242),
-                Arguments.of(SemRelMeasure.Resnik, veilchenID, veilchenID, 0, 5.18204),
+                Arguments.of(SemRelMeasure.Resnik, bambusID, veilchenID, 0, 2.56571),
+                Arguments.of(SemRelMeasure.Resnik, bambusID, veilchenID, 10, 2.6043),
+                Arguments.of(SemRelMeasure.Resnik, bambusID, bambusID, 10, 5.51221),
+                Arguments.of(SemRelMeasure.Resnik, veilchenID, veilchenID, 0, 5.1826),
                 Arguments.of(SemRelMeasure.Resnik, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, 10.0),
-                Arguments.of(SemRelMeasure.Resnik, lebertransplantationID, lebertransplantationID, 0, 6.36496),
+                Arguments.of(SemRelMeasure.Resnik, lebertransplantationID, lebertransplantationID, 0, 6.3656),
                 Arguments.of(SemRelMeasure.Resnik, kleinesJohanniswuermchenID, lebertransplantationID, 0, 0.0),
                 Arguments.of(SemRelMeasure.Resnik, kleinesJohanniswuermchenID, lebertransplantationID, 10, 0.0),
                 Arguments.of(SemRelMeasure.Resnik, bemehlenID, anmusternID, 0, 0.0),
@@ -646,10 +662,10 @@ public class SemanticUtilsTest {
                 Arguments.of(SemRelMeasure.Resnik, blasphemischID, regressivID, 10, 0.0),
                 Arguments.of(SemRelMeasure.Resnik, blasphemischID, blasphemischID, 0, 6.03333),
                 Arguments.of(SemRelMeasure.Resnik, blasphemischID, blasphemischID, 10, 6.47042),
-                Arguments.of(SemRelMeasure.Resnik, apfelbaumId, giftpflanzeId, 0, 2.56616),
-                Arguments.of(SemRelMeasure.Resnik, apfelbaumId, giftpflanzeId, 10, 2.60464),
-                Arguments.of(SemRelMeasure.Resnik, giftpflanzeId, apfelbaumId, 0, 2.56616),
-                Arguments.of(SemRelMeasure.Resnik, giftpflanzeId, apfelbaumId, 10, 2.60464),
+                Arguments.of(SemRelMeasure.Resnik, apfelbaumId, giftpflanzeId, 0, 2.56571),
+                Arguments.of(SemRelMeasure.Resnik, apfelbaumId, giftpflanzeId, 10, 2.60431),
+                Arguments.of(SemRelMeasure.Resnik, giftpflanzeId, apfelbaumId, 0, 2.56571),
+                Arguments.of(SemRelMeasure.Resnik, giftpflanzeId, apfelbaumId, 10, 2.60431),
                 Arguments.of(SemRelMeasure.Resnik, riechenID, schmeckenID, 0, 1.35137),
                 Arguments.of(SemRelMeasure.Resnik, laufenID, springenID, 10, 1.53634),
                 Arguments.of(SemRelMeasure.Resnik, apfelbaumId, null, 10, null),
@@ -659,13 +675,13 @@ public class SemanticUtilsTest {
 
     private static Stream<Arguments> jiangAndConrathProvider() {
 
-        double identityExpectedNounRaw = 19.70449;
+        double identityExpectedNounRaw = 19.70579; //19.70359;
         double identityExpectedAdjRaw = 18.64896;
         double normalized10IdentityExpected = 10.0;
 
-        return Stream.of(
-                Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, veilchenID, 0, 14.22379),
-                Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, veilchenID, 10, 7.21855),
+        return  Stream.of(
+                Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, veilchenID, 0, 14.22290),
+                Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, veilchenID, 10, 7.21843),
                 Arguments.of(SemRelMeasure.JiangAndConrath, bambusID, bambusID, 10, normalized10IdentityExpected),
                 Arguments.of(SemRelMeasure.JiangAndConrath, veilchenID, veilchenID, 0, identityExpectedNounRaw),
                 Arguments.of(SemRelMeasure.JiangAndConrath, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10IdentityExpected),
@@ -679,10 +695,10 @@ public class SemanticUtilsTest {
                 Arguments.of(SemRelMeasure.JiangAndConrath, blasphemischID, regressivID, 10, 3.63776),
                 Arguments.of(SemRelMeasure.JiangAndConrath, blasphemischID, blasphemischID, 0, identityExpectedAdjRaw),
                 Arguments.of(SemRelMeasure.JiangAndConrath, blasphemischID, blasphemischID, 10, normalized10IdentityExpected),
-                Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, giftpflanzeId, 0, 14.95433),
-                Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, giftpflanzeId, 10, 7.58930),
-                Arguments.of(SemRelMeasure.JiangAndConrath, giftpflanzeId, apfelbaumId, 0, 14.95433),
-                Arguments.of(SemRelMeasure.JiangAndConrath, giftpflanzeId, apfelbaumId, 10, 7.58930),
+                Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, giftpflanzeId, 0, 14.95344),
+                Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, giftpflanzeId, 10, 7.58818),
+                Arguments.of(SemRelMeasure.JiangAndConrath, giftpflanzeId, apfelbaumId, 0, 14.95344),
+                Arguments.of(SemRelMeasure.JiangAndConrath, giftpflanzeId, apfelbaumId, 10, 7.58818),
                 Arguments.of(SemRelMeasure.JiangAndConrath, riechenID, schmeckenID, 0, 14.7336),
                 Arguments.of(SemRelMeasure.JiangAndConrath, laufenID, springenID, 10, 7.74654),
                 Arguments.of(SemRelMeasure.JiangAndConrath, apfelbaumId, null, 10, null),
@@ -697,7 +713,7 @@ public class SemanticUtilsTest {
 
         return Stream.of(
                 Arguments.of(SemRelMeasure.Lin, bambusID, veilchenID, 0, 0.48358),
-                Arguments.of(SemRelMeasure.Lin, bambusID, veilchenID, 10, 4.83587),
+                Arguments.of(SemRelMeasure.Lin, bambusID, veilchenID, 10, 4.8341),
                 Arguments.of(SemRelMeasure.Lin, bambusID, bambusID, 10, normalized10IdentityExpected),
                 Arguments.of(SemRelMeasure.Lin, veilchenID, veilchenID, 0, identityExpectedAllRaw),
                 Arguments.of(SemRelMeasure.Lin, kleinesJohanniswuermchenID, kleinesJohanniswuermchenID, 10, normalized10IdentityExpected),
@@ -714,9 +730,9 @@ public class SemanticUtilsTest {
                 Arguments.of(SemRelMeasure.Lin, riechenID, schmeckenID, 0, 0.34244),
                 Arguments.of(SemRelMeasure.Lin, laufenID, springenID, 10, 4.05390),
                 Arguments.of(SemRelMeasure.Lin, apfelbaumId, giftpflanzeId, 0, 0.51933),
-                Arguments.of(SemRelMeasure.Lin, apfelbaumId, giftpflanzeId, 10, 5.19335),
+                Arguments.of(SemRelMeasure.Lin, apfelbaumId, giftpflanzeId, 10, 5.1914),
                 Arguments.of(SemRelMeasure.Lin, giftpflanzeId, apfelbaumId, 0, 0.51933),
-                Arguments.of(SemRelMeasure.Lin, giftpflanzeId, apfelbaumId, 10, 5.19335),
+                Arguments.of(SemRelMeasure.Lin, giftpflanzeId, apfelbaumId, 10, 5.1914),
                 Arguments.of(SemRelMeasure.Lin, apfelbaumId, null, 10, null),
                 Arguments.of(SemRelMeasure.Lin, null, giftpflanzeId, 10, null)
         );
@@ -728,7 +744,7 @@ public class SemanticUtilsTest {
     // This should never happen.
     @Test
     void catDoesntMatchHyperTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset1 : synsetList) {
@@ -752,7 +768,7 @@ public class SemanticUtilsTest {
     // and whose wordClass does not match that of its hypernym.
     // For informational purposes only, since this can sometimes happen.
     void wordClassOneHyperDoesntMatchNounTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset : synsetList) {
@@ -775,11 +791,11 @@ public class SemanticUtilsTest {
     }
 
     @Test
-    // Find synsets that have the same orthForm multiple times
+        // Find synsets that have the same orthForm multiple times
     void duplicateOrthFormsTest() {
         List<String> allOrthFormsSet;
         List<String> allOrthFormsList;
-        List<Synset> allSynsets = gnetCaseSensitive.getSynsets();
+        List<Synset> allSynsets = gnet.getSynsets();
 
         for (Synset synset : allSynsets) {
             allOrthFormsSet = synset.getAllOrthForms(); // uses a Set
@@ -800,7 +816,7 @@ public class SemanticUtilsTest {
     // and whose wordClass does not match that of its hypernym.
     // For informational purposes only, since this can sometimes happen.
     void wordClassOneHyperDoesntMatchVerbTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset : synsetList) {
@@ -825,7 +841,7 @@ public class SemanticUtilsTest {
     // and whose wordClass does not match that of its hypernym.
     // For informational purposes only, since this can sometimes happen.
     void wordClassOneHyperDoesntMatchAdjTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset : synsetList) {
@@ -850,7 +866,7 @@ public class SemanticUtilsTest {
     // and whose wordClass does not match that of any of its hypernyms.
     // For informational purposes only, since this can sometimes happen.
     void wordClassMultHyperNoneMatchNounTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset : synsetList) {
@@ -880,7 +896,7 @@ public class SemanticUtilsTest {
     // and whose wordClass does not match that of any of its hypernyms.
     // For informational purposes only, since this can sometimes happen.
     void wordClassMultHyperNoneMatchVerbTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset : synsetList) {
@@ -910,7 +926,7 @@ public class SemanticUtilsTest {
     // and whose wordClass does not match that of any of its hypernyms.
     // For informational purposes only, since this can sometimes happen.
     void wordClassMultHyperNoneMatchAdjTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset : synsetList) {
@@ -943,7 +959,7 @@ public class SemanticUtilsTest {
             LOGGER.info("\n\t{}\n", wordCategory);
             int minDist = 2;
             int maxDist = 5;
-            List<Synset> synsets = gnetCaseSensitive.getSynsets(wordCategory);
+            List<Synset> synsets = gnet.getSynsets(wordCategory);
             int i=0;
             int j=synsets.size()-1;
             for (; i < j; i++) {
@@ -967,7 +983,7 @@ public class SemanticUtilsTest {
     // Find all synsets that are of a different WordCategory as their hypernyms
     // For informational purposes only.
     void wordCatMismatchTest() {
-        List<Synset> synsetList = gnetCaseSensitive.getSynsets();
+        List<Synset> synsetList = gnet.getSynsets();
 
         int cnt = 0;
         for (Synset synset : synsetList) {
@@ -984,3 +1000,4 @@ public class SemanticUtilsTest {
         LOGGER.info("{} instances of WordCategory mismatches.", cnt);
     }
 }
+

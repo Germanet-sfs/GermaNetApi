@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2012 Department of General and Computational Linguistics,
+ * University of Tuebingen
+ *
+ * This file is part of the Java API to GermaNet.
+ *
+ * The Java API to GermaNet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The Java API to GermaNet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this API; if not, see <http://www.gnu.org/licenses/>.
+ */
 package de.tuebingen.uni.sfs.germanet.api;
 
 import org.junit.jupiter.api.*;
@@ -19,38 +38,45 @@ import static org.junit.jupiter.api.Assertions.*;
  * regardless of which constructor was used (ignoreCase true | false),
  * which method is used (overloaded search methods or with FilterConfig).</br></br>
  * <p>
- * The GermaNet XML data is expected to be located at Data/GN-XML-ForApiUnitTesting
+ * The GermaNet XML data is expected to be located at Data/GermaNetForApiUnitTesting/Rxx/XML-Valid
  * under your home directory.
  * <p>
  * author: meh, Seminar für Sprachwissenschaft, Universität Tübingen
  */
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class GermaNetTest {
+class R14GermaNetTest {
     static GermaNet gnetCaseSensitive;
     static GermaNet gnetIgnoreCase;
     static String dataPath;
-    private static final Logger LOGGER = LoggerFactory.getLogger(GermaNetTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(R14GermaNetTest.class);
 
 
     @BeforeAll
     static void setUp() {
         try {
+            String release = "14";
             String userHome = System.getProperty("user.home");
             String sep = System.getProperty("file.separator");
-            dataPath = userHome + sep + "Data" + sep;
-            String goodDataPath = dataPath + "GN-XML-ForApiUnitTesting/";
+            dataPath = userHome + sep + "Data" + sep + "GermaNetForApiUnitTesting" + sep;
+            String goodDataPath = dataPath + "R" + release + sep + "XML-Valid" + sep;
 
             gnetCaseSensitive = new GermaNet(goodDataPath, false);
             gnetIgnoreCase = new GermaNet(goodDataPath, true);
 
         } catch (IOException ex) {
-            LOGGER.error("\nGermaNet data not found at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
+            LOGGER.error("\nGermaNet data not found at {}\nAborting...", dataPath, ex);
             System.exit(0);
         } catch (XMLStreamException ex) {
-            LOGGER.error("\nUnable to load GermaNet data at <homeDirectory>/Data/GN-XML-ForApiUnitTesting/\nAborting...", ex);
+            LOGGER.error("\nUnable to load GermaNet data at {}\nAborting...", dataPath, ex);
             System.exit(0);
         }
+    }
+
+    @AfterAll
+    void cleanup() {
+        gnetCaseSensitive = null;
+        gnetIgnoreCase = null;
     }
 
     @Test
