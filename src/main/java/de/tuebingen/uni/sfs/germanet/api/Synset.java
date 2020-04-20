@@ -19,6 +19,7 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import com.google.common.collect.Sets;
 import java.util.*;
 
 /**
@@ -30,7 +31,7 @@ import java.util.*;
  * A <code>Synset</code> also has the conceptual relations (<code>ConRel</code>),
  * of which hypernymy, hyponymy, meronymy, and holonymy
  * are transitive:<br><br>
- * 
+ *
  * <code>ConRel.has_hypernym</code>, <code>ConRel.has_hyponym</code>,<br>
  * <code>ConRel.has_component_meronym</code>, <code>ConRel.has_component_holonym</code>,<br>
  * <code>ConRel.has_member_meronym</code>, <code>ConRel.has_member_holonym</code>,<br>
@@ -39,10 +40,10 @@ import java.util.*;
  * <code>ConRel.entails</code>, <code>ConRel.is_entailed_by</code>,<br>
  * <code>ConRel.is_related_to</code>,<br>
  * <code>ConRel.causes</code><br><br>
- *
+ * <p>
  * Methods are provided to get the <code>WordCategory</code>, paraphrase, and
  * the <code>LexUnit</code>s.<br><br>
-* 
+ * <p>
  * Conceptual relations can be retrieved:<br>
  * <code>
  * &nbsp;&nbsp;&nbsp;List&lt;Synset&gt; hypernyms = aSynset.getRelatedLexUnits(ConRel.has_hypernym);<br><br>
@@ -51,15 +52,15 @@ import java.util.*;
  * <code>
  * &nbsp;&nbsp;&nbsp;List&lt;List&lt;Synset&gt;&gt; meronyms = aSynset.getTransRelatedSynsets(ConRel.meronymy);<br>
  * </code>
- *    which returns a List of Lists, each representing the Synsets found at a depth.<br><br>
+ * which returns a List of Lists, each representing the Synsets found at a depth.<br><br>
  * Neighbors (all Synsets that are related to this one) can be retrieved:<br>
  * <code>
  * &nbsp;&nbsp;&nbsp;List&lt;Synset&gt; neighbors = aSynset.getRelatedLexUnits();<br><br>
  * </code>
- *  
+ * <p>
  * Unless otherwise stated, methods will return an empty List rather than null
- * to indicate that no objects exist for the given request. 
-
+ * to indicate that no objects exist for the given request.
+ *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
@@ -67,29 +68,43 @@ public class Synset implements Comparable {
     private int id;
     private WordCategory wordCategory;
     private WordClass wordClass;
-    private ArrayList<LexUnit> lexUnits;
+    private Set<LexUnit> lexUnits;
     private String paraphrase;
 
+    // for semantic relatedness utils
+    private Map<Integer, Integer> distanceMap;
+    private int maxDistance; // to any hypernym on path to root
+    private int depth; // distance from root
+    private Double infoContent;
+
     // Relations of this Synset
-    private EnumMap<ConRel, ArrayList<Synset>> relations;
+    private EnumMap<ConRel, Set<Synset>> outgoingRelations;
+    private EnumMap<ConRel, Set<Synset>> incomingRelations;
 
     /**
      * Constructs a <code>Synset</code> with the specified attributes.
-     * @param id unique identifier
+     *
+     * @param id           unique identifier
      * @param wordCategory the <code>WordCategory</code> of this <code>Synset</code>
-     * @param wordClass the <code>WordClass</code> of this <code>Synset</code>
+     * @param wordClass    the <code>WordClass</code> of this <code>Synset</code>
      */
-    protected Synset(int id, WordCategory wordCategory, WordClass wordClass) {
+    Synset(int id, WordCategory wordCategory, WordClass wordClass) {
         this.id = id;
         this.wordCategory = wordCategory;
         this.wordClass = wordClass;
-        lexUnits = new ArrayList<LexUnit>(0);
+        lexUnits = new HashSet<>(0);
         paraphrase = "";
-        relations = new EnumMap<ConRel, ArrayList<Synset>>(ConRel.class);
+        outgoingRelations = new EnumMap<>(ConRel.class);
+        incomingRelations = new EnumMap<>(ConRel.class);
+        maxDistance = 0;
+        distanceMap = new HashMap<>();
+        distanceMap.put(id, 0);
+        infoContent = 0.0;
     }
 
     /**
      * Returns the <code>WordCategory</code> that this <code>Synset</code> belongs to.
+     *
      * @return the <code>WordCategory</code> that this <code>Synset</code> belongs to
      */
     public WordCategory getWordCategory() {
@@ -98,6 +113,7 @@ public class Synset implements Comparable {
 
     /**
      * Returns the <code>WordClass</code> that this <code>Synset</code> belongs to.
+     *
      * @return the <code>WordClass</code> that this <code>Synset</code> belongs to
      */
     public WordClass getWordClass() {
@@ -106,24 +122,27 @@ public class Synset implements Comparable {
 
     /**
      * Return true if this <code>Synset</code> is in <code>wordCategory</code>.
+     *
      * @param wordCategory the <code>WordCategory</code> (eg. nomen, verben, adj)
      * @return true if this <code>Synset</code> is in <code>wordCategory</code>
      */
     public boolean inWordCategory(WordCategory wordCategory) {
-        return wordCategory == this.wordCategory;
+        return this.wordCategory == wordCategory;
     }
 
     /**
      * Return true if this <code>Synset</code> is in <code>wordClass</code>.
+     *
      * @param wordClass the <code>WordClass</code>
      * @return true if this <code>Synset</code> is in <code>wordClass</code>
      */
     public boolean inWordClass(WordClass wordClass) {
-        return wordClass == this.wordClass;
+        return this.wordClass == wordClass;
     }
 
     /**
      * Return the number of <code>LexUnits</code> in this <code>Synset</code>.
+     *
      * @return the number of <code>LexUnits</code> in this <code>Synset</code>
      */
     public int numLexUnits() {
@@ -132,6 +151,7 @@ public class Synset implements Comparable {
 
     /**
      * Return the unique identifier for this <code>Synset</code>.
+     *
      * @return the unique identifier for this <code>Synset</code> as it appears
      * in the data files.
      */
@@ -141,83 +161,100 @@ public class Synset implements Comparable {
 
     /**
      * Adds a <code>LexUnit</code> to this <code>Synset</code>.
+     *
      * @param lexUnit the <code>LexUnit</code> to add.
      */
-    protected void addLexUnit(LexUnit lexUnit) {
+    void addLexUnit(LexUnit lexUnit) {
         lexUnits.add(lexUnit);
     }
 
     /**
      * Sets the paraphrase of this <code>Synset</code>.
+     *
      * @param paraphrase the paraphrase to set for this <code>Synset</code>
      */
-    protected void setParaphrase(String paraphrase) {
+    void setParaphrase(String paraphrase) {
         this.paraphrase = paraphrase;
     }
 
     /**
      * Sets the word class of this <code>Synset</code>.
+     *
      * @param wordClass the word class to set for this <code>Synset</code>
      */
-    protected void setWordClass(WordClass wordClass) {
+    void setWordClass(WordClass wordClass) {
         this.wordClass = wordClass;
     }
 
     /**
      * Trims all <code>ArrayLists</code> to conserve memory.
      */
-    protected void trimAll() {
-        ArrayList<Synset> list;
-        lexUnits.trimToSize();
-
+    void trimAll() {
         // trim LexUnits
         for (LexUnit lu : lexUnits) {
             lu.trimAll();
-        }
-
-        // trim relations
-        for (ConRel rel : relations.keySet()) {
-            list = relations.get(rel);
-            list.trimToSize();
-            relations.put(rel, list);
         }
     }
 
     /**
      * Returns a <code>List</code> of this <code>Synset</code>'s
      * <code>LexUnits</code>. This <code>List</code> is never empty.
+     *
      * @return a <code>List</code> of this <code>Synset</code>'s
      * <code>LexUnits</code>
      */
     @SuppressWarnings("unchecked")
     public List<LexUnit> getLexUnits() {
-        return (List<LexUnit>) lexUnits.clone();
+        return new ArrayList<>(lexUnits);
     }
 
     /**
-     * Returns a <code>List</code> of all (old) orthographic forms and variants
+     * Returns a <code>List</code> of all orthographic forms and variants
      * contained in all <code>LexUnits</code> of this <code>Synset</code>.
      * This <code>List</code> is never empty as the <code>List</code> of
      * <code>LexUnits</code> is never empty.
+     *
      * @return a <code>List</code> of all orthographic forms contained in all
      * <code>LexUnits</code> of this <code>Synset</code>
      */
     public List<String> getAllOrthForms() {
-        List<String> rval = new ArrayList<String>(0);
-        List<LexUnit> luList = getLexUnits();
-        for (LexUnit lu : luList) {
-            rval.addAll(lu.getOrthForms());
+        Set<String> allOrthForms = new HashSet<>();
+
+        for (LexUnit lu : lexUnits) {
+            allOrthForms.addAll(lu.getOrthForms());
         }
-        return rval;
+        return new ArrayList<>(allOrthForms);
+    }
+
+    /**
+     * Returns a non-null <code>List</code> of orthographic variants contained in all
+     * <code>LexUnit</code>s of this <code>Synset</code>. May be empty if no
+     * <code>LexUnit</code> contains the given <code>variant</code>.
+     *
+     * @param variant the <code>OrthFormVariant</code> to get
+     * @return a non-null, but possibly empty <code>List</code> of orthographic <code>variant</code>s contained in all
+     * <code>LexUnit</code>s of this <code>Synset</code>
+     */
+    public List<String> getOrthForms(OrthFormVariant variant) {
+        Set<String> orthForms = new HashSet<>();
+
+        for (LexUnit lu : lexUnits) {
+            String orthForm = lu.getOrthForm(variant);
+            if (orthForm != null) {
+                orthForms.add(orthForm);
+            }
+        }
+        return new ArrayList<>(orthForms);
     }
 
     /**
      * Returns this <code>Synset</code>'s paraphrase (can be empty). This is the
      * paraphrase that was manually added to GermaNet.
+     *
      * @return this <code>Synset</code>'s paraphrase
      */
     public String getParaphrase() {
-        return this.paraphrase;
+        return paraphrase;
     }
 
     /**
@@ -225,12 +262,13 @@ public class Synset implements Comparable {
      * contains all paraphrases that were harvested from Wiktionary (this
      * requires a call of <code>GermaNet.loadWiktionaryParaphrases</code>
      * before) as well as GermaNet's manually added paraphrase.
+     *
      * @return this <code>Synset</code>'s paraphrases
      */
     public List<String> getParaphrases() {
         List<String> rval = new ArrayList<String>();
-        if (this.paraphrase.length() != 0) {
-            rval.add(this.paraphrase);
+        if (paraphrase.length() != 0) {
+            rval.add(paraphrase);
         }
         for (LexUnit lu : lexUnits) {
             List<WiktionaryParaphrase> wphrases = lu.getWiktionaryParaphrases();
@@ -242,22 +280,34 @@ public class Synset implements Comparable {
     }
 
     /**
-     * Add a relation of the specified type to target <code>Synset</code>.
-     * @param type the type of relation (eg. <code>ConRel.has_hypernym</code>)
+     * If <code>direction</code> is <code>RelDirection.outgoing</code>, add an
+     * outgoing relation of the specified type to this <code>Synset</code>.
+     * If <code>direction</code> is <code>RelDirection.incoming</code>, add an
+     * incoming relation of the specified type to this <code>Synset</code>.
+     *
+     * @param type   the type of relation (eg. <code>ConRel.has_hypernym</code>)
      * @param target the target <code>Synset</code>
+     * @param direction the direction of the relation.
      */
-    protected void addRelation(ConRel type, Synset target) {
-        ArrayList<Synset> relList = this.relations.get(type);
-        if (relList == null) {
-            relList = new ArrayList<Synset>(1);
+    void addRelation(ConRel type, Synset target, RelDirection direction) {
+        EnumMap<ConRel, Set<Synset>> relations;
+
+        relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
+
+        Set<Synset> related = relations.get(type);
+        if (related == null) {
+            related = new HashSet<>(1);
         }
-        relList.add(target);
-        this.relations.put(type, relList);
+        related.add(target);
+        relations.put(type, related);
     }
 
     /**
-     * Returns a <code>List</code> of this <code>Synset</code>'s relations of
-     * type <code>type</code>.
+     * Returns a <code>List</code> of <code>Synsets</code> for which this
+     * <code>Synset</code> has an outgoing <code>type</code> relation.
+     * Same as calling:
+     * <code>getRelatedSynsets(type, RelDirection.outgoing)</code>.
+     *
      * @param type type of relations to retrieve
      * @return a <code>List</code> of this <code>Synset</code>'s relations of
      * type <code>type</code>
@@ -265,11 +315,32 @@ public class Synset implements Comparable {
      * the type <code>ConRel.has_hypernym</code>
      */
     public List<Synset> getRelatedSynsets(ConRel type) {
-        ArrayList<Synset> rval = this.relations.get(type);
-        if (rval == null) {
-            rval = new ArrayList<Synset>(0);
+        return getRelatedSynsets(type, RelDirection.outgoing);
+    }
+
+    /**
+     * Returns a <code>List</code> of <code>Synsets</code> with a conceptual
+     * relation of type <code>type</code> in the given <code>direction</code>
+     * to this <code>Synset</code>.
+     * Outgoing relations are from this <code>Synset</code> to another <code>Synset</code>.
+     * Incoming relation are from another <code>Synset</code> to this <code>Synset</code>.
+     *
+     * @param type the type of relation to retrieve
+     * @param direction direction of the relation (incoming or outgoing)
+     * @return a <code>List</code> of <code>Synset</code>s with a conceptual
+     * relation of type <code>type</code> in the given <code>direction</code>
+     * to this <code>Synset</code>.
+     */
+    public List<Synset> getRelatedSynsets(ConRel type, RelDirection direction) {
+        Set<Synset> rels;
+        ArrayList<Synset> rval;
+
+        rels = (direction == RelDirection.outgoing) ? outgoingRelations.get(type) : incomingRelations.get(type);
+
+        if (rels == null) {
+            rval = new ArrayList<>(0);
         } else {
-            rval = (ArrayList<Synset>) rval.clone();
+            rval = new ArrayList<>(rels);
         }
         return rval;
     }
@@ -284,14 +355,41 @@ public class Synset implements Comparable {
      * depth. The size of the <code>List</code> returned indicates the maximum
      * depth.<br>
      * Returns an empty <code>List</code> if type is not transitive.
+     * Same as calling:
+     * <code>getTransRelatedSynsets(type, RelDirection.outgoing)</code>
+     *
      * @param type the <code>type</code> of relation (e.g.
-     * <code>ConRel.has_hypernym</code>).
+     *             <code>ConRel.has_hypernym</code>).
      * @return the transitive closure of all relations of type <code>type</code>
      * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
      */
     public List<List<Synset>> getTransRelatedSynsets(ConRel type) {
-        List<List<Synset>> result = new ArrayList<List<Synset>>();
-        List<Synset> resultPrevDepth = new ArrayList<Synset>(1);
+        return getTransRelatedSynsets(type, RelDirection.outgoing);
+    }
+
+    /**
+     * Returns the transitive closure of all relations of type <code>type</code>
+     * to this <code>Synset</code>, in the given direction. The direction indicates
+     * whether the relations to consider are coming into this <code>Synset</code>, or
+     * going out of this <code>Synset</code>.
+     * A <code>List</code> of <code>Lists</code> of
+     * <code>Synsets</code> is returned, where the <code>List</code> at
+     * position 0 contains this <code>Synset</code>, the <code>List</code> at
+     * position 1 contains the relations at depth 1, the <code>List</code> at
+     * position 2 contains the relations at depth 2, and so on up to the maximum
+     * depth. The size of the <code>List</code> returned indicates the maximum
+     * depth.<br>
+     * Returns an empty <code>List</code> if type is not transitive.
+     *
+     * @param type the <code>type</code> of relation (e.g.
+     *             <code>ConRel.has_hypernym</code>).
+     * @param direction the direction of the relations (incoming or outgoing)
+     * @return the transitive closure of all relations of type <code>type</code>
+     * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
+     */
+    public List<List<Synset>> getTransRelatedSynsets(ConRel type, RelDirection direction) {
+        List<List<Synset>> result = new ArrayList<>();
+        List<Synset> resultPrevDepth = new ArrayList<>(1);
         List<Synset> resultCurDepth;
 
         if (!type.isTransitive()) {
@@ -300,9 +398,9 @@ public class Synset implements Comparable {
         resultPrevDepth.add(this);
         result.add(resultPrevDepth);
         while (resultPrevDepth.size() > 0) {
-            resultCurDepth = new ArrayList<Synset>();
+            resultCurDepth = new ArrayList<>();
             for (Synset sset : resultPrevDepth) {
-                List<Synset> ssetRels = sset.getRelatedSynsets(type);
+                List<Synset> ssetRels = sset.getRelatedSynsets(type, direction);
                 resultCurDepth.addAll(ssetRels);
             }
             if (resultCurDepth.size() > 0) {
@@ -315,14 +413,33 @@ public class Synset implements Comparable {
 
     /**
      * Returns a <code>List</code> of all of the <code>Synsets</code> that this
-     * <code>Synset</code> has any relation to.
+     * <code>Synset</code> has any outgoing relation to.
+     * Same as calling:
+     * <code>getRelatedSynsets(RelDirection.outgoing)</code>
+     *
      * @return a <code>List</code> of all of the <code>Synsets</code> that this
      * <code>Synset</code> has any relation to
      */
     public List<Synset> getRelatedSynsets() {
-        List<Synset> rval = new ArrayList<Synset>();
+        return getRelatedSynsets(RelDirection.outgoing);
+    }
 
-        for (Map.Entry<ConRel, ArrayList<Synset>> entry : relations.entrySet()) {
+    /**
+     * Returns a <code>List</code> of all of the <code>Synsets</code> that this
+     * <code>Synset</code> has any relation to, in the given direction.
+     * Outgoing relations are from this <code>Synset</code> to another <code>Synset</code>.
+     * Incoming relation are from another <code>Synset</code> to this <code>Synset</code>.
+     *
+     * @return a <code>List</code> of all of the <code>Synsets</code> that this
+     * <code>Synset</code> has any relation to, in the given direction.
+     */
+    public List<Synset> getRelatedSynsets(RelDirection direction) {
+        List<Synset> rval = new ArrayList<Synset>();
+        Map<ConRel, Set<Synset>> relations;
+
+        relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
+
+        for (Map.Entry<ConRel, Set<Synset>> entry : relations.entrySet()) {
             rval.addAll(entry.getValue());
         }
         return rval;
@@ -330,6 +447,7 @@ public class Synset implements Comparable {
 
     /**
      * Returns a <code>String</code> representation of this <code>Synset</code>.
+     *
      * @return a <code>String</code> representation of this <code>Synset</code>
      */
     @Override
@@ -340,7 +458,7 @@ public class Synset implements Comparable {
             for (String para : getParaphrases()) {
                 synsetAsString += para + "; ";
             }
-            synsetAsString = synsetAsString.substring(0, synsetAsString.length()-2);
+            synsetAsString = synsetAsString.substring(0, synsetAsString.length() - 2);
         }
 
         return synsetAsString;
@@ -349,11 +467,12 @@ public class Synset implements Comparable {
     /**
      * Returns a <code>List</code> of all of the <code>IliRecords</code> that this
      * <code>Synset</code> is associated with.
+     *
      * @return a <code>List</code> of all of the <code>IliRecords</code> that this
      * <code>Synset</code> is associated with
      */
     public List<IliRecord> getIliRecords() {
-        List<IliRecord> iliRecords = new ArrayList<IliRecord>();
+        List<IliRecord> iliRecords = new ArrayList<>();
         for (LexUnit unit : lexUnits) {
             for (IliRecord ili : unit.getIliRecords()) {
                 iliRecords.add(ili);
@@ -361,22 +480,149 @@ public class Synset implements Comparable {
         }
         return iliRecords;
     }
-    
+
     /**
-     * Return true if this <code>Synset</code> is equal to another <code>Synset</code>.
-     * @param other the <code>Synset</code> to compare to
-     * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
+     * Find the least common subsumer(s) of this synset and the input synset. The least common subsumer of two
+     * synsets is the closest common parent, using hypernym relations only.
+     *
+     * @param otherSynset the other synset
+     * @return a set of LeastCommonSubsumer objects, each of which contains a synset ID of a synset that is
+     * a common parent of both this synset and the input synset, and which has the shortest possible distance of all common parents.
+     * It is possible that multiple least common subsumers exist, in which case
+     * all least common subsumers will have the same, shortest, distance. Returns null if both synsets do not belong
+     * to the same WordCategory.
      */
-    public boolean equals(Synset other) {
-        if (this.id == other.id) {
-            return true;
+    Set<LeastCommonSubsumer> getLeastCommonSubsumers(Synset otherSynset) {
+
+        if (otherSynset == null || !otherSynset.inWordCategory(wordCategory)) {
+            return null;
         }
-        return false;
+
+        Set<LeastCommonSubsumer> rval = new HashSet<>();
+        int shortestDistance = Integer.MAX_VALUE;
+
+        // the intersection of the hypernyms are the common subsumers
+        Set<Integer> intersection = Sets.intersection(getHypernymIds(), otherSynset.getHypernymIds());
+
+        int otherId = otherSynset.getId();
+
+        // find all of the common subsumers with the shortest distance between the 2 synsets
+        for (int hypernymID : intersection) {
+            int distance = getDistanceToHypernym(hypernymID) + otherSynset.getDistanceToHypernym(hypernymID);
+            if (distance < shortestDistance) {
+                rval.clear();
+                rval.add(new LeastCommonSubsumer(hypernymID, Sets.newHashSet(id, otherId), distance));
+                shortestDistance = distance;
+            } else if (distance == shortestDistance) {
+                rval.add(new LeastCommonSubsumer(hypernymID, Sets.newHashSet(id, otherId), distance));
+            }
+        }
+        return rval;
     }
 
-     /**
+    /**
+     *  Get the shortest distance to otherSynset using hypernym / hyponym relations only. Both
+     *  Synsets must belong to the same WordCategory.
+     *
+     * @param otherSynset the other synset
+     * @return The distance to otherSynset, or null if otherSynset does not belong to the
+     * same WordCategory as this synset.
+     */
+    Integer getDistanceToSynset(Synset otherSynset) {
+
+        if (otherSynset == null || !otherSynset.inWordCategory(wordCategory)) {
+            return null;
+        }
+
+        // all LCS's have the same distance, just get the first one
+        return getLeastCommonSubsumers(otherSynset).iterator().next().getDistance();
+    }
+
+    /**
+     * Add the input hypernymID and distance to the distance map (or replace the distance
+     * if hypernymID is already in the map). Also adjust maxDistance (to any hypernym) and
+     * depth (from ROOT), if necessary.
+     * @param hypernymID synset ID of the hypernym
+     * @param distance distance from this synset to the hypernym
+     */
+    void updateDistanceMap(Integer hypernymID, Integer distance) {
+        Integer curDist = distanceMap.get(hypernymID);
+        distanceMap.put(hypernymID, distance);
+        if ((distance > maxDistance) || (curDist != null && curDist == maxDistance)) {
+            maxDistance = distance;
+        }
+
+        if (hypernymID == GermaNet.GNROOT_ID) {
+            this.depth = distance;
+        }
+    }
+
+    /**
+     * Return the set of all synset IDs that are on a path from this synset to ROOT,
+     * using hypernym relations.
+     * @return the set of all synset IDs that are on a path from this synset to ROOT,
+     * using hypernym relations
+     */
+    Set<Integer> getHypernymIds() {
+        return distanceMap.keySet();
+    }
+
+    /**
+     * Return the maximum distance between this synset and another synset on the path
+     * to ROOT, using edge counting and hypernym relations. Note: the distance to ROOT
+     * is not always the max distance.
+     * @return
+     */
+    int getMaxDistance() {
+        return maxDistance;
+    }
+
+    /**
+     * Return the depth of this synset. This is the length, using edge counting of hypernym relations,
+     * from this synset to ROOT. If there are multiple paths to ROOT, the length of the shortest path is returned.
+     * @return the depth of this synset
+     */
+    public int getDepth() {
+        return depth;
+    }
+
+    /**
+     * Get the distance from this synset to one of the hypernyms on the path to ROOT, or null if
+     * the hypernym is not on the path.
+     *
+     * @param hypernymID ID of the hypernym
+     * @return the distance from this synset to one of the hypernyms on the path to ROOT, or null if
+     * the hypernym is not on the path
+     */
+    Integer getDistanceToHypernym(int hypernymID) {
+        return distanceMap.get(hypernymID);
+    }
+
+    /**
+     * Return true if this <code>Synset</code> is equal to another <code>Synset</code>.
+     *
+     * @param o the <code>Synset</code> to compare to
+     * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Synset synset = (Synset) o;
+        return id == synset.id &&
+                wordCategory == synset.wordCategory &&
+                wordClass == synset.wordClass;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, wordCategory, wordClass);
+    }
+
+    /**
      * Return 1 if this <code>Synset</code> has a larger id than another <code>Synset</code>,
-      * -1 if it has a smaller one.
+     * -1 if it has a smaller one.
+     *
      * @param otherSynset the <code>Synset</code> to compare to
      * @return true if this <code>Synset</code> is equal to another <code>Synset</code>
      */

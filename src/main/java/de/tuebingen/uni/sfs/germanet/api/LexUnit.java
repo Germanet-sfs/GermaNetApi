@@ -30,24 +30,24 @@ import java.util.*;
  * attributes: styleMarking (boolean), sense (int), styleMarking (boolean),
  * artificial (boolean), namedEntity (boolean), and source (String).<br>
  * A <code>LexUnit</code> also has lexical relations such as: <br><br>
- * 
+ *
  * <code>LexRel.has_antonym</code>, <code>LexRel.has_synonym</code>,
  * <code>LexRel.has_pertainym</code>, <code>LexRel.has_participle</code>, etc.<br><br>
- * 
+ * <p>
  * Methods are provided to get each of the attributes.<br><br>
- * 
+ * <p>
  * The orthographic form can be retrieved:<br>
  * <code>
  * &nbsp;&nbsp;&nbsp;String orthForm = aLexUnit.getOrthForm();<br><br>
  * </code>
-
+ * <p>
  * The orthographic form, and (if existent) the orthographic variant, the old
  * orthographic form, and the old orthographic variant can be retrieved at once:
  * <br>
  * <code>
  * &nbsp;&nbsp;&nbsp;List&lt;String&gt; forms = aLexUnit.getAllOrthForms();<br><br>
  * </code>
- * 
+ * <p>
  * Lexical relations can be retrieved:<br>
  * <code>
  * &nbsp;&nbsp;&nbsp;List&lt;LexUnit&gt; antonyms = aLexUnit.getRelatedLexUnits(LexRel.antonymy);<br><br>
@@ -56,42 +56,44 @@ import java.util.*;
  * <code>
  * &nbsp;&nbsp;&nbsp;List&lt;LexUnit&gt; neighbors = aLexUnit.getRelatedLexUnits();<br><br>
  * </code>
- *
+ * <p>
  * Unless otherwise stated, methods will return an empty List rather than null
- * to indicate that no objects exist for the given request. 
- * 
+ * to indicate that no objects exist for the given request.
+ *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
 public class LexUnit {
-
     private int id;
     private String source;
     private boolean styleMarking, artificial, namedEntity;
     private Synset synset;
     private String orthForm, orthVar, oldOrthForm, oldOrthVar;
+    private List<String> allOrthForms;
     private int sense;
     private ArrayList<Frame> frames;
     private ArrayList<Example> examples;
     private ArrayList<IliRecord> iliRecords;
     private ArrayList<WiktionaryParaphrase> wiktionaryParaphrases;
     // Relations of this LexUnit
-    private EnumMap<LexRel, ArrayList<LexUnit>> relations;
+    private EnumMap<LexRel, Set<LexUnit>> outgoingRelations;
+    private EnumMap<LexRel, Set<LexUnit>> incomingRelations;
     private CompoundInfo compoundInfo;
 
     /**
      * Constructs a <code>LexUnit</code> with the specified attributes.
-     * @param id unique identifier
-     * @param synset <code>Synset</code> to which this <code>LexUnit</code> belongs
-     * @param sense running sense number
+     *
+     * @param id          unique identifier
+     * @param synset      <code>Synset</code> to which this <code>LexUnit</code> belongs
+     * @param sense       running sense number
      * @param markedStyle boolean attribute
-     * @param artificial boolean attribute
-     * @param orthForm boolean attribute
-     * @param orthVar boolean attribute
+     * @param artificial  boolean attribute
+     * @param orthForm    boolean attribute
+     * @param orthVar     boolean attribute
      * @param oldOrthForm boolean attribute
-     * @param oldOrthVar
+     * @param oldOrthVar  boolean attribute
      * @param namedEntity boolean attribute
-     * @param source source of this <code>LexUnit</code> (eg "core")
+     * @param source      source of this <code>LexUnit</code> (eg "core")
      */
     LexUnit(int id, Synset synset, int sense,
             boolean markedStyle, boolean artificial, String orthForm, String orthVar,
@@ -107,100 +109,120 @@ public class LexUnit {
         this.oldOrthVar = oldOrthVar;
         this.namedEntity = namedEntity;
         this.source = source;
-        this.relations = new EnumMap<LexRel, ArrayList<LexUnit>>(LexRel.class);
-        this.frames = new ArrayList<Frame>();
-        this.examples = new ArrayList<Example>();
-        this.iliRecords = new ArrayList<IliRecord>();
-        this.wiktionaryParaphrases = new ArrayList<WiktionaryParaphrase>();
+        this.outgoingRelations = new EnumMap<>(LexRel.class);
+        this.incomingRelations = new EnumMap<>(LexRel.class);
+        this.frames = new ArrayList<>();
+        this.examples = new ArrayList<>();
+        this.iliRecords = new ArrayList<>();
+        this.wiktionaryParaphrases = new ArrayList<>();
+
+        allOrthForms = new ArrayList<>();
+        allOrthForms.add(orthForm);
+        if (orthVar != null) {
+            allOrthForms.add(orthVar);
+        }
+        if (oldOrthForm != null) {
+            allOrthForms.add(oldOrthForm);
+        }
+        if (oldOrthVar != null) {
+            allOrthForms.add(oldOrthVar);
+        }
     }
 
     /**
      * Returns the <code>Synset</code> to which this <code>LexUnit</code> belongs.
+     *
      * @return the <code>Synset</code> to which this <code>LexUnit</code> belongs
      */
     public Synset getSynset() {
-        return this.synset;
+        return synset;
     }
 
     /**
      * Returns the sense number of this <code>LexUnit</code>.
+     *
      * @return the sense number of this <code>LexUnit</code>
      */
     public int getSense() {
-        return this.sense;
+        return sense;
     }
 
     /**
      * Returns the unique identifier of this <code>LexUnit</code>.
+     *
      * @return the unique identifier of this <code>LexUnit</code>
      */
     public int getId() {
-        return this.id;
+        return id;
     }
 
     /**
      * Returns true if the <code>styleMarking</code> attribute is set, false otherwise.
+     *
      * @return true if the <code>styleMarking</code> attribute is set, false otherwise
      */
     public boolean isStyleMarking() {
-        return this.styleMarking;
+        return styleMarking;
     }
 
     /**
      * Returns true if the <code>artificial</code> attribute is set, false otherwise.
+     *
      * @return true if the <code>artificial</code> attribute is set, false otherwise
      */
     public boolean isArtificial() {
-        return this.artificial;
+        return artificial;
     }
 
     /**
      * Returns true if the <code>namedEntity</code> attribute is set, false otherwise.
+     *
      * @return true if the <code>namedEntity</code> attribute is set, false otherwise
      */
     public boolean isNamedEntity() {
-        return this.namedEntity;
+        return namedEntity;
     }
 
     /**
      * Trims all <code>ArrayLists</code>
      */
-    protected void trimAll() {
-        ArrayList<LexUnit> list;
-
-        for (LexRel rel : this.relations.keySet()) {
-            list = this.relations.get(rel);
-            list.trimToSize();
-            this.relations.put(rel, list);
-        }
+    void trimAll() {
+        frames.trimToSize();
+        examples.trimToSize();
+        iliRecords.trimToSize();
+        wiktionaryParaphrases.trimToSize();
     }
 
     /**
      * Returns the orthographic form of this <code>LexUnit</code>.
+     *
      * @return the orthographic form of this <code>LexUnit</code>
      */
     public String getOrthForm() {
-        return this.orthForm;
+        return orthForm;
     }
 
     /**
      * Returns the orthographic variant of this <code>LexUnit</code>.
+     *
      * @return the orthographic variant of this <code>LexUnit</code>
      */
     public String getOrthVar() {
-        return this.orthVar;
+        return orthVar;
     }
 
     /**
      * Returns the old orthographic form of this <code>LexUnit</code>.
+     *
      * @return the old orthographic form of this <code>LexUnit</code>
      */
     public String getOldOrthForm() {
-        return this.oldOrthForm;
+        return oldOrthForm;
     }
 
     /**
      * Returns the old orthographic variant of this <code>LexUnit</code>.
+     *
      * @return the old orthographic variant of this <code>LexUnit</code>
      */
     public String getOldOrthVar() {
@@ -208,50 +230,69 @@ public class LexUnit {
     }
 
     /**
+     * Return the orthForm variant specified by <code>variant</code>.
+     * Can be null if <code>variant</code> is not defined for this <code>LexUnit</code>.
+     *
+     * @param variant the orthForm variant to get
+     * @return the orthForm variant specified by <code>variant</code>
+     */
+    public String getOrthForm(OrthFormVariant variant) {
+        switch (variant) {
+            case orthForm:
+                return getOrthForm();
+            case orthVar:
+                return getOrthVar();
+            case oldOrthForm:
+                return getOldOrthForm();
+            case oldOrthVar:
+                return getOldOrthVar();
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Returns a <code>List</code> of all orthographic forms of this
      * <code>LexUnit</code> (i.e. the attributes <code>orthForm</code>,
      * <code>orthVar</code>, <code>oldOrthForm</code>, and <code>oldOrthVar</code>).
+     *
      * @return a <code>List</code> of all orthographic forms of this
      * <code>LexUnit</code> (i.e. the attributes <code>orthForm</code>,
      * <code>orthVar</code>, <code>oldOrthForm</code>, and <code>oldOrthVar</code>)
      */
     public List<String> getOrthForms() {
-        List<String> allOrthForms = new ArrayList<String>();
-        allOrthForms.add(this.orthForm);
-
-        if (getOrthVar() != null) {
-            allOrthForms.add(this.orthVar);
-        }
-
-        if (getOldOrthForm() != null && !allOrthForms.contains(this.oldOrthForm)) {
-            allOrthForms.add(this.oldOrthForm);
-        }
-
-        if (getOldOrthVar() != null && !allOrthForms.contains(this.oldOrthVar)) {
-            allOrthForms.add(this.oldOrthVar);
-        }
-
         return allOrthForms;
     }
 
     /**
-     * Adds a relation of the specified type to the target <code>LexUnit</code>.
-     * @param type the type of relation (eg. <code>LexRel.antonymy</code>)
+     * If <code>direction</code> is <code>RelDirection.outgoing</code>, add an
+     * outgoing relation of the specified type to this <code>LexUnit</code>.
+     * If <code>direction</code> is <code>RelDirection.incoming</code>, add an
+     * incoming relation of the specified type to this <code>LexUnit</code>.
+     *
+     * @param type   the type of relation (eg. <code>LexRel.antonymy</code>)
      * @param target the target <code>LexUnit</code>
+     * @param direction the direction of the relation.
      */
-    protected void addRelation(LexRel type, LexUnit target) {
-        ArrayList<LexUnit> relationList = this.relations.get(type);
+    void addRelation(LexRel type, LexUnit target, RelDirection direction) {
+        EnumMap<LexRel, Set<LexUnit>> relations;
 
-        if (relationList == null) {
-            relationList = new ArrayList<LexUnit>(1);
+        relations =  (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
+        Set<LexUnit> related = relations.get(type);
+
+        if (related == null) {
+            related = new HashSet<>(1);
         }
-        relationList.add(target);
-        this.relations.put(type, relationList);
+        related.add(target);
+        relations.put(type, related);
     }
 
     /**
-     * Returns a <code>List</code> of <code>LexUnits</code> that have the
-     * relation <code>type</code> to this <code>LexUnit</code>.
+     * Returns a <code>List</code> of <code>LexUnits</code> for which this
+     * <code>LexUnit</code> has an outgoing <code>type</code> relation.
+     * Same as calling:
+     * <code>getRelatedLexUnits(type, RelDirection.outgoing)</code>.
+     *
      * @param type type of relation to retrieve
      * @return a <code>List</code> of <code>LexUnits</code> that have the
      * relation <code>type</code> to this <code>LexUnit</code>. For example,
@@ -260,15 +301,35 @@ public class LexUnit {
      */
     @SuppressWarnings("unchecked")
     public List<LexUnit> getRelatedLexUnits(LexRel type) {
+        return getRelatedLexUnits(type, RelDirection.outgoing);
+    }
+
+    /**
+     * Returns a <code>List</code> of <code>LexUnits</code> with a
+     * lexical relation of type <code>type</code> in direction <code>direction</code>
+     * to this <code>LexUnit</code>.
+     * Outgoing relations are from this <code>LexUnit</code> to another <code>LexUnit</code>.
+     * Incoming relations are from another <code>LexUnit</code> to this <code>LexUnit</code>.
+     *
+     * @param type type of relation to retrieve
+     * @param direction direction of the relation (incoming or outgoing)
+     * @return a <code>List</code> of <code>LexUnits</code> with a
+     * lexical relation of type <code>type</code> in direction <code>direction</code>
+     * to this <code>LexUnit</code>
+     */
+    public List<LexUnit> getRelatedLexUnits(LexRel type, RelDirection direction) {
         ArrayList<LexUnit> rval = null;
+        Set<LexUnit> rels;
+
+        // direction doesn't matter for synonyms
         if (type.equals(LexRel.has_synonym)) {
             return getSynonyms();
         } else {
-            rval = this.relations.get(type);
-            if (rval == null) {
-                rval = new ArrayList<LexUnit>(0);
+            rels = (direction == RelDirection.outgoing) ? outgoingRelations.get(type) : incomingRelations.get(type);
+            if (rels == null) {
+                rval = new ArrayList<>(0);
             } else {
-                rval = (ArrayList<LexUnit>) rval.clone();
+                rval = new ArrayList<>(rels);
             }
         }
         return rval;
@@ -278,217 +339,276 @@ public class LexUnit {
      * Returns the synonyms of this <code>LexUnit</code> - a <code>List</code>
      * of <code>LexUnits</code> that are part of this <code>LexUnit</code>'s
      * <code>Synset</code>.
-     * @return  the synonyms of this <code>LexUnit</code>
+     *
+     * @return the synonyms of this <code>LexUnit</code>
      * Same as <code>getRelatedLexUnits(LexRel.synonymy)</code>
      */
     public List<LexUnit> getSynonyms() {
-        List<LexUnit> rval = this.synset.getLexUnits();
+        List<LexUnit> rval = synset.getLexUnits();
         rval.remove(this);
         return rval;
     }
 
     /**
      * Returns a <code>List</code> of all of the <code>LexUnits</code> that this
-     * <code>LexUnit</code> has any relation to.
+     * <code>LexUnit</code> has any outgoing relation to.
+     * Same as calling:
+     * <code>getRelatedLexUnits(RelDirection.outgoing)</code>
      * @return a <code>List</code> of all of the <code>LexUnits</code> that this
-     * <code>LexUnit</code> has any relation to
+     * <code>LexUnit</code> has any outgoing relation to
      */
     public List<LexUnit> getRelatedLexUnits() {
-        List<LexUnit> rval = new ArrayList<LexUnit>();
+        return getRelatedLexUnits(RelDirection.outgoing);
+    }
 
-        for (Map.Entry<LexRel, ArrayList<LexUnit>> entry : this.relations.entrySet()) {
+    /**
+     * Returns a <code>List</code> of all of the <code>LexUnits</code> that this
+     * <code>LexUnit</code> has any relation to, in the given direction.
+     * Outgoing relations are from this <code>LexUnit</code> to another <code>LexUnit</code>.
+     * Incoming relation are from another <code>LexUnit</code> to this <code>LexUnit</code>.
+     *
+     * @param direction the direction of the relation (incoming or outgoing)
+     * @return a <code>List</code> of all of the <code>LexUnits</code> that this
+     * <code>LexUnit</code> has any relation to, in the given direction.
+     */
+    public List<LexUnit> getRelatedLexUnits(RelDirection direction) {
+        List<LexUnit> rval = new ArrayList<>();
+        Map<LexRel, Set<LexUnit>> relations;
+
+        relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
+
+        for (Map.Entry<LexRel, Set<LexUnit>> entry : relations.entrySet()) {
             rval.addAll(entry.getValue());
         }
+
+        // include synonyms
+        rval.addAll(getSynonyms());
+
         return rval;
     }
 
     /**
      * Returns a <code>String</code> representation of this <code>LexUnit</code>.
+     *
      * @return a <code>String</code> representation of this <code>LexUnit</code>
      */
     @Override
     public String toString() {
-        String lexUnitAsString = "id: " + this.id
-                + ", orth form: " + this.orthForm;
+        String lexUnitAsString = "id: " + id
+                + ", orth form: " + orthForm;
 
         if (getOrthVar() != null) {
-            lexUnitAsString += ", orth var: " + this.orthVar;
+            lexUnitAsString += ", orth var: " + orthVar;
         }
 
         if (getOldOrthForm() != null) {
-            lexUnitAsString += ", old orth form: " + this.oldOrthForm;
+            lexUnitAsString += ", old orth form: " + oldOrthForm;
         }
 
         if (getOldOrthVar() != null) {
-            lexUnitAsString += ", old orth var: " + this.oldOrthVar;
+            lexUnitAsString += ", old orth var: " + oldOrthVar;
         }
 
-        lexUnitAsString += ", synset id: " + this.synset.getId()
-                + ", sense: " + this.sense
-                + ", source: " + this.source
-                + ", named entity: " + this.namedEntity
-                + ", artificial: " + this.artificial
-                + ", style marking: " + this.styleMarking;
+        lexUnitAsString += ", synset id: " + synset.getId()
+                + ", sense: " + sense
+                + ", source: " + source
+                + ", named entity: " + namedEntity
+                + ", artificial: " + artificial
+                + ", style marking: " + styleMarking;
 
         return lexUnitAsString;
     }
 
     /**
      * Adds an <code>Example</code> to this <code>Synset</code>.
+     *
      * @param example the <code>Example</code> to add
      */
-    protected void addExample(Example example) {
-        this.examples.add(example);
+    void addExample(Example example) {
+        examples.add(example);
     }
 
     /**
      * Adds a <code>Frame</code> to this <code>Synset</code>.
+     *
      * @param frame the <code>Frame</code> to add
      */
-    protected void addFrame(Frame frame) {
-        this.frames.add(frame);
+    void addFrame(Frame frame) {
+        frames.add(frame);
     }
 
     /**
      * Returns the source of this <code>LexUnit</code>.
+     *
      * @return the source of this <code>LexUnit</code>
      */
     public String getSource() {
-        return this.source;
+        return source;
     }
 
     /**
      * Returns a <code>List</code> of this <code>LexUnit</code>'s
-     * <code>Examples/code>.
+     * <code>Examples</code>.
+     *
      * @return a <code>List</code> of this <code>LexUnit</code>'s
      * <code>Examples</code>
      */
     public List<Example> getExamples() {
-        return (List<Example>) this.examples.clone();
+        return new ArrayList<>(examples);
     }
 
     /**
      * Returns a <code>List</code> of this <code>LexUnit</code>'s
      * <code>Frames</code>.
+     *
      * @return a <code>List</code> of this <code>LexUnit</code>'s
      * <code>Frames</code>
      */
     public List<Frame> getFrames() {
-        return (List<Frame>) this.frames.clone();
+        return new ArrayList<>(frames);
     }
 
     /**
      * Return the <code>WordCategory</code> of this <code>LexUnit</code>.
+     *
      * @return the <code>WordCategory</code> of this <code>LexUnit</code>
      * (eg. nomen, verben, adj).
      */
     public WordCategory getWordCategory() {
-        return this.synset.getWordCategory();
+        return synset.getWordCategory();
     }
 
     /**
      * Return true if this <code>LexUnit</code> is in <code>wordCategory</code>.
+     *
      * @param wordCategory the <code>WordCategory</code> (eg. nomen, verben, adj)
      * @return true if this <code>LexUnit</code> is in <code>wordCategory</code>
      */
     public boolean inWordCategory(WordCategory wordCategory) {
-        return wordCategory == this.synset.getWordCategory();
+        return wordCategory == synset.getWordCategory();
     }
 
 
     /**
      * Return the <code>WordClass</code> of this <code>LexUnit</code>.
+     *
      * @return the <code>WordClass</code> of this <code>LexUnit</code>
      * (eg. Menge, Allgemein).
      */
     public WordClass getWordClass() {
-        return this.synset.getWordClass();
+        return synset.getWordClass();
     }
 
     /**
      * Return true if this <code>LexUnit</code> is in <code>wordClass</code>.
+     *
      * @param wordClass the <code>WordClass</code> (eg.Menge, Allgemein)
      * @return true if this <code>LexUnit</code> is in <code>wordClass</code>
      */
     public boolean inWordClass(WordClass wordClass) {
-        return wordClass == this.synset.getWordClass();
+        return wordClass == synset.getWordClass();
     }
 
     /**
      * Return the number of <code>Frames</code> in this <code>Synset</code>.
+     *
      * @return the number of <code>Frames</code> in this <code>Synset</code>
      */
     public int numFrames() {
-        return this.frames.size();
+        return frames.size();
     }
 
     /**
      * Return the number of <code>Examples</code> in this <code>Synset</code>.
+     *
      * @return the number of <code>Examples</code> in this <code>Synset</code>
      */
     public int numExamples() {
-        return this.examples.size();
+        return examples.size();
     }
 
     /**
      * Return a <code>List</code> of <code>IliRecords</code> for this <code>LexUnit</code>.
+     *
      * @return <code>List</code> of <code>IliRecords</code> for this <code>LexUnit</code>
      */
     public List<IliRecord> getIliRecords() {
-        return (List<IliRecord>) this.iliRecords.clone();
+        return new ArrayList<>(iliRecords);
     }
 
     /**
      * Add an <code>IliRecord</code> to this <code>LexUnit</code>.
+     *
      * @param record <code>IliRecord</code> to add to this <code>LexUnit</code>
      */
-    protected void addIliRecord(IliRecord record) {
+    void addIliRecord(IliRecord record) {
         iliRecords.add(record);
     }
 
     /**
      * Return the <code>CompoundInfo</code> for this <code>LexUnit</code>, if it exists.
+     *
      * @return the <code>CompoundInfo</code> for this <code>LexUnit</code>
      */
     public CompoundInfo getCompoundInfo() {
-        return this.compoundInfo;
+        return compoundInfo;
     }
 
     /**
      * Set the <code>CompoundInfo</code> for this <code>LexUnit</code>.
+     *
      * @param compoundInfo the <code>CompoundInfo</code> for this <code>LexUnit</code>
      */
-    protected void setCompoundInfo(CompoundInfo compoundInfo) {
+    void setCompoundInfo(CompoundInfo compoundInfo) {
         this.compoundInfo = compoundInfo;
     }
 
     /**
      * Return a <code>List</code> of <code>WiktionaryParaphrases</code>
      * for this <code>LexUnit</code>.
+     *
      * @return <code>List</code> of <code>WiktionaryParaphrase</code>
      * for this <code>LexUnit</code>
      */
     public List<WiktionaryParaphrase> getWiktionaryParaphrases() {
-        return (List<WiktionaryParaphrase>) this.wiktionaryParaphrases.clone();
+        return new ArrayList<>(wiktionaryParaphrases);
     }
 
     /**
      * Add a <code>WiktionaryParaphrase</code> to this <code>LexUnit</code>.
+     *
      * @param paraphrase <code>WiktionaryParaphrase</code> to add to this <code>LexUnit</code>
      */
     public void addWiktionaryParaphrase(WiktionaryParaphrase paraphrase) {
         wiktionaryParaphrases.add(paraphrase);
     }
-    
+
     /**
      * Return true if this <code>LexUnit</code> is equal to another <code>LexUnit</code>.
-     * @param other the <code>LexUnit</code> to compare to
+     *
+     * @param o the <code>LexUnit</code> to compare to
      * @return true if this <code>LexUnit</code> is equal to another <code>LexUnit</code>
      */
-    public boolean equals(LexUnit other) {
-        if (this.id == other.id) {
-            return true;
-        }
-        return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LexUnit lexUnit = (LexUnit) o;
+
+        if (id != lexUnit.id) return false;
+        return orthForm.equals(lexUnit.orthForm);
+    }
+
+    /**
+     * Return the hashcode for this object
+     *
+     * @return the hashcode for this object
+     */
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + orthForm.hashCode();
+        return result;
     }
 }

@@ -21,136 +21,79 @@ package de.tuebingen.uni.sfs.germanet.api;
 
 import java.io.*;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.xml.stream.XMLStreamException;
+
+import static de.tuebingen.uni.sfs.germanet.api.GermaNet.NUMBER_OF_GERMANET_FILES;
 
 /**
  * Stax loader for GermaNet xml files. All Synsets must be loaded before
  * any relations can be loaded.
- * 
+ *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
-*/
+ */
 class StaxLoader {
-    private File germaNetDir;
-    private List<InputStream> germaNetStreams;
+    private static final Logger LOGGER = LoggerFactory.getLogger(StaxLoader.class);
+    private List<InputStream> inputStreams;
+    private List<String> xmlNames;
+    private InputStream relsInputStream;
+    private String relsXmlName;
     private SynsetLoader synLoader;  // loader for synsets
     private RelationLoader relLoader; // loader for relations
-    private List<String> xmlNames;
 
     /**
      * Constructs a <code>StaxLoader</code> for data files in directory
      * <code>germanetDirectory</code> and existing <code>GermaNet</code> object
      * <code>germaNet</code>.
-     * @param germanetDirectory location of GermaNet data files
+     *
      * @param germaNet <code>GermaNet</code> object to load into
      * @throws java.io.FileNotFoundException
      */
-    protected StaxLoader(File germaNetDir, GermaNet germaNet) throws
-            FileNotFoundException {
-        this.germaNetDir = germaNetDir;
-        this.germaNetStreams = null;
+    protected StaxLoader(GermaNet germaNet) {
+        this.inputStreams = germaNet.inputStreams;
+        this.xmlNames = germaNet.xmlNames;
+        this.relsInputStream = germaNet.relsInputStream;
+        this.relsXmlName = germaNet.relsXmlName;
         this.synLoader = new SynsetLoader(germaNet);
         this.relLoader = new RelationLoader(germaNet);
-        this.xmlNames = null;
-
-        if (!germaNetDir.isDirectory()) {
-            throw new FileNotFoundException("Unable to load GermaNet from \"" +
-                    germaNetDir + "\"");
-        }
-    }
-
-    /**
-     * Constructs a <code>StaxLoader</code> for data streams in
-     * <code>germanetStreams</code> and existing <code>GermaNet</code> object
-     * <code>germaNet</code>.
-     * @param germanetDirectory location of GermaNet data files
-     * @param germaNet <code>GermaNet</code> object to load into
-     * @throws java.io.FileNotFoundException
-     */
-    protected StaxLoader(List<InputStream> germaNetStreams, List<String> xmlNames, GermaNet germaNet) throws
-            StreamCorruptedException {
-        this.germaNetStreams = germaNetStreams;
-        this.germaNetDir = null;
-        this.synLoader = new SynsetLoader(germaNet);
-        this.relLoader = new RelationLoader(germaNet);
-        this.xmlNames = xmlNames;
-
-        if (germaNetStreams.isEmpty()) {
-            throw new StreamCorruptedException("Unable to load GermaNet from \"" +
-                    germaNetStreams + "\"");
-        }
     }
 
     /**
      * Loads all synset files or streams (depending on what exists) and then all relation files.
+     *
      * @throws java.io.FileNotFoundException
      * @throws javax.xml.stream.XMLStreamException
      */
-    protected void load() throws XMLStreamException {
-        if (this.germaNetDir != null) { // load GermaNet from file
-            FilenameFilter filter = new SynsetFilter(); //get only synset files
+    protected void load() throws XMLStreamException, IOException {
 
-            File[] germaNetFiles = germaNetDir.listFiles(filter);
+        int loadedFiles = 0;
+        if (inputStreams == null || inputStreams.isEmpty()) {
+            throw new FileNotFoundException("Unable to load GermaNet data.");
+        }
 
-            try {
-                if (germaNetFiles == null || germaNetFiles.length == 0) {
-                    throw new FileNotFoundException("Unable to load GermaNet from \"" + this.germaNetDir.getPath() + "\"");
-                }
+        // load all synset input streams first with a SynsetLoader
+        for (int i = 0; i < inputStreams.size(); i++) {
+            InputStream stream = inputStreams.get(i);
+            String name = xmlNames.get(i);
+            LOGGER.info("Loading {}...", name);
+            synLoader.loadSynsets(stream);
+            stream.close();
+            loadedFiles++;
+        }
 
-                // load all synset files first with a SynsetLoader
-                for (int i = 0; i < germaNetFiles.length; i++) {
-                    System.out.println("Loading " +
-                            germaNetFiles[i].getName() + "...");
-                    synLoader.loadSynsets(germaNetFiles[i]);
-                }
+        // load relations with a RelationLoader
+        LOGGER.info("Loading {}...", relsXmlName);
+        relLoader.loadRelations(relsInputStream);
+        loadedFiles++;
 
-                filter = new RelationFilter(); //get only relatin files
-
-                germaNetFiles = germaNetDir.listFiles(filter);
-
-                // load relations with a RelationLoader
-                for (int i = 0; i < germaNetFiles.length; i++) {
-                    System.out.println("Loading " +
-                            germaNetFiles[i].getName() + "...");
-                    relLoader.loadRelations(germaNetFiles[i]);
-                }
-                System.out.println("Done.");
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(StaxLoader.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } else { // load GermaNet from InputStream list
-            if (germaNetStreams == null || germaNetStreams.isEmpty()) {
-                try {
-                    throw new StreamCorruptedException("Unable to load GermaNet from input stream \"" + this.germaNetStreams.toString() + "\"");
-                } catch (StreamCorruptedException ex) {
-                    Logger.getLogger(StaxLoader.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            // load all synset input streams first with a SynsetLoader
-            for (int i = 0; i < germaNetStreams.size(); i++) {
-
-                if (xmlNames.get(i).endsWith("xml")
-                        && (xmlNames.get(i).startsWith("nomen")
-                        || xmlNames.get(i).startsWith("verben")
-                        || xmlNames.get(i).startsWith("adj"))) {
-                    System.out.println("Loading input stream "
-                            + xmlNames.get(i) + "...");
-                    synLoader.loadSynsets(germaNetStreams.get(i));
-                }
-            }
-
-            // load relations with a RelationLoader
-            for (int i = 0; i < germaNetStreams.size(); i++) {
-                if (xmlNames.get(i).equals("gn_relations.xml")) {
-                    System.out.println("Loading input stream "
-                            + xmlNames.get(i) + "...");
-                    relLoader.loadRelations(germaNetStreams.get(i));
-                }
-            }
-            System.out.println("Done.");
+        if (loadedFiles >= NUMBER_OF_GERMANET_FILES) {
+            LOGGER.info("Done loading {} GermaNet files.", loadedFiles);
+        } else {
+            throw new FileNotFoundException("GermaNet data not found or files are missing.");
         }
     }
 
@@ -162,8 +105,8 @@ class StaxLoader {
         public boolean accept(File directory, String name) {
             return (name.endsWith("xml") &&
                     (name.startsWith("nomen") ||
-                    name.startsWith("verben") ||
-                    name.startsWith("adj")));
+                            name.startsWith("verben") ||
+                            name.startsWith("adj")));
         }
     }
 

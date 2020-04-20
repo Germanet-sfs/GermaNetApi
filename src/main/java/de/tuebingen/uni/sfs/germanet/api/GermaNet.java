@@ -19,23 +19,21 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.io.StreamCorruptedException;
+import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.xml.stream.XMLStreamException;
+import java.io.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import javax.xml.stream.XMLStreamException;
 
 /**
  * Provides high-level look-up access to GermaNet data. Intended as a read-only
  * resource - no public methods are provided for changing or adding data.<br><br>
- * 
+ * <p>
  * GermaNet is a collection of German lexical units (<code>LexUnits</code>)
  * organized into sets of synonyms (<code>Synsets</code>).<br>
  * A <code>Synset</code> has a
@@ -52,7 +50,7 @@ import javax.xml.stream.XMLStreamException;
  * A <code>Frame</code> is simply a container for frame data (String).<br>
  * An <code>Example</code> consists of text (String) and zero or one
  * <code>Frame</code>(s).<br><br>
- * 
+ * <p>
  * To construct a <code>GermaNet</code> object, provide the location of the
  * GermaNet data and (optionally) a flag indicating whether searches should be
  * done ignoring case. This data location can be set with a <code>String</code>
@@ -60,42 +58,44 @@ import javax.xml.stream.XMLStreamException;
  * <code>File</code> object. If no flag is used, then case-sensitive
  * searching will be performed:<br><br>
  * <code>
- *    // Use case-sensitive searching<br>
- *    GermaNet gnet = new GermaNet("/home/myName/germanet/GN_V130");<br>
+ * // Use case-sensitive searching<br>
+ * GermaNet gnet = new GermaNet("/home/myName/germanet/GN_V130");<br>
  * </code>
  * or<br>
  * <code>
- *    // Ignore case when searching<br>
- *    File gnetDir = new File("/home/myName/germanet/GN_V130");<br>
- *    GermaNet gnet = new GermaNet(gnetDir, true);<br><br>
+ * // Ignore case when searching<br>
+ * File gnetDir = new File("/home/myName/germanet/GN_V130");<br>
+ * GermaNet gnet = new GermaNet(gnetDir, true);<br><br>
  * </code>
  * The <code>GermaNet</code> class has methods that return <code>Lists</code> of
  * <code>Synsets</code> or <code>LexUnits</code>, given
  * an orthForm or a WordCategory.  For example,<br><br><code>
- *    List&lt;LexUnit&gt; lexList = gnet.getLexUnits("Bank");<br>
- *    List&lt;LexUnit&gt;> verbenLU = gnet.getLexUnits(WordCategory.verben);<br>
- *    List&lt;Synset&gt; synList = gnet.getSynsets("gehen");<br>
- *    List&lt;Synset&gt; adjSynsets = gnet.getSynsets(WordCategory.adj);<br><br>
+ * List&lt;LexUnit&gt; lexList = gnet.getLexUnits("Bank");<br>
+ * List&lt;LexUnit&gt; verbenLU = gnet.getLexUnits(WordCategory.verben);<br>
+ * List&lt;Synset&gt; synList = gnet.getSynsets("gehen");<br>
+ * List&lt;Synset&gt; adjSynsets = gnet.getSynsets(WordCategory.adj);<br><br>
  * </code>
- * 
+ * <p>
  * Unless otherwise stated, methods will return an empty List rather than null
  * to indicate that no objects exist for the given request. <br><br>
- * 
+ *
  * <b>Important Note:</b><br>
  * Loading GermaNet requires more memory than the JVM allocates by default. Any
  * application that loads GermaNet will most likely need to be run with JVM
  * options that increase the memory allocated, like this:<br><br>
- * 
+ *
  * <code>java -Xms1g -Xmx1g MyApplication</code><br><br>
- * 
+ * <p>
  * Depending on the memory needs of the application itself, the 1g's may
  * need to be changed to something higher.
- * 
+ *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
 public class GermaNet {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GermaNet.class);
+    public static final int GNROOT_ID = 51001;
     public static final String XML_SYNSETS = "synsets";
     public static final String XML_SYNSET = "synset";
     public static final String XML_ID = "id";
@@ -125,7 +125,7 @@ public class GermaNet {
     public static final String XML_RELATION_INV = "inv";
     public static final String XML_RELATION_TO = "to";
     public static final String XML_RELATION_FROM = "from";
-    
+
     //for ILI
     public static final String XML_ILI_RECORD = "iliRecord";
     public static final String XML_LEX_UNIT_ID = "lexUnitId";
@@ -139,7 +139,7 @@ public class GermaNet {
     public static final String XML_PWN20_SYNONYM = "pwn20Synonym";
     public static final String YES = "yes";
     public static final String NO = "no";
-    
+
     //for Wiktionary
     public static final String XML_WIKTIONARY_PARAPHRASE = "wiktionaryParaphrase";
     public static final String XML_WIKTIONARY_ID = "wiktionaryId";
@@ -147,110 +147,204 @@ public class GermaNet {
     public static final String XML_WIKTIONARY_SENSE = "wiktionarySense";
     public static final String XML_WIKTIONARY_EDITED = "edited";
     public static final String XML_WIKTIONARY_POS = "pos";
-    
+
     //for Compounds
     public static final String XML_COMPOUND = "compound";
     public static final String XML_PROPERTY = "property";
     public static final String XML_CATEGORY = "category";
     public static final String XML_COMPOUND_MODIFIER = "modifier";
     public static final String XML_COMPOUND_HEAD = "head";
-    
-    private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMap;
-    private EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>> wordCategoryMapAllOrthForms;
+
+    // number of GermaNet files
+    public static final int NUMBER_OF_GERMANET_FILES = 55;
+
+    private EnumMap<WordCategory, Map<String, Set<LexUnit>>> wordCategoryMap;
+    private EnumMap<WordCategory, Map<String, Set<LexUnit>>> wordCategoryMapAllOrthForms;
+    private HashMap<String, Set<String>> lowerToUpperMap;
     private TreeSet<Synset> synsets;
     private ArrayList<IliRecord> iliRecords;
     private ArrayList<WiktionaryParaphrase> wiktionaryParaphrases;
-    private HashMap<Integer, LexUnit> lexUnitID;
-    private HashMap<Integer, Synset> synsetID;
+    private Map<Integer, LexUnit> lexUnitIDMap;
+    private Map<Integer, Synset> synsetIDMap;
     private File dir = null;
-    private List<InputStream> inputStreams = null;
-    private List<String> xmlNames = null;
-    private boolean ignoreCase = false;
+    private File nounFreqFile;
+    private File verbFreqFile;
+    private File adjFreqFile;
+    List<InputStream> inputStreams;
+    List<String> xmlNames;
+    List<InputStream> wiktInputStreams;
+    List<String> wiktXmlNames;
+    InputStream iliInputStream;
+    String iliXmlName;
+    InputStream relsInputStream;
+    String relsXmlName;
+    private boolean ignoreCase;
+
+    // semanticUtils
+    private Map<WordCategory, Integer> catMaxHypernymDistanceMap;
+    private SemanticUtils semanticUtils;
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
      * files in the specified directory/archive path name - searches are case sensitive.
+     *
      * @param dirName the directory where the GermaNet data files are located
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws javax.xml.stream.IOException
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
-    public GermaNet(String dirName) throws FileNotFoundException, XMLStreamException, IOException {
+    public GermaNet(String dirName) throws IOException, XMLStreamException {
         this(new File(dirName), false);
     }
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
-     * files in the specified directory/archive path name.
+     * files in the specified directory/archive path name. Use <code>FilterConfig</code>
+     * to configure search options. Frequency file paths are required for
+     * constructing a <code>SemanticUtils</code> object.
+     *
      * @param dirName the directory where the GermaNet data files are located
-     * @param ignoreCase if true ignore case on lookups, otherwise do case
-     * sensitive searches
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws javax.xml.stream.IOException
+     * @param nounFreqPath full path to the noun frequency file
+     * @param verbFreqPath full path to the verb frequency file
+     * @param adjFreqPath full path to the adj frequency file
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
-    public GermaNet(String dirName, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, IOException {
+    public GermaNet(String dirName, String nounFreqPath, String verbFreqPath, String adjFreqPath) throws IOException, XMLStreamException {
+        this(new File(dirName), false);
+        this.nounFreqFile = new File(nounFreqPath);
+        this.verbFreqFile = new File(verbFreqPath);
+        this.adjFreqFile = new File(adjFreqPath);
+    }
+
+    /**
+     * Constructs a new <code>GermaNet</code> object by loading the the data
+     * files in the specified directory/archive path name.
+     *
+     * @param dirName    the directory where the GermaNet data files are located
+     * @param ignoreCase if true ignore case on lookups, otherwise do case
+     *                   sensitive searches
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
+     */
+    public GermaNet(String dirName, boolean ignoreCase) throws XMLStreamException, IOException {
         this(new File(dirName), ignoreCase);
     }
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
      * files in the specified directory/archive File - searches are case sensitive.
+     *
      * @param dir location of the GermaNet data files
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws javax.xml.stream.IOException
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
-    public GermaNet(File dir) throws FileNotFoundException, XMLStreamException, IOException {
+    public GermaNet(File dir) throws XMLStreamException, IOException {
         this(dir, false);
     }
 
     /**
      * Constructs a new <code>GermaNet</code> object by loading the the data
-     * files in the specified directory/archive File.
+     * files in the specified directory/archive File.  Use <code>FilterConfig</code>
+     * to configure search options. Frequency file paths are required for
+     * constructing a <code>SemanticUtils</code> object.
+     *
      * @param dir location of the GermaNet data files
-     * @param ignoreCase if true ignore case on lookups, otherwise do case
-     * sensitive searches
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     * @throws javax.xml.stream.IOException
+     * @param nounFreqFile  noun frequency file
+     * @param verbFreqFile verb frequency file
+     * @param adjFreqFile adj frequency file
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
      */
-    public GermaNet(File dir, boolean ignoreCase) throws FileNotFoundException, XMLStreamException, IOException {
+    public GermaNet(File dir, File nounFreqFile, File verbFreqFile, File adjFreqFile) throws XMLStreamException, IOException {
+        this(dir, false);
+        this.nounFreqFile = nounFreqFile;
+        this.verbFreqFile = verbFreqFile;
+        this.adjFreqFile = adjFreqFile;
+    }
+
+    /**
+     * Constructs a new <code>GermaNet</code> object by loading the the data
+     * files in the specified directory/archive File.
+     *
+     * @param dir        location of the GermaNet data files
+     * @param ignoreCase if true ignore case on lookups, otherwise do case
+     *                   sensitive searches
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
+     * @throws java.io.IOException                 if there is a file error
+     */
+    public GermaNet(File dir, boolean ignoreCase) throws XMLStreamException, IOException {
         checkMemory();
         this.ignoreCase = ignoreCase;
-        this.inputStreams = null;
-        this.synsets = new TreeSet<Synset>();
-        this.iliRecords = new ArrayList<IliRecord>();
-        this.wiktionaryParaphrases = new ArrayList<WiktionaryParaphrase>();
-        this.synsetID = new HashMap<Integer, Synset>();
-        this.lexUnitID = new HashMap<Integer, LexUnit>();
-        this.wordCategoryMap = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
-        this.wordCategoryMapAllOrthForms = new EnumMap<WordCategory, HashMap<String, ArrayList<LexUnit>>>(WordCategory.class);
+        this.inputStreams = new ArrayList<>();
+        this.xmlNames = new ArrayList<>();
+        this.wiktInputStreams = new ArrayList<>();
+        this.wiktXmlNames = new ArrayList<>();
+        this.iliInputStream = null;
+        this.iliXmlName = null;
+        this.synsets = new TreeSet<>();
+        this.iliRecords = new ArrayList<>();
+        this.wiktionaryParaphrases = new ArrayList<>();
+        this.synsetIDMap = new HashMap<>();
+        this.lexUnitIDMap = new HashMap<>();
+        this.wordCategoryMap = new EnumMap<>(WordCategory.class);
+        this.wordCategoryMapAllOrthForms = new EnumMap<>(WordCategory.class);
+        this.lowerToUpperMap = new HashMap<>();
+        semanticUtils = null;
 
+        long startTime = System.currentTimeMillis();
         if (!dir.isDirectory() && isZipFile(dir)) {
             ZipFile zipFile = new ZipFile(dir);
             Enumeration entries = zipFile.entries();
 
-            List<InputStream> inputStreamList = new ArrayList<InputStream>();
-            List<String> nameList = new ArrayList<String>();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) entries.nextElement();
-                String entryName = entry.getName();
-                if (entryName.split(File.separator).length > 1) {
-                    entryName = entryName.split(File.separator)[entryName.split(File.separator).length - 1];
+                String name = entry.getName();
+                if (name.split(File.separator).length > 1) {
+                    name = name.split(File.separator)[name.split(File.separator).length - 1];
                 }
-                nameList.add(entryName);
-                InputStream stream = (zipFile.getInputStream(entry));
-                inputStreamList.add(stream);
+                InputStream stream = zipFile.getInputStream(entry);
+                addStreamToLists(name, stream);
             }
-            inputStreams = inputStreamList;
-            xmlNames = nameList;
-
         } else {
             this.dir = dir;
+            File[] allFiles = dir.listFiles();
+            for (int i = 0; i < allFiles.length; i++) {
+                InputStream stream = new FileInputStream(allFiles[i]);
+                String name = allFiles[i].getName();
+                addStreamToLists(name, stream);
+            }
         }
-
         load();
+
+        long endTime = System.currentTimeMillis();
+        double processingTime = (double) (endTime - startTime) / 1000;
+        LOGGER.info("Done loading GermaNet data ({} seconds).", processingTime);
+    }
+
+    /**
+     * Add the given stream to the correct stream list for loading,
+     * based on its name.
+     *
+     * @param fileName
+     * @param stream
+     */
+    private void addStreamToLists(String fileName, InputStream stream) {
+        if (fileName.startsWith("wiktionary") && fileName.endsWith(".xml")) {
+            wiktInputStreams.add(stream);
+            wiktXmlNames.add(fileName);
+        } else if (fileName.startsWith("interLingualIndex") && fileName.endsWith(".xml")) {
+            iliInputStream = stream;
+            iliXmlName = fileName;
+        } else if (fileName.equals("gn_relations.xml")) {
+            relsInputStream = stream;
+            relsXmlName = fileName;
+        } else if (fileName.endsWith(".xml") &&
+                (fileName.startsWith("nomen.")
+                        || fileName.startsWith("adj.")
+                        || fileName.startsWith("verben."))) {
+            inputStreams.add(stream);
+            xmlNames.add(fileName);
+        }
     }
 
     /**
@@ -259,20 +353,19 @@ public class GermaNet {
     private void checkMemory() {
         long freeMemory = Runtime.getRuntime().freeMemory() / 1000000;
         if (freeMemory < 120) {
-            System.out.println("Warning: you may not have enough memory to "
-                    + "load GermaNet.");
-            System.out.println("Try using \"-Xms128m -Xmx128m\" JVM options:");
-            System.out.println("java -Xms128m -Xmx128m <restOfCommand>");
+            LOGGER.warn("You may not have enough memory to load GermaNet.\n"
+                    + "Try using \"-Xms1g -Xmx1g\" JVM options:");
         }
     }
 
     /**
      * Loads the data files into this <code>GermaNet</code> object.
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
+     *
+     * @throws javax.xml.stream.XMLStreamException if there is a file error
      */
-    void load() throws XMLStreamException {
+    void load() throws IOException, XMLStreamException {
         StaxLoader loader;
+        SynsetDistanceMapLoader distMapLoader;
         String oldVal = null;
 
         // use xerces xml parser
@@ -281,27 +374,18 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-        if (this.dir != null) {
-            try {
-                loader = new StaxLoader(dir, this);
-                loader.load();
-                loadIli(false);
-                loadWiktionaryParaphrases(false);
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } else {
-            try {
-                loader = new StaxLoader(inputStreams, xmlNames, this);
-                loader.load();
-                loadIli(true);
-                loadWiktionaryParaphrases(true);
-            } catch (StreamCorruptedException ex) {
-                Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
+        loader = new StaxLoader(this);
+        loader.load();
+        loadIli();
+        loadWiktionaryParaphrases();
         trimAll();
+
+        // calculate and load distance maps into Synset objects
+        distMapLoader = new SynsetDistanceMapLoader(this);
+        distMapLoader.loadDistanceMaps();
+
+        // get maps for creating a SemanticUtils object if necessary at a later point
+        catMaxHypernymDistanceMap = distMapLoader.getCatMaxHypernymDistanceMap();
 
         // set parser back to whatever it was before
         if (oldVal != null) {
@@ -312,6 +396,7 @@ public class GermaNet {
     /**
      * Gets the absolute path name of the directory where the GermaNet data files
      * are stored.
+     *
      * @return the absolute pathname of the location of the GermaNet data files
      */
     public String getDir() {
@@ -325,102 +410,159 @@ public class GermaNet {
     /**
      * Adds a <code>Synset</code> to this <code>GermaNet</code>'s
      * <code>Synset</code> list.
+     *
      * @param synset the <code>Synset</code> to add
      */
     protected void addSynset(Synset synset) {
-        ArrayList<LexUnit> luList;
-        HashMap<String, ArrayList<LexUnit>> map;
-        HashMap<String, ArrayList<LexUnit>> mapAllOrthForms;
+        Set<LexUnit> luSet;
+        Map<String, Set<LexUnit>> map;
+        Map<String, Set<LexUnit>> mapAllOrthForms;
 
-        // add synset to synset list and synsetID map
+        // add synset to synset list and synsetIDMap map
         synsets.add(synset);
-        synsetID.put(synset.getId(), synset);
+        synsetIDMap.put(synset.getId(), synset);
+
+        // Don't add Root or its LexUnit to any of the
+        // WordCategory or orthForm maps
+        if (synset.getId() == GNROOT_ID) {
+            return;
+        }
 
         // add synset to its wordCategory map
         map = wordCategoryMap.get(synset.getWordCategory());
         mapAllOrthForms = wordCategoryMapAllOrthForms.get(synset.getWordCategory());
         if (map == null) {
-            map = new HashMap<String, ArrayList<LexUnit>>();
+            map = new HashMap<>();
         }
         if (mapAllOrthForms == null) {
-            mapAllOrthForms = new HashMap<String, ArrayList<LexUnit>>();
+            mapAllOrthForms = new HashMap<>();
         }
 
-        // add LexUnits of synset to lexUnitID map and add mapping
+        // add LexUnits of synset to lexUnitIDMap map and add mapping
         // from orthForm to corresponding LexUnits
         for (LexUnit lu : synset.getLexUnits()) {
 
-            lexUnitID.put(lu.getId(), lu);
+            lexUnitIDMap.put(lu.getId(), lu);
 
+            // add orthForm and lowercase orthForm to lowerToUpperMap
             String orthForm = lu.getOrthForm();
-            if (ignoreCase) {
-                orthForm = orthForm.toLowerCase();
+            String orthFormLower = orthForm.toLowerCase();
+            Set<String> orthFormSet = lowerToUpperMap.get(orthFormLower);
+            if (orthFormSet == null) {
+                orthFormSet = new HashSet<String>();
             }
-            luList = map.get(orthForm);
-            if (luList == null) {
-                luList = new ArrayList<LexUnit>();
-            }
-            luList.add(lu);
-            map.put(orthForm, luList);
+            orthFormSet.add(orthForm);
+            orthFormSet.add(orthFormLower);
+            lowerToUpperMap.put(orthFormLower, orthFormSet);
 
-            luList = mapAllOrthForms.get(orthForm);
-            if (luList == null) {
-                luList = new ArrayList<LexUnit>();
+            luSet = map.get(orthForm);
+            if (luSet == null) {
+                luSet = new HashSet<>();
             }
-            luList.add(lu);
-            mapAllOrthForms.put(orthForm, luList);
+            luSet.add(lu);
+            map.put(orthForm, luSet);
 
+            luSet = mapAllOrthForms.get(orthForm);
+            if (luSet == null) {
+                luSet = new HashSet<>();
+            }
+            luSet.add(lu);
+            mapAllOrthForms.put(orthForm, luSet);
+
+            // get orthVar
+            // add orthVar and lowercase orthVar to lowerToUpperMap
             String orthVar = lu.getOrthVar();
-            if (ignoreCase && orthVar != null) {
-                orthVar = orthVar.toLowerCase();
+            if (orthVar != null) {
+                String orthVarLower = orthVar.toLowerCase();
+                Set<String> orthVarSet = lowerToUpperMap.get(orthVarLower);
+                if (orthVarSet == null) {
+                    orthVarSet = new HashSet<String>();
+                }
+                orthVarSet.add(orthVar);
+                orthVarSet.add(orthVarLower);
+                lowerToUpperMap.put(orthVarLower, orthVarSet);
             }
-            luList = mapAllOrthForms.get(orthVar);
-            if (luList == null) {
-                luList = new ArrayList<LexUnit>();
+            luSet = mapAllOrthForms.get(orthVar);
+            if (luSet == null) {
+                luSet = new HashSet<>();
             }
-            luList.add(lu);
-            mapAllOrthForms.put(orthVar, luList);
+            luSet.add(lu);
+            mapAllOrthForms.put(orthVar, luSet);
 
+            // get oldOrthForm
+            // add oldOrthForm and lowercase oldOrthForm to lowerToUpperMap
             String oldOrthForm = lu.getOldOrthForm();
-            if (ignoreCase && oldOrthForm != null) {
-                oldOrthForm = oldOrthForm.toLowerCase();
+            if (oldOrthForm != null) {
+                String oldOrthFormLower = oldOrthForm.toLowerCase();
+                Set<String> oldOrthFormSet = lowerToUpperMap.get(oldOrthFormLower);
+                if (oldOrthFormSet == null) {
+                    oldOrthFormSet = new HashSet<String>();
+                }
+                oldOrthFormSet.add(oldOrthForm);
+                oldOrthFormSet.add(oldOrthFormLower);
+                lowerToUpperMap.put(oldOrthFormLower, oldOrthFormSet);
             }
-            luList = mapAllOrthForms.get(oldOrthForm);
-            if (luList == null) {
-                luList = new ArrayList<LexUnit>();
+            luSet = mapAllOrthForms.get(oldOrthForm);
+            if (luSet == null) {
+                luSet = new HashSet<>();
             }
-            if (!luList.contains(lu)) {
-                luList.add(lu);
-                mapAllOrthForms.put(oldOrthForm, luList);
-            }
+            luSet.add(lu);
+            mapAllOrthForms.put(oldOrthForm, luSet);
 
+
+            // get oldOrthVar
+            // add oldOrthVar and lowercase oldOrthVar to lowerToUpperMap
             String oldOrthVar = lu.getOldOrthVar();
-            if (ignoreCase && oldOrthVar != null) {
-                oldOrthVar = oldOrthVar.toLowerCase();
+            if (oldOrthVar != null) {
+                String oldOrthVarLower = oldOrthVar.toLowerCase();
+                Set<String> oldOrthVarSet = lowerToUpperMap.get(oldOrthVarLower);
+                if (oldOrthVarSet == null) {
+                    oldOrthVarSet = new HashSet<String>();
+                }
+                oldOrthVarSet.add(oldOrthVar);
+                oldOrthVarSet.add(oldOrthVarLower);
+                lowerToUpperMap.put(oldOrthVarLower, oldOrthVarSet);
             }
-            luList = mapAllOrthForms.get(oldOrthVar);
-            if (luList == null) {
-                luList = new ArrayList<LexUnit>();
+            luSet = mapAllOrthForms.get(oldOrthVar);
+            if (luSet == null) {
+                luSet = new HashSet<>();
             }
-            if (!luList.contains(lu)) {
-                luList.add(lu);
-                mapAllOrthForms.put(oldOrthVar, luList);
-            }
+            luSet.add(lu);
+            mapAllOrthForms.put(oldOrthVar, luSet);
         }
         wordCategoryMap.put(synset.getWordCategory(), map);
         wordCategoryMapAllOrthForms.put(synset.getWordCategory(), mapAllOrthForms);
     }
 
     /**
+     * Returns a <code>List</code> of all <code>Synsets</code> using the specified
+     * <code>FilterConfig</code>.
+     *
+     * @param filter a <code>FilterConfig</code> to use for the search
+     * @return a <code>List</code> of all <code>Synsets</code> using the specified
+     * <code>FilterConfig</code>. If no <code>Synsets</code> were found, this
+     * is an empty <code>List</code>.
+     */
+    public List<Synset> getSynsets(FilterConfig filter) {
+        List<Synset> rval = new ArrayList<>();
+
+        List<LexUnit> lexUnits = getLexUnits(filter);
+        Set<Synset> synsets = new HashSet<>();
+        for (LexUnit lexUnit : lexUnits) {
+            synsets.add(lexUnit.getSynset());
+        }
+        rval.addAll(synsets);
+        return rval;
+        //return getSynsets(filter, getSynsets());
+    }
+
+    /**
      * Returns a <code>List</code> of all <code>Synsets</code>.
+     *
      * @return a <code>list</code> of all <code>Synsets</code>
      */
     public List<Synset> getSynsets() {
-        List<Synset> rval = new ArrayList<Synset>(synsets.size());
-        Iterator iter = synsets.iterator();
-        while (iter.hasNext())
-            rval.add((Synset) iter.next());
-        return rval;
+        return new ArrayList<>(synsets);
     }
 
     /**
@@ -431,6 +573,7 @@ public class GermaNet {
      * <code>ignoreCase</code> flag as set in the constructor. Same than calling
      * <code>getSynsets(orthForm, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
+     *
      * @param orthForm the <code>orthForm</code> to search for
      * @return a <code>List</code> of all <code>Synsets</code> containing
      * orthForm. If no <code>Synsets</code> were found, this is a
@@ -450,39 +593,21 @@ public class GermaNet {
      * orthographic variant in one of its <code>LexUnits</code> -- in case
      * <code>considerAllOrthForms</code> is false. It uses the
      * <code>ignoreCase</code> flag as set in the constructor.
-     * @param orthForm the <code>orthForm</code> to search for
+     *
+     * @param orthForm                 the <code>orthForm</code> to search for
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (<code>true</code>) or all variants (<code>false</code>)
+     *                                 (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of all <code>Synsets</code> containing
      * orthForm. If no <code>Synsets</code> were found, this is a
      * <code>List</code> containing no <code>Synsets</code>
      */
     public List<Synset> getSynsets(String orthForm, boolean considerMainOrthFormOnly) {
-        ArrayList<Synset> rval = new ArrayList<Synset>();
-        HashMap<String, ArrayList<LexUnit>> map;
-        List<LexUnit> tmpList;
-        String mapForm = orthForm;
-
-        if (ignoreCase) {
-            mapForm = orthForm.toLowerCase();
-        }
+        List<Synset> rval = new ArrayList<>();
 
         for (WordCategory wc : WordCategory.values()) {
-            if (considerMainOrthFormOnly) {
-                map = wordCategoryMap.get(wc);
-            } else {
-                map = wordCategoryMapAllOrthForms.get(wc);
-            }
-            tmpList = map.get(mapForm);
-            if (tmpList != null) {
-                for (LexUnit lu : tmpList) {
-                    if (!rval.contains(lu.getSynset())) {
-                        rval.add(lu.getSynset());
-                    }
-                }
-            }
+            rval.addAll(getSynsets(orthForm, wc, considerMainOrthFormOnly));
+
         }
-        rval.trimToSize();
         return rval;
     }
 
@@ -495,9 +620,10 @@ public class GermaNet {
      * the constructor. Same than calling
      * <code>getSynsets(orthForm, wordCategory, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
-     * @param orthForm the <code>orthForm</code> to be found
+     *
+     * @param orthForm     the <code>orthForm</code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
-     * <code>Synsets</code> to be found (e.g. <code>WordCategory.adj</code>)
+     *                     <code>Synsets</code> to be found (e.g. <code>WordCategory.adj</code>)
      * @return a <code>List</code> of <code>Synsets</code> with the specified
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
@@ -516,59 +642,60 @@ public class GermaNet {
      * orthographic variant in one of its <code>LexUnits</code> -- in case
      * <code>considerAllOrthForms</code> is false. It uses the
      * <code>ignoreCase</code> flag as set in the constructor.
-     * @param orthForm the <code>orthForm</code> to be found
-     * @param wordCategory the <code>WordCategory</code> of the
-     * <code>Synsets</code> to be found (e.g. <code>WordCategory.adj</code>)
+     *
+     * @param orthForm                 the <code>orthForm</code> to be found
+     * @param wordCategory             the <code>WordCategory</code> of the
+     *                                 <code>Synsets</code> to be found (e.g. <code>WordCategory.adj</code>)
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (<code>true</code>) or all variants (<code>false</code>)
+     *                                 (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of <code>Synsets</code> with the specified
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
-    public List<Synset> getSynsets(String orthForm, WordCategory wordCategory,
-            boolean considerMainOrthFormOnly) {
-        /*
-         * This method can probably be removed since it is very rare that
-         * an orthForm is contained in more than one word class
-         */
-        ArrayList<Synset> rval = new ArrayList<Synset>();
-        HashMap<String, ArrayList<LexUnit>> map;
-        List<LexUnit> tmpList;
+    public List<Synset> getSynsets(String orthForm, WordCategory wordCategory, boolean considerMainOrthFormOnly) {
+        Map<String, Set<LexUnit>> map;
+        Set<LexUnit> tmpLexUnitSet;
+        Set<Synset> tmpSynsetSet = new HashSet<>();
+        Set<String> mapForms;
 
         if (ignoreCase) {
-            orthForm = orthForm.toLowerCase();
+            mapForms = lowerToUpperMap.get(orthForm.toLowerCase());
+            mapForms = (mapForms == null) ? new HashSet<>(0) : mapForms;
+        } else {
+            mapForms = new HashSet<>(1);
+            mapForms.add(orthForm);
         }
 
-        if (considerMainOrthFormOnly) {
-            map = wordCategoryMap.get(wordCategory);
-        } else {
-            map = wordCategoryMapAllOrthForms.get(wordCategory);
-        }
-        if (map != null) {
-            tmpList = map.get(orthForm);
-            if (tmpList != null) {
-                for (LexUnit lu : tmpList) {
-                    if (!rval.contains(lu.getSynset())) {
-                        rval.add(lu.getSynset());
-                    }
+        for (String form : mapForms) {
+            if (considerMainOrthFormOnly) {
+                map = wordCategoryMap.get(wordCategory);
+            } else {
+                map = wordCategoryMapAllOrthForms.get(wordCategory);
+            }
+
+            tmpLexUnitSet = map.get(form);
+            if (tmpLexUnitSet != null) {
+                for (LexUnit lu : tmpLexUnitSet) {
+                    tmpSynsetSet.add(lu.getSynset());
+
                 }
             }
+
         }
-        rval.trimToSize();
-        return rval;
+        return new ArrayList<>(tmpSynsetSet);
     }
 
     /**
      * Returns a <code>List</code> of all <code>Synsets</code> in the specified
      * <code>wordCategory</code>.
+     *
      * @param wordCategory the <code>WordCategory</code>, for example
-     * <code>WordCategory.nomen</code>
+     *                     <code>WordCategory.nomen</code>
      * @return a <code>List</code> of all <code>Synsets</code> in the specified
      * <code>wordCategory</code>. If no <code>Synsets</code> were found, this is
      * a <code>List</code> containing no <code>Synsets</code>.
      */
     public List<Synset> getSynsets(WordCategory wordCategory) {
-
-        ArrayList<Synset> rval = new ArrayList<Synset>();
+        ArrayList<Synset> rval = new ArrayList<>();
 
         for (Synset syn : synsets) {
             if (syn.getWordCategory() == wordCategory) {
@@ -582,15 +709,16 @@ public class GermaNet {
     /**
      * Returns a <code>List</code> of all <code>Synsets</code> in the specified
      * <code>wordClass</code>.
+     *
      * @param wordClass the <code>WordClass</code>, for example
-     * <code>WordCategory.Menge</code>
+     *                  <code>WordCategory.Menge</code>
      * @return a <code>List</code> of all <code>Synsets</code> in the specified
      * <code>wordClass</code>. If no <code>Synsets</code> were found, this is
      * a <code>List</code> containing no <code>Synsets</code>.
      */
     public List<Synset> getSynsets(WordClass wordClass) {
 
-        ArrayList<Synset> rval = new ArrayList<Synset>();
+        ArrayList<Synset> rval = new ArrayList<>();
 
         for (Synset syn : synsets) {
             if (syn.getWordClass() == wordClass) {
@@ -604,42 +732,61 @@ public class GermaNet {
     /**
      * Returns the <code>Synset</code> with <code>id</code>, or
      * <code>null</code> if it is not found.
+     *
      * @param id the ID of the <code>Synset</code> to be found.
      * @return the <code>Synset</code> with <code>id</code>, or <code>null</code>
      * if it is not found..
      */
     public Synset getSynsetByID(int id) {
-        return synsetID.get(id);
+        return synsetIDMap.get(id);
     }
 
     /**
      * Returns the <code>LexUnit</code> with <code>id</code>, or
      * <code>null</code> if it is not found.
+     *
      * @param id the ID of the <code>LexUnit</code> to be found
      * @return the <code>LexUnit</code> with <code>id</code>, or
      * <code>null</code> if it is not found.
      */
     public LexUnit getLexUnitByID(int id) {
-        return lexUnitID.get(id);
+        return lexUnitIDMap.get(id);
     }
 
     /**
      * Returns the number of <code>Synsets</code> contained in <code>GermaNet</code>.
+     *
      * @return the number of <code>Synsets</code> contained in <code>GermaNet</code>
      */
     public int numSynsets() {
-        return synsetID.size(); //synsets.size();
+        return synsetIDMap.size(); //synsets.size();
 
     }
 
     /**
      * Returns the number of <code>LexUnits</code> contained in
      * <code>GermaNet</code>.
+     *
      * @return the number of <code>LexUnits</code> contained in
      * <code>GermaNet</code>
      */
     public int numLexUnits() {
-        return lexUnitID.size();
+        return lexUnitIDMap.size();
+    }
+
+    /**
+     * Returns a <code>List</code> of all <code>LexUnits</code>.
+     *
+     * @return a <code>List</code> of all <code>LexUnits</code>
+     */
+    public List<LexUnit> getLexUnits() {
+        List<LexUnit> rval = new ArrayList<>();
+
+        for (WordCategory wc : WordCategory.values()) {
+            rval.addAll(getLexUnits(wc));
+        }
+
+        return rval;
     }
 
     /**
@@ -650,6 +797,7 @@ public class GermaNet {
      * <code>ignoreCase</code> flag as set in the constructor. Same than
      * calling <code>getSynsets(orthForm, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
+     *
      * @param orthForm the <code>orthForm</code> to search for
      * @return a <code>List</code> of all <code>LexUnits</code> containing
      * <code>orthForm</code>. If no <code>LexUnits</code> were found, this is a
@@ -669,21 +817,21 @@ public class GermaNet {
      * orthographic variant -- in case
      * <code>considerAllOrthForms</code> is false. It uses the
      * <code>ignoreCase</code> flag as set in the constructor.
-     * @param orthForm the <code>orthForm</code> to search for
+     *
+     * @param orthForm                 the <code>orthForm</code> to search for
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (<code>true</code>) or all variants (<code>false</code>)
+     *                                 (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of all <code>LexUnits</code> containing
      * <code>orthForm</code>. If no <code>LexUnits</code> were found, this is a
      * <code>List</code> containing no <code>LexUnits</code>.
      */
     public List<LexUnit> getLexUnits(String orthForm, boolean considerMainOrthFormOnly) {
-        ArrayList<LexUnit> rval = new ArrayList<LexUnit>();
+        List<LexUnit> rval = new ArrayList<>();
 
         // get LexUnits from each word class
         for (WordCategory wc : WordCategory.values()) {
             rval.addAll(getLexUnits(orthForm, wc, considerMainOrthFormOnly));
         }
-        rval.trimToSize();
         return rval;
     }
 
@@ -696,9 +844,10 @@ public class GermaNet {
      * the constructor. Same than calling
      * <code>getSynsets(orthForm, wordCategory, false)</code> with
      * <code>considerMainOrthFormOnly=false</code>.
-     * @param orthForm the <code>orthForm</code> to be found
+     *
+     * @param orthForm     the <code>orthForm</code> to be found
      * @param wordCategory the <code>WordCategory</code> of the
-     * <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
+     *                     <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
      * @return a <code>List</code> of <code>LexUnits</code> with the specified
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
@@ -716,37 +865,39 @@ public class GermaNet {
      * orthographic variant -- in case
      * <code>considerAllOrthForms</code> is false. It uses the
      * <code>ignoreCase</code> flag as set in the constructor.
-     * @param orthForm the <code>orthForm</code> to be found
-     * @param wordCategory the <code>WordCategory</code> of the
-     * <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
+     *
+     * @param orthForm                 the <code>orthForm</code> to be found
+     * @param wordCategory             the <code>WordCategory</code> of the
+     *                                 <code>LexUnits</code> to be found (eg <code>WordCategory.nomen</code>)
      * @param considerMainOrthFormOnly considering main orthographical form only
-     * (<code>true</code>) or all variants (<code>false</code>)
+     *                                 (<code>true</code>) or all variants (<code>false</code>)
      * @return a <code>List</code> of <code>LexUnits</code> with the specified
      * <code>orthForm</code> and <code>wordCategory</code>.
      */
-    public List<LexUnit> getLexUnits(String orthForm, WordCategory wordCategory,
-            boolean considerMainOrthFormOnly) {
-        List<LexUnit> rval = null;
-        ArrayList<LexUnit> tmpList;
-        HashMap<String, ArrayList<LexUnit>> map;
+    public List<LexUnit> getLexUnits(String orthForm, WordCategory wordCategory, boolean considerMainOrthFormOnly) {
+        ArrayList<LexUnit> rval = new ArrayList<>();
+        Set<LexUnit> tmpLexUnitSet;
+        Map<String, Set<LexUnit>> map;
         String mapForm = orthForm;
+        Set<String> mapForms;
 
         if (ignoreCase) {
-            mapForm = orthForm.toLowerCase();
-        }
-
-        if (considerMainOrthFormOnly) {
-            map = wordCategoryMap.get(wordCategory);
+            mapForms = lowerToUpperMap.get(orthForm.toLowerCase());
+            mapForms = (mapForms == null) ? new HashSet<>(0) : mapForms;
         } else {
-            map = wordCategoryMapAllOrthForms.get(wordCategory);
+            mapForms = new HashSet<String>(1);
+            mapForms.add(orthForm);
         }
 
-        if (map != null) {
-            tmpList = map.get(mapForm);
-            if (tmpList == null) {
-                rval = new ArrayList<LexUnit>(0);
+        for (String form : mapForms) {
+            if (considerMainOrthFormOnly) {
+                map = wordCategoryMap.get(wordCategory);
             } else {
-                rval = (List<LexUnit>) tmpList.clone();
+                map = wordCategoryMapAllOrthForms.get(wordCategory);
+            }
+            tmpLexUnitSet = map.get(form);
+            if (tmpLexUnitSet != null) {
+                rval.addAll(tmpLexUnitSet);
             }
         }
         return rval;
@@ -755,36 +906,189 @@ public class GermaNet {
     /**
      * Returns a <code>List</code> of all <code>LexUnits</code> in the specified
      * <code>wordCategory</code>.
+     *
      * @param wordCategory the <code>WordCategory</code>, (e.g.
-     * <code>WordCategory.verben</code>)
+     *                     <code>WordCategory.verben</code>)
      * @return a <code>List</code> of all <code>LexUnits</code> in the specified
      * <code>wordCategory</code>. If no <code>LexUnits</code> were found, this
      * is a <code>List</code> containing no <code>LexUnits</code>.
      */
     public List<LexUnit> getLexUnits(WordCategory wordCategory) {
-        ArrayList<LexUnit> rval = new ArrayList<LexUnit>();
-        HashMap<String, ArrayList<LexUnit>> map;
-        map = (HashMap<String, ArrayList<LexUnit>>) wordCategoryMap.get(wordCategory);
+        ArrayList<LexUnit> rval = new ArrayList<>();
+        Map<String, Set<LexUnit>> map;
+        map = wordCategoryMap.get(wordCategory);
+        Set<LexUnit> tmpLexUnitSet = new HashSet<>();
 
-        for (ArrayList<LexUnit> luList : map.values()) {
-            rval.addAll((ArrayList<LexUnit>) luList.clone());
+        for (Set<LexUnit> luSet : map.values()) {
+            tmpLexUnitSet.addAll(luSet);
         }
+
+        rval = new ArrayList<>(tmpLexUnitSet);
         rval.trimToSize();
+
         return rval;
     }
 
     /**
-     * Returns a <code>List</code> of all <code>LexUnits</code>.
-     * @return a <code>List</code> of all <code>LexUnits</code>
+     * Returns a <code>List</code> of all <code>LexUnits</code> using the specified
+     * <code>FilterConfig</code>.
+     *
+     * @param filter a <code>FilterConfig</code> to use for the search
+     * @return a <code>List</code> of all <code>LexUnits</code> using the specified
+     * <code>FilterConfig</code>. If no <code>LexUnits</code> were found, this
+     * is an empty <code>List</code>.
      */
-    public List<LexUnit> getLexUnits() {
-        ArrayList<LexUnit> rval = new ArrayList<LexUnit>();
-
-        for (WordCategory wc : WordCategory.values()) {
-            rval.addAll(getLexUnits(wc));
+    public List<LexUnit> getLexUnits(FilterConfig filter) {
+        if (filter == null) {
+            return new ArrayList<>();
         }
-        rval.trimToSize();
+
+        String searchString = filter.getSearchString();
+        Set<WordCategory> wordCategories = filter.getWordCategories();
+        Set<WordClass> wordClasses = filter.getWordClasses();
+        Set<OrthFormVariant> orthFormVariants = filter.getOrthFormVariants();
+
+        // can't do anything with a null or empty searchString
+        // or if any of the sets are null or empty
+        if (searchString == null || searchString.isEmpty()
+                || wordCategories == null || wordCategories.isEmpty()
+                || wordClasses == null || wordClasses.isEmpty()
+                || orthFormVariants == null || orthFormVariants.isEmpty()) {
+            return new ArrayList<LexUnit>();
+        }
+
+        List<LexUnit> lexUnits = getLexUnits();
+
+        // every lexunit must be inspected if it's a regEx or editDist
+        if (filter.isRegEx() || filter.getEditDistance() > 0) {
+            return  getLexUnits(filter, lexUnits);
+        }
+
+        // if it's a literal search string and not using edit distance
+        // limit the lexunit list
+        List<LexUnit> partiallyFilteredLexUnits = new ArrayList<>();
+        Map<String, Set<LexUnit>> formLexUnitMap;
+        Set<LexUnit> tmpLexUnitSet;
+        Set<String> mapForms;
+
+        if (filter.isIgnoreCase()) {
+            // get all possible orthForms that would match ignoring case
+            // including all orthFormVariants
+            mapForms = lowerToUpperMap.get(searchString.toLowerCase());
+            mapForms = (mapForms == null) ? new HashSet<>(0) : mapForms;
+        } else {
+            // search for the search term exactly
+            mapForms = new HashSet<>(1);
+            mapForms.add(searchString);
+        }
+
+        // extract lexunits containing any of the forms as any orthFormVariant
+        // that belong to any of the WordCategories in the filter
+        for (String form : mapForms) {
+            for (WordCategory wordCategory : filter.getWordCategories()) {
+                formLexUnitMap = wordCategoryMapAllOrthForms.get(wordCategory);
+
+                tmpLexUnitSet = formLexUnitMap.get(form);
+                if (tmpLexUnitSet != null) {
+                    partiallyFilteredLexUnits.addAll(tmpLexUnitSet);
+                }
+            }
+        }
+        return getLexUnits(filter, partiallyFilteredLexUnits);
+    }
+
+    /**
+     * Returns a <code>List</code> of <code>LexUnits</code> in the given <code>Collection</code> of <code>LexUnit</code>
+     * that satisfy the specified <code>FilterConfig</code>.
+     *
+     * @param filter   a <code>FilterConfig</code> to use for the search
+     * @param lexUnits a <code>Collection</code> of <code>LexUnit</code> to search
+     * @return a <code>List</code> of <code>LexUnits</code> in the given <code>Collection</code> of <code>LexUnit</code>
+     * that satisfy the specified <code>FilterConfig</code>. If no <code>LexUnits</code> were found, this
+     * is an empty <code>List</code>.
+     */
+    public List<LexUnit> getLexUnits(FilterConfig filter, Collection<LexUnit> lexUnits) {
+        List<LexUnit> rval = new ArrayList<>();
+
+        if (filter == null) {
+            return rval;
+        }
+
+        String searchString = filter.getSearchString();
+        Set<WordCategory> wordCategories = filter.getWordCategories();
+        Set<WordClass> wordClasses = filter.getWordClasses();
+        Set<OrthFormVariant> orthFormVariants = filter.getOrthFormVariants();
+        int editDist = filter.getEditDistance();
+        boolean regEx = filter.isRegEx();
+        boolean calcEditDist = (!regEx && editDist > 0);
+        Pattern pattern = null;
+        LevenshteinDistance levenshteinDistance = null;
+
+        // Only need one of pattern || levenshtein for a filter
+        if (calcEditDist) {
+            levenshteinDistance = new LevenshteinDistance(editDist);
+        } else {
+            pattern = compilePattern(filter);
+        }
+
+        for (LexUnit lu : lexUnits) {
+
+            // check WordCategory and WordClass
+            if (wordCategories.contains(lu.getWordCategory())
+                    && wordClasses.contains(lu.getWordClass())) {
+
+                // check all required orthFormVariants
+                boolean hit = false;
+                for (OrthFormVariant variant : orthFormVariants) {
+                    String toMatch = lu.getOrthForm(variant);
+                    if (toMatch != null) {
+                        // pattern will also check for case, but it has to be done
+                        // separately when editDistance is used
+                        if (calcEditDist) {
+                            if (filter.isIgnoreCase()) {
+                                searchString = searchString.toLowerCase();
+                                toMatch = toMatch.toLowerCase();
+                            }
+                            int actualDist = levenshteinDistance.apply(searchString, toMatch);
+                            if (actualDist >= 0) {
+                                hit = true;
+                                break; // found a match in this LexUnit, stop looking
+                            }
+                        } else if (pattern.matcher(toMatch).matches()) {
+                            hit = true;
+                            break; // found a match in this LexUnit, stop looking
+                        }
+                    }
+                }
+                if (hit) {
+                    rval.add(lu);
+                }
+            }
+        }
         return rval;
+    }
+
+    /**
+     * Returns a compiled pattern based on the given <code>FilterConfig</code>'s
+     * searchString, ignoreCase and regEx values.
+     *
+     * @param filter the <code>FilterConfig</code> to use for this <code>Pattern</code>
+     * @return a compiled pattern based on the given <code>FilterConfig</code>'s
+     * searchString, ignoreCase and regEx values.
+     */
+    private Pattern compilePattern(FilterConfig filter) {
+        int patternFlags = 0;
+        String searchString = filter.getSearchString();
+
+        // set the pattern flags if case insensitive or not a regEx
+        if (filter.isIgnoreCase()) {
+            patternFlags = patternFlags | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+        }
+        if (!filter.isRegEx()) {
+            patternFlags = patternFlags | Pattern.LITERAL;
+        }
+
+        return Pattern.compile(searchString, patternFlags);
     }
 
     /**
@@ -792,30 +1096,20 @@ public class GermaNet {
      */
     protected void trimAll() {
         // trim Synsets, which trim LexUnits
-        for (Synset sset : synsets) {
-            sset.trimAll();
-        }
-
-        // trim lists in wordCategoryMap
-        HashMap<String, ArrayList<LexUnit>> map;
-        for (WordCategory wc : WordCategory.values()) {
-            map = wordCategoryMap.get(wc);
-            for (ArrayList<LexUnit> luList : map.values()) {
-                luList.trimToSize();
-            }
+        for (Synset synsetSet : synsets) {
+            synsetSet.trimAll();
         }
     }
 
     /**
      * Loads the ILI data files into this <code>GermaNet</code> object
      * from the specified directory File
-     * @param path location of the ILI data files
-     * @throws java.io.FileNotFoundException
+     *
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadIli(boolean zip) throws XMLStreamException {
+    private void loadIli() throws FileNotFoundException, XMLStreamException {
         IliLoader loader;
-        String oldVal = null;
+        String oldVal;
 
         // use xerces xml parser
         oldVal = System.getProperty("javax.xml.stream.XMLInputFactory");
@@ -823,36 +1117,24 @@ public class GermaNet {
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
         // load data
-        try {
-            loader = new IliLoader(this);
-            if (zip) {
-                InputStream iliStream = null;
-                for (int i = 0; i < inputStreams.size(); i++) {
-                    if (xmlNames.get(i).equals("interLingualIndex_DE-EN.xml")) {
-                        iliStream = inputStreams.get(i);
-                        break;
-                    }
-                }
-                loader.loadILI(iliStream);
-            } else loader.loadILI(new File(dir + "/interLingualIndex_DE-EN.xml"));
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        loader = new IliLoader(this);
 
-        trimAll();
+        if (iliInputStream != null) {
+            loader.loadILI(iliInputStream);
+            //add the information about corresponding IliRecords to LexUnits
+            updateLexUnitsWithIli();
+        }
 
         // set parser back to whatever it was before
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
         }
-
-        //add the information about corresponding IliRecords to LexUnits
-        updateLexUnitsWithIli();
     }
 
     /**
      * Adds <code>IliRecords</code> to this <code>GermaNet</code>
      * object when IliLoader is called
+     *
      * @param ili the <code>IliRecord</code> to be added
      */
     protected void addIliRecord(IliRecord ili) {
@@ -861,10 +1143,11 @@ public class GermaNet {
 
     /**
      * Returns a <code>List</code> of all <code>IliRecords</code>.
+     *
      * @return a <code>List</code> of all <code>IliRecords</code>
      */
     public List<IliRecord> getIliRecords() {
-        return (List<IliRecord>) iliRecords.clone();
+        return new ArrayList<>(iliRecords);
     }
 
     /**
@@ -875,9 +1158,10 @@ public class GermaNet {
         for (IliRecord ili : iliRecords) {
             int id = ili.getLexUnitId();
             if (getLexUnitByID(id) != null) {
-            LexUnit lu = getLexUnitByID(id);
-            lu.addIliRecord(ili);
-            lexUnitID.put(id, lu);}
+                LexUnit lu = getLexUnitByID(id);
+                lu.addIliRecord(ili);
+                lexUnitIDMap.put(id, lu);
+            }
         }
     }
 
@@ -885,43 +1169,37 @@ public class GermaNet {
     /**
      * Loads the Wiktionary data files into this <code>GermaNet</code> object
      * from the specified directory File
-     * @param path location of the Wiktionary data files
-     * @throws java.io.FileNotFoundException
+     *
      * @throws javax.xml.stream.XMLStreamException
      */
-    private void loadWiktionaryParaphrases(boolean zip) throws XMLStreamException {
+    private void loadWiktionaryParaphrases() throws XMLStreamException, FileNotFoundException {
         WiktionaryLoader loader;
-        String oldVal = null;
+        String oldVal;
 
         // use xerces xml parser
         oldVal = System.getProperty("javax.xml.stream.XMLInputFactory");
         System.setProperty("javax.xml.stream.XMLInputFactory",
                 "com.sun.xml.internal.stream.XMLInputFactoryImpl");
 
-        // load data
-        try {
+        if (wiktInputStreams.size() > 0) {
+            // load data
             loader = new WiktionaryLoader(this);
-            if (zip) {
-                loader.loadWiktionary(inputStreams, xmlNames);
-            } else loader.loadWiktionary(dir);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(GermaNet.class.getName()).log(Level.SEVERE, null, ex);
+            loader.loadWiktionary(wiktInputStreams, wiktXmlNames);
+            //add the information about corresponding WiktionaryParaphrases to LexUnits
+            updateLexUnitsWithWiktionary();
+            LOGGER.info("Done loading wiktionary data.");
         }
-
-        trimAll();
 
         // set parser back to whatever it was before
         if (oldVal != null) {
             System.setProperty("javax.xml.stream.XMLInputFactory", oldVal);
         }
-
-        //add the information about corresponding WiktionaryParaphrases to LexUnits
-        updateLexUnitsWithWiktionary();
     }
 
     /**
      * Adds <code>WiktionaryParaphrases</code> to this <code>GermaNet</code>
      * object when WiktionaryLoader is called
+     *
      * @param wiki the <code>WiktionaryParaphrase</code> to be added
      */
     protected void addWiktionaryParaphrase(WiktionaryParaphrase wiki) {
@@ -930,10 +1208,11 @@ public class GermaNet {
 
     /**
      * Returns a <code>List</code> of all <code>WiktionaryParaphrases</code>.
+     *
      * @return a <code>List</code> of all <code>WiktionaryParaphrases</code>
      */
     public List<WiktionaryParaphrase> getWiktionaryParaphrases() {
-        return (List<WiktionaryParaphrase>) wiktionaryParaphrases.clone();
+        return new ArrayList<>(wiktionaryParaphrases);
     }
 
     public HashMap<LexUnit, CompoundInfo> getLexUnitsWithCompoundInfo() {
@@ -954,18 +1233,35 @@ public class GermaNet {
         for (WiktionaryParaphrase wiki : wiktionaryParaphrases) {
             int id = wiki.getLexUnitId();
             LexUnit lu = getLexUnitByID(id);
-            if (lu != null) { // TODO: this might get obsolete once we do a proper Wiktionary XML release
+            if (lu != null) {
                 lu.addWiktionaryParaphrase(wiki);
             }
-            lexUnitID.put(id, lu);
+            lexUnitIDMap.put(id, lu);
         }
     }
 
     /**
+     * Get the <code>SemanticUtils</code> object, which can be used to calculate semantic relatedness
+     * based on several algorithms. Some algorithms require frequency lists for each word category.
+     * These frequency files should be specified in the <code>GermaNet</code> constructor.
+     *
+     * @return the <code>SemanticUtils</code> object
+     * @throws IOException if any of the frequency list files do not exist or can not be read
+     */
+    public SemanticUtils getSemanticUtils() throws IOException {
+        if (semanticUtils == null) {
+            semanticUtils = new SemanticUtils(catMaxHypernymDistanceMap, this,
+                    nounFreqFile, verbFreqFile, adjFreqFile);
+        }
+        return semanticUtils;
+    }
+
+    /**
      * Checks whether the <code>File</code> is a <code>ZipFile</code>.
+     *
      * @param file the <code>File</code> to check
      * @return true if this <code>File</code> is a <code>ZipFile</code>
-     * @throws javax.xml.stream.IOException
+     * @throws java.io.IOException if there is an error opening or reading the file.
      */
     protected static boolean isZipFile(File file) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(file, "r");
