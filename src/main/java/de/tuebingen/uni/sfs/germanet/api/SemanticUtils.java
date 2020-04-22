@@ -36,6 +36,8 @@ import java.util.*;
 public class SemanticUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SemanticUtils.class);
+
+    private boolean freqFilesFound;
     private Map<WordCategory, Integer> catMaxHypernymDistanceMap;
     private Map<WordCategory, Set<LeastCommonSubsumer>> catLongestLCSMap;
     private Map<WordCategory, Integer> catMaxDepthMap;
@@ -51,14 +53,11 @@ public class SemanticUtils {
 
     SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap, GermaNet gnet,
                   File nounFreqFile, File verbFreqFile, File adjFreqFile) throws IOException {
+
         this.catMaxHypernymDistanceMap = catMaxHypernymDistanceMap;
         this.gnet = gnet;
         catMaxDepthMap = new HashMap<>(WordCategory.values().length);
         catNormalizationMap = new HashMap<>(WordCategory.values().length);
-        catICMap = new HashMap<>(WordCategory.values().length);
-        formFreqMaps = new HashMap<>(WordCategory.values().length);
-        individualFreqMaps = new HashMap<>(WordCategory.values().length);
-        cumulativeFreqMaps = new HashMap<>(WordCategory.values().length);
 
         long startTime = System.currentTimeMillis();
         LOGGER.info("Initializing SemanticUtils object...");
@@ -68,28 +67,37 @@ public class SemanticUtils {
         LOGGER.info("Initializing normalization values for Path algorithms...");
         initPathNormalizationValues();
 
-        LOGGER.info("Loading frequency lists...");
-        formFreqMaps.put(WordCategory.nomen, loadFreqData(nounFreqFile));
-        formFreqMaps.put(WordCategory.verben, loadFreqData(verbFreqFile));
-        formFreqMaps.put(WordCategory.adj, loadFreqData(adjFreqFile));
+        if (nounFreqFile == null || verbFreqFile == null || adjFreqFile == null) {
+            freqFilesFound = false;
+        } else {
+            catICMap = new HashMap<>(WordCategory.values().length);
+            formFreqMaps = new HashMap<>(WordCategory.values().length);
+            individualFreqMaps = new HashMap<>(WordCategory.values().length);
+            cumulativeFreqMaps = new HashMap<>(WordCategory.values().length);
 
-        // initialize individual frequency maps
-        LOGGER.info("Calculating individual frequencies...");
-        initIndividualFreqMaps();
+            LOGGER.info("Loading frequency lists...");
+            formFreqMaps.put(WordCategory.nomen, loadFreqData(nounFreqFile));
+            formFreqMaps.put(WordCategory.verben, loadFreqData(verbFreqFile));
+            formFreqMaps.put(WordCategory.adj, loadFreqData(adjFreqFile));
+            freqFilesFound = true;
 
+            // initialize individual frequency maps
+            LOGGER.info("Calculating individual frequencies...");
+            initIndividualFreqMaps();
 
-        // calculate cumulative frequency of each synset
-        LOGGER.info("Calculating cumulative frequencies...");
-        initCumulativeFreqMaps();
+            // calculate cumulative frequency of each synset
+            LOGGER.info("Calculating cumulative frequencies...");
+            initCumulativeFreqMaps();
 
-        // calculate the Information Content of each synset and normalization values for each word category
-        LOGGER.info("Calculating Information Content values and normalization values...");
-        initICMaps();
+            // calculate the Information Content of each synset and normalization values for each word category
+            LOGGER.info("Calculating Information Content values and normalization values...");
+            initICMaps();
 
-        // Delete maps that are not needed any more
-        formFreqMaps = null;
-        individualFreqMaps = null;
-        cumulativeFreqMaps = null;
+            // Delete maps that are not needed any more
+            formFreqMaps = null;
+            individualFreqMaps = null;
+            cumulativeFreqMaps = null;
+        }
 
         long endTime = System.currentTimeMillis();
         double processingTime = (double) (endTime - startTime) / 1000;
@@ -704,6 +712,8 @@ public class SemanticUtils {
      * If normalizedMax is &gt; 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
      * <p>
+     * <code>GermaNet</code> must be constructed with frequency files to use this method.
+     * Frequency lists with wide coverage of words in GermaNet are available for download from the GermaNet website<br>
      * Synsets must be in the same WordCategory.
      * <p>
      * @param s1 first synset to be compared
@@ -711,9 +721,12 @@ public class SemanticUtils {
      * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
      * @return The similarity using the Resnik algorithm with optional normalization, or null if
      * the synsets do not belong to the same WordCategory, or if there is not enough information to
-     * calculate the similarity.
+     * calculate the similarity (such as missing frequency files).
      */
     public Double getSimilarityResnik(Synset s1, Synset s2, int normalizedMax) {
+        if (!freqFilesFound) {
+            return null;
+        }
         if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return null;
         }
@@ -737,6 +750,8 @@ public class SemanticUtils {
      * If normalizedMax is &gt; 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
      *
+     * <code>GermaNet</code> must be constructed with frequency files to use this method.
+     * Frequency lists with wide coverage of words in GermaNet are available for download from the GermaNet website<br>
      * Synsets must be in the same WordCategory.
      *
      * @param s1 first synset to be compared
@@ -744,9 +759,12 @@ public class SemanticUtils {
      * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
      * @return The similarity using the Jiang and Conrath algorithm with optional normalization, or null if
      * the synsets do not belong to the same WordCategory, or if there is not enough information to
-     * calculate the similarity.
+     * calculate the similarity (such as missing frequency files).
      */
     public Double getSimilarityJiangAndConrath(Synset s1, Synset s2, int normalizedMax) {
+        if (!freqFilesFound) {
+            return null;
+        }
         if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return null;
         }
@@ -772,6 +790,8 @@ public class SemanticUtils {
      * If normalizedMax is &gt; 0, then synsets that are very similar will be close to that
      * value, and dissimilar synsets will have a value close to 0.0.<br><br>
      *
+     * <code>GermaNet</code> must be constructed with frequency files to use this method.
+     * Frequency lists with wide coverage of words in GermaNet are available for download from the GermaNet website<br>
      * Synsets must be in the same WordCategory.
      *
      * @param s1 first synset to be compared
@@ -779,9 +799,12 @@ public class SemanticUtils {
      * @param normalizedMax value to use for maximal similarity (raw value is returned if &lt;= 0)
      * @return The similarity using the Lin algorithm with optional normalization, or null if
      * the synsets do not belong to the same WordCategory, or if there is not enough information to
-     * calculate the similarity.
+     * calculate the similarity (such as missing frequency files).
      */
     public Double getSimilarityLin(Synset s1, Synset s2, int normalizedMax) {
+        if (!freqFilesFound) {
+            return null;
+        }
         if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return null;
         }

@@ -37,7 +37,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 class WiktionaryLoader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GermaNet.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WiktionaryLoader.class);
     private GermaNet germaNet;
     private String namespace;
 

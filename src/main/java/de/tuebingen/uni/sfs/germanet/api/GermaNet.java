@@ -1243,7 +1243,8 @@ public class GermaNet {
     /**
      * Get the <code>SemanticUtils</code> object, which can be used to calculate semantic relatedness
      * based on several algorithms. Some algorithms require frequency lists for each word category.
-     * These frequency files should be specified in the <code>GermaNet</code> constructor.
+     * To use those algorithms, frequency files must specified in the <code>GermaNet</code> constructor.
+     * Frequency lists with wide coverage of words in GermaNet are available for download from the GermaNet website<br>
      *
      * @return the <code>SemanticUtils</code> object
      * @throws IOException if any of the frequency list files do not exist or can not be read
@@ -1251,7 +1252,7 @@ public class GermaNet {
     public SemanticUtils getSemanticUtils() throws IOException {
         if (semanticUtils == null) {
             semanticUtils = new SemanticUtils(catMaxHypernymDistanceMap, this,
-                    nounFreqFile, verbFreqFile, adjFreqFile);
+                        nounFreqFile, verbFreqFile, adjFreqFile);
         }
         return semanticUtils;
     }

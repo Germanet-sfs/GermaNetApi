@@ -80,6 +80,27 @@ class R15GermaNetTest {
     }
 
     @Test
+    void semUtilsWithoutFreqLists() {
+        try {
+            Synset synset1 = gnetCaseSensitive.getSynsetByID(100607);
+            Synset synset2 = gnetCaseSensitive.getSynsetByID(46683);
+            SemanticUtils semanticUtils = gnetCaseSensitive.getSemanticUtils();
+
+            // should get a value for Path measures
+            assertNotNull(semanticUtils.getSimilarityWuAndPalmer(synset1, synset2, 0));
+            assertNotNull(semanticUtils.getSimilaritySimplePath(synset1, synset2, 0));
+            assertNotNull(semanticUtils.getSimilarityLeacockChodorow(synset1, synset2, 0));
+
+            // should get null for IC based measures
+            assertNull(semanticUtils.getSimilarityLin(synset1, synset2, 0));
+            assertNull(semanticUtils.getSimilarityResnik(synset1, synset2, 0));
+            assertNull(semanticUtils.getSimilarityJiangAndConrath(synset1, synset2, 0));
+        } catch (IOException ex) {
+            fail(ex);
+        }
+    }
+
+    @Test
     void badPathTest() {
         assertThrows(FileNotFoundException.class, () -> {
             GermaNet gnet = new GermaNet(dataPath + "blah/blah/");
@@ -88,14 +109,14 @@ class R15GermaNetTest {
 
     @Test
     void iliCountTest() {
-        // release 14
+        // release 15
         assertEquals(28564, gnetCaseSensitive.getIliRecords().size());
         assertEquals(28564, gnetIgnoreCase.getIliRecords().size());
     }
 
     @Test
     void wiktCountTest() {
-        // release 14
+        // release 15
         assertEquals(29548, gnetCaseSensitive.getWiktionaryParaphrases().size());
         assertEquals(29548, gnetIgnoreCase.getWiktionaryParaphrases().size());
     }
