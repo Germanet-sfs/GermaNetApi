@@ -31,3 +31,7 @@ Usage
 For a short introduction into the latest version API and some code examples of how to use it, you can have a look at the [java notebook](https://github.com/Germanet-sfs/germanetTutorials/blob/master/javaAPI/tutorial_R15.ipynb) in this [repository](https://github.com/Germanet-sfs/germanetTutorials). You can either look at the code or download it as an interactive jupyter notebook if you follow the instructions in the readme.
 
 For a more extensive introduction into the linguistic concepts related to GermaNet and more sophisticated examples of how to use the API, have a look at this [PDF](https://github.com/Germanet-sfs/GermaNetApi/blob/master/documentation/tutorial/GermaNetTutorial13.0.pdf) and the following [code](https://github.com/Germanet-sfs/GermaNetApi/blob/master/src/test/java/HypernymGraph.java). This tutorial is based on an older version of the API but can also be used with the current version.
+
+Contact
+---------
+If problems or further questions arise, simply contact us by [e-mail](germanet-feedback@sfs.uni-tuebingen.de)
