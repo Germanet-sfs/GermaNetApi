@@ -34,4 +34,4 @@ For a more extensive introduction into the linguistic concepts related to GermaN
 
 Contact
 ---------
-If problems or further questions arise, simply contact us by [e-mail](germanet-feedback@sfs.uni-tuebingen.de)
+If problems or further questions arise, simply contact us by e-mail: germanet-feedback@sfs.uni-tuebingen.de
