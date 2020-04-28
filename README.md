@@ -7,6 +7,10 @@ A semantic concept is modeled by a synset (short for *synonymy set*) in
 GermaNet. A synset is a set of words (called *lexical units*) where all
 the words are taken to have (almost) the same meaning.
 
+This repository contains the Java API to access the GermaNet data. The main class named `GermaNet` serves as a starting point to the API.
+When a `GermaNet` object is constructed, data is loaded from the
+GermaNet XML sources.
+
 Setup
 --------------------
 
