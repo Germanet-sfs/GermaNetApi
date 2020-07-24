@@ -104,9 +104,9 @@ class R14GermaNetTest {
      * Search gnet for Synsets with filterConfig and a GermaNet instance constructed with ignoreCase true | false.
      * Test that the expected synsets , identified by ID, are returned
      *
-     * @param filterConfig
-     * @param useGnetIgnoreCase
-     * @param expectedIds
+     * @param filterConfig filter to use
+     * @param useGnetIgnoreCase which GermaNet instance to use
+     * @param expectedIds expected IDs for the search result
      */
     @ParameterizedTest(name = "{index} {1} {2} {0}")
     @MethodSource({"emptyFilterProvider",
@@ -140,9 +140,9 @@ class R14GermaNetTest {
      * Search gnet for LexUnits with filterConfig and a GermaNet instance constructed with ignoreCase true | false.
      * Test that the expected lexunits , identified by ID, are returned
      *
-     * @param filterConfig
-     * @param useGnetIgnoreCase
-     * @param expectedIds
+     * @param filterConfig the filter to use
+     * @param useGnetIgnoreCase which GermaNet instance to use
+     * @param expectedIds expected IDs for the search result
      */
     @ParameterizedTest(name = "{index} {1} {2} {0}")
     @MethodSource({"emptyFilterProvider",
@@ -1219,13 +1219,9 @@ class R14GermaNetTest {
      */
     @ParameterizedTest(name = "{index} {0} {1} {2}")
     @MethodSource({"getSynsetsMainOnlyProvider"})
-    void getSynsetsMainOnly(String orthForm, List<Integer> expectedIds, boolean useGnetIgnoreCase, TestReporter testReporter) {
+    void getSynsetsMainOnly(String orthForm, List<Integer> expectedIds, boolean useGnetIgnoreCase) {
         GermaNet gnet;
         List<Synset> actualList;
-
-        testReporter.publishEntry("params", orthForm + " " + expectedIds + " "
-                + (useGnetIgnoreCase ? "ignoreCase" : "caseSensitive"));
-
 
         gnet = (useGnetIgnoreCase) ? gnetIgnoreCase : gnetCaseSensitive;
         actualList = gnet.getSynsets(orthForm, true);

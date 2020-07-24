@@ -19,6 +19,8 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.*;
 import java.util.*;
 
 /**
@@ -76,8 +78,8 @@ public class LexUnit {
     private ArrayList<IliRecord> iliRecords;
     private ArrayList<WiktionaryParaphrase> wiktionaryParaphrases;
     // Relations of this LexUnit
-    private EnumMap<LexRel, Set<LexUnit>> outgoingRelations;
-    private EnumMap<LexRel, Set<LexUnit>> incomingRelations;
+    private Object2ObjectMap<LexRel, ObjectSet<LexUnit>> outgoingRelations;
+    private Object2ObjectMap<LexRel, ObjectSet<LexUnit>> incomingRelations;
     private CompoundInfo compoundInfo;
 
     /**
@@ -109,14 +111,14 @@ public class LexUnit {
         this.oldOrthVar = oldOrthVar;
         this.namedEntity = namedEntity;
         this.source = source;
-        this.outgoingRelations = new EnumMap<>(LexRel.class);
-        this.incomingRelations = new EnumMap<>(LexRel.class);
+        this.outgoingRelations = new Object2ObjectOpenHashMap<>(LexRel.values().length);
+        this.incomingRelations = new Object2ObjectOpenHashMap<>(LexRel.values().length);
         this.frames = new ArrayList<>();
         this.examples = new ArrayList<>();
         this.iliRecords = new ArrayList<>();
         this.wiktionaryParaphrases = new ArrayList<>();
 
-        allOrthForms = new ArrayList<>();
+        allOrthForms = new ObjectArrayList<>();
         allOrthForms.add(orthForm);
         if (orthVar != null) {
             allOrthForms.add(orthVar);
@@ -127,6 +129,7 @@ public class LexUnit {
         if (oldOrthVar != null) {
             allOrthForms.add(oldOrthVar);
         }
+        Collections.sort(allOrthForms);
     }
 
     /**
@@ -275,13 +278,13 @@ public class LexUnit {
      * @param direction the direction of the relation.
      */
     void addRelation(LexRel type, LexUnit target, RelDirection direction) {
-        EnumMap<LexRel, Set<LexUnit>> relations;
+        Object2ObjectMap<LexRel, ObjectSet<LexUnit>> relations;
 
         relations =  (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
-        Set<LexUnit> related = relations.get(type);
 
+        ObjectSet<LexUnit> related = relations.get(type);
         if (related == null) {
-            related = new HashSet<>(1);
+            related = new ObjectOpenHashSet<>(1);
         }
         related.add(target);
         relations.put(type, related);
@@ -299,7 +302,6 @@ public class LexUnit {
      * antonyms of this <code>LexUnit</code> can be retrieved with the type
      * <code>LexRel.antonymy</code>
      */
-    @SuppressWarnings("unchecked")
     public List<LexUnit> getRelatedLexUnits(LexRel type) {
         return getRelatedLexUnits(type, RelDirection.outgoing);
     }
@@ -318,8 +320,8 @@ public class LexUnit {
      * to this <code>LexUnit</code>
      */
     public List<LexUnit> getRelatedLexUnits(LexRel type, RelDirection direction) {
-        ArrayList<LexUnit> rval = null;
-        Set<LexUnit> rels;
+        List<LexUnit> rval = null;
+        ObjectSet<LexUnit> rels;
 
         // direction doesn't matter for synonyms
         if (type.equals(LexRel.has_synonym)) {
@@ -327,9 +329,9 @@ public class LexUnit {
         } else {
             rels = (direction == RelDirection.outgoing) ? outgoingRelations.get(type) : incomingRelations.get(type);
             if (rels == null) {
-                rval = new ArrayList<>(0);
+                rval = new ObjectArrayList<>(0);
             } else {
-                rval = new ArrayList<>(rels);
+                rval = new ObjectArrayList<>(rels);
             }
         }
         return rval;
@@ -372,13 +374,15 @@ public class LexUnit {
      * <code>LexUnit</code> has any relation to, in the given direction.
      */
     public List<LexUnit> getRelatedLexUnits(RelDirection direction) {
-        List<LexUnit> rval = new ArrayList<>();
-        Map<LexRel, Set<LexUnit>> relations;
+        ObjectList<LexUnit> rval = new ObjectArrayList<>();
+        Object2ObjectMap<LexRel, ObjectSet<LexUnit>> relations;
 
         relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
 
-        for (Map.Entry<LexRel, Set<LexUnit>> entry : relations.entrySet()) {
-            rval.addAll(entry.getValue());
+        ObjectSet<Map.Entry<LexRel, ObjectSet<LexUnit>>> entrySet = relations.entrySet();
+        ObjectIterator<Object2ObjectMap.Entry<LexRel, ObjectSet<LexUnit>>> iterator = Object2ObjectMaps.fastIterator(relations);
+        while (iterator.hasNext()) {
+            rval.addAll(iterator.next().getValue());
         }
 
         // include synonyms

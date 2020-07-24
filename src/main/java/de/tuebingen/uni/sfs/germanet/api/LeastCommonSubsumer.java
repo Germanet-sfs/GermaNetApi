@@ -19,6 +19,9 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.util.Set;
 
 /**
@@ -28,12 +31,12 @@ import java.util.Set;
  */
 public class LeastCommonSubsumer {
     private int lcsID;
-    private Set<Integer> fromToSynsetIDs;
+    private IntSet fromToSynsetIDs;
     private int distance;
 
     public LeastCommonSubsumer(int lcsID, Set<Integer> fromToSynsetIDs, int distance) {
         this.lcsID = lcsID;
-        this.fromToSynsetIDs = fromToSynsetIDs;
+        this.fromToSynsetIDs = new IntOpenHashSet(fromToSynsetIDs);
         this.distance = distance;
     }
 

@@ -19,7 +19,9 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import com.google.common.collect.Sets;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.*;
+
 import java.util.*;
 
 /**
@@ -68,18 +70,19 @@ public class Synset implements Comparable {
     private int id;
     private WordCategory wordCategory;
     private WordClass wordClass;
-    private Set<LexUnit> lexUnits;
+    private ObjectOpenHashSet<LexUnit> lexUnits;
     private String paraphrase;
+    private ObjectList<String> allOrthForms;
 
     // for semantic relatedness utils
-    private Map<Integer, Integer> distanceMap;
+    private Int2IntMap distanceMap;
+    private IntSet hypernymIds;
     private int maxDistance; // to any hypernym on path to root
     private int depth; // distance from root
-    private Double infoContent;
 
     // Relations of this Synset
-    private EnumMap<ConRel, Set<Synset>> outgoingRelations;
-    private EnumMap<ConRel, Set<Synset>> incomingRelations;
+    private Object2ObjectMap<ConRel, ObjectSet<Synset>> outgoingRelations;
+    private Object2ObjectMap<ConRel, ObjectSet<Synset>> incomingRelations;
 
     /**
      * Constructs a <code>Synset</code> with the specified attributes.
@@ -92,14 +95,15 @@ public class Synset implements Comparable {
         this.id = id;
         this.wordCategory = wordCategory;
         this.wordClass = wordClass;
-        lexUnits = new HashSet<>(0);
+        lexUnits = new ObjectOpenHashSet<>();
         paraphrase = "";
-        outgoingRelations = new EnumMap<>(ConRel.class);
-        incomingRelations = new EnumMap<>(ConRel.class);
+        outgoingRelations = new Object2ObjectOpenHashMap<>();
+        incomingRelations = new Object2ObjectOpenHashMap<>();
         maxDistance = 0;
-        distanceMap = new HashMap<>();
+        distanceMap = new Int2IntOpenHashMap();
+        distanceMap.defaultReturnValue(-1);
         distanceMap.put(id, 0);
-        infoContent = 0.0;
+        allOrthForms = null;
     }
 
     /**
@@ -187,11 +191,17 @@ public class Synset implements Comparable {
     }
 
     /**
-     * Trims all <code>ArrayLists</code> to conserve memory.
+     * Trims all <code>Lists</code> to conserve memory.
      */
     void trimAll() {
-        // trim LexUnits
-        for (LexUnit lu : lexUnits) {
+        // trim set of lexunits
+        lexUnits.trim();
+
+        // trim each lexunit
+        ObjectIterator<LexUnit> iterator = lexUnits.iterator();
+        LexUnit lu;
+        while (iterator.hasNext()) {
+            lu = iterator.next();
             lu.trimAll();
         }
     }
@@ -203,9 +213,8 @@ public class Synset implements Comparable {
      * @return a <code>List</code> of this <code>Synset</code>'s
      * <code>LexUnits</code>
      */
-    @SuppressWarnings("unchecked")
     public List<LexUnit> getLexUnits() {
-        return new ArrayList<>(lexUnits);
+        return new ObjectArrayList<>(lexUnits);
     }
 
     /**
@@ -218,12 +227,18 @@ public class Synset implements Comparable {
      * <code>LexUnits</code> of this <code>Synset</code>
      */
     public List<String> getAllOrthForms() {
-        Set<String> allOrthForms = new HashSet<>();
+        if (allOrthForms == null) {
+            Set<String> orthForms = new ObjectOpenHashSet<>();
 
-        for (LexUnit lu : lexUnits) {
-            allOrthForms.addAll(lu.getOrthForms());
+            Iterator<LexUnit> iterator = lexUnits.iterator();
+            while (iterator.hasNext()) {
+                orthForms.addAll(iterator.next().getOrthForms());
+            }
+
+            allOrthForms = new ObjectArrayList<>(orthForms);
+            Collections.sort(allOrthForms);
         }
-        return new ArrayList<>(allOrthForms);
+        return allOrthForms;
     }
 
     /**
@@ -236,15 +251,16 @@ public class Synset implements Comparable {
      * <code>LexUnit</code>s of this <code>Synset</code>
      */
     public List<String> getOrthForms(OrthFormVariant variant) {
-        Set<String> orthForms = new HashSet<>();
+        Set<String> orthForms = new ObjectOpenHashSet<>();
 
-        for (LexUnit lu : lexUnits) {
-            String orthForm = lu.getOrthForm(variant);
+        Iterator<LexUnit> iterator = lexUnits.iterator();
+        while (iterator.hasNext()) {
+            String orthForm = iterator.next().getOrthForm(variant);
             if (orthForm != null) {
                 orthForms.add(orthForm);
             }
         }
-        return new ArrayList<>(orthForms);
+        return new ObjectArrayList<>(orthForms);
     }
 
     /**
@@ -266,12 +282,13 @@ public class Synset implements Comparable {
      * @return this <code>Synset</code>'s paraphrases
      */
     public List<String> getParaphrases() {
-        List<String> rval = new ArrayList<String>();
+        List<String> rval = new ObjectArrayList<>();
         if (paraphrase.length() != 0) {
             rval.add(paraphrase);
         }
-        for (LexUnit lu : lexUnits) {
-            List<WiktionaryParaphrase> wphrases = lu.getWiktionaryParaphrases();
+        Iterator<LexUnit> iterator = lexUnits.iterator();
+        while (iterator.hasNext()) {
+            List<WiktionaryParaphrase> wphrases = iterator.next().getWiktionaryParaphrases();
             for (WiktionaryParaphrase wp : wphrases) {
                 rval.add(wp.getWiktionarySense());
             }
@@ -290,13 +307,13 @@ public class Synset implements Comparable {
      * @param direction the direction of the relation.
      */
     void addRelation(ConRel type, Synset target, RelDirection direction) {
-        EnumMap<ConRel, Set<Synset>> relations;
+        Object2ObjectMap<ConRel, ObjectSet<Synset>> relations;
 
         relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
 
-        Set<Synset> related = relations.get(type);
+        ObjectSet<Synset> related = relations.get(type);
         if (related == null) {
-            related = new HashSet<>(1);
+            related = new ObjectOpenHashSet<>(1);
         }
         related.add(target);
         relations.put(type, related);
@@ -332,15 +349,15 @@ public class Synset implements Comparable {
      * to this <code>Synset</code>.
      */
     public List<Synset> getRelatedSynsets(ConRel type, RelDirection direction) {
-        Set<Synset> rels;
-        ArrayList<Synset> rval;
+        ObjectSet<Synset> rels;
+        List<Synset> rval;
 
         rels = (direction == RelDirection.outgoing) ? outgoingRelations.get(type) : incomingRelations.get(type);
 
         if (rels == null) {
-            rval = new ArrayList<>(0);
+            rval = new ObjectArrayList<>(0);
         } else {
-            rval = new ArrayList<>(rels);
+            rval = new ObjectArrayList<>(rels);
         }
         return rval;
     }
@@ -388,8 +405,8 @@ public class Synset implements Comparable {
      * - a <code>List</code> of <code>Lists</code> of <code>Synsets</code>
      */
     public List<List<Synset>> getTransRelatedSynsets(ConRel type, RelDirection direction) {
-        List<List<Synset>> result = new ArrayList<>();
-        List<Synset> resultPrevDepth = new ArrayList<>(1);
+        List<List<Synset>> result = new ObjectArrayList<>();
+        List<Synset> resultPrevDepth = new ObjectArrayList<>();
         List<Synset> resultCurDepth;
 
         if (!type.isTransitive()) {
@@ -398,7 +415,7 @@ public class Synset implements Comparable {
         resultPrevDepth.add(this);
         result.add(resultPrevDepth);
         while (resultPrevDepth.size() > 0) {
-            resultCurDepth = new ArrayList<>();
+            resultCurDepth = new ObjectArrayList<>();
             for (Synset sset : resultPrevDepth) {
                 List<Synset> ssetRels = sset.getRelatedSynsets(type, direction);
                 resultCurDepth.addAll(ssetRels);
@@ -434,12 +451,12 @@ public class Synset implements Comparable {
      * <code>Synset</code> has any relation to, in the given direction.
      */
     public List<Synset> getRelatedSynsets(RelDirection direction) {
-        List<Synset> rval = new ArrayList<Synset>();
-        Map<ConRel, Set<Synset>> relations;
+        List<Synset> rval = new ObjectArrayList<>();
+        Object2ObjectMap<ConRel, ObjectSet<Synset>> relations;
 
         relations = (direction == RelDirection.outgoing) ? outgoingRelations : incomingRelations;
 
-        for (Map.Entry<ConRel, Set<Synset>> entry : relations.entrySet()) {
+        for (Map.Entry<ConRel, ObjectSet<Synset>> entry : relations.entrySet()) {
             rval.addAll(entry.getValue());
         }
         return rval;
@@ -502,19 +519,24 @@ public class Synset implements Comparable {
         int shortestDistance = Integer.MAX_VALUE;
 
         // the intersection of the hypernyms are the common subsumers
-        Set<Integer> intersection = Sets.intersection(getHypernymIds(), otherSynset.getHypernymIds());
-
+        IntSet hypernymIds = getHypernymIds();
+        IntIterator iter = hypernymIds.iterator();
+        IntSet otherHypernymIds = otherSynset.getHypernymIds();
         int otherId = otherSynset.getId();
 
         // find all of the common subsumers with the shortest distance between the 2 synsets
-        for (int hypernymID : intersection) {
-            int distance = getDistanceToHypernym(hypernymID) + otherSynset.getDistanceToHypernym(hypernymID);
-            if (distance < shortestDistance) {
-                rval.clear();
-                rval.add(new LeastCommonSubsumer(hypernymID, Sets.newHashSet(id, otherId), distance));
-                shortestDistance = distance;
-            } else if (distance == shortestDistance) {
-                rval.add(new LeastCommonSubsumer(hypernymID, Sets.newHashSet(id, otherId), distance));
+        int hypernymID;
+        while (iter.hasNext()) {
+            hypernymID = iter.nextInt();
+            if (otherHypernymIds.contains(hypernymID)) {
+                int distance = getDistanceToHypernym(hypernymID) + otherSynset.getDistanceToHypernym(hypernymID);
+                if (distance < shortestDistance) {
+                    rval.clear();
+                    rval.add(new LeastCommonSubsumer(hypernymID, new IntOpenHashSet(new int[]{id, otherId}), distance));
+                    shortestDistance = distance;
+                } else if (distance == shortestDistance) {
+                    rval.add(new LeastCommonSubsumer(hypernymID, new IntOpenHashSet(new int[]{id, otherId}), distance));
+                }
             }
         }
         return rval;
@@ -545,10 +567,10 @@ public class Synset implements Comparable {
      * @param hypernymID synset ID of the hypernym
      * @param distance distance from this synset to the hypernym
      */
-    void updateDistanceMap(Integer hypernymID, Integer distance) {
-        Integer curDist = distanceMap.get(hypernymID);
+    void updateDistanceMap(int hypernymID, int distance) {
+        int curDist = distanceMap.get(hypernymID);
         distanceMap.put(hypernymID, distance);
-        if ((distance > maxDistance) || (curDist != null && curDist == maxDistance)) {
+        if ((distance > maxDistance) || (curDist == maxDistance)) {
             maxDistance = distance;
         }
 
@@ -563,15 +585,19 @@ public class Synset implements Comparable {
      * @return the set of all synset IDs that are on a path from this synset to ROOT,
      * using hypernym relations
      */
-    Set<Integer> getHypernymIds() {
-        return distanceMap.keySet();
+    IntSet getHypernymIds() {
+        if (hypernymIds == null) {
+            hypernymIds = new IntOpenHashSet(distanceMap.keySet());
+        }
+        return hypernymIds;
     }
 
     /**
      * Return the maximum distance between this synset and another synset on the path
      * to ROOT, using edge counting and hypernym relations. Note: the distance to ROOT
      * is not always the max distance.
-     * @return
+     * @return the maximum distance between this synset and another synset on the path
+     * to ROOT
      */
     int getMaxDistance() {
         return maxDistance;
@@ -587,15 +613,15 @@ public class Synset implements Comparable {
     }
 
     /**
-     * Get the distance from this synset to one of the hypernyms on the path to ROOT, or null if
+     * Get the distance from this synset to one of the hypernyms on the path to ROOT, or -1 if
      * the hypernym is not on the path.
      *
      * @param hypernymID ID of the hypernym
-     * @return the distance from this synset to one of the hypernyms on the path to ROOT, or null if
+     * @return the distance from this synset to one of the hypernyms on the path to ROOT, or -1 if
      * the hypernym is not on the path
      */
-    Integer getDistanceToHypernym(int hypernymID) {
-        return distanceMap.get(hypernymID);
+    int getDistanceToHypernym(int hypernymID) {
+        return distanceMap.getOrDefault(hypernymID, -1);
     }
 
     /**

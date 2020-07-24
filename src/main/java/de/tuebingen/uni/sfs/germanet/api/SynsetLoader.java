@@ -19,11 +19,12 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -31,48 +32,37 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Load <code>Synsets</code> into a specified <code>GermaNet</code> object.
+ * Load <code>Synsets</code> for <code>GermaNet</code>.
  * 
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
 class SynsetLoader {
 
-    private GermaNet germaNet;
-    private String namespace;
-
     /**
-     * Constructs a <code>SynsetLoader</code> for the specified
-     * <code>GermaNet</code> object.
-     * @param germaNet the <code>GermaNet</code> object to load the
-     * <code>Synsets</code> into
-     */
-    protected SynsetLoader(GermaNet germaNet) {
-        this.germaNet = germaNet;
-    }
-
-    /**
-     * Loads <code>Synsets</code> from the specified file into this
-     * <code>SynsetLoader</code>'s <code>GermaNet</code> object.
+     * Return a List of <code>Synsets</code> read from the specified file.
      * @param synsetFile the file containing <code>GermaNet Synset<code> data
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
+     * @return a List of Synsets read from the file
+     * @throws FileNotFoundException if the file is not found
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    protected void loadSynsets(File synsetFile) throws FileNotFoundException, XMLStreamException {
-        loadSynsets(new FileInputStream(synsetFile));
+    static List<Synset> loadSynsets(File synsetFile) throws FileNotFoundException, XMLStreamException {
+        return SynsetLoader.loadSynsets(new FileInputStream(synsetFile));
     }
 
     /**
-     * Loads <code>Synsets</code> from the specified file into this
-     * <code>SynsetLoader</code>'s <code>GermaNet</code> object.
+     * Return a List of <code>Synsets</code> read from the specified file.
      * @param inputStream the <code>InputStream</code> containing <code>GermaNet Synset<code> data
-     * @throws javax.xml.stream.XMLStreamException
+     * @return a List of Synsets read from the file
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    protected void loadSynsets(InputStream inputStream) throws XMLStreamException {
+    static List<Synset> loadSynsets(InputStream inputStream) throws XMLStreamException {
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
+        String namespace = null;
         int event;
         String nodeName;
+        List<Synset> synsets = new ObjectArrayList<>(5000);
 
         /*
          * Parse entire file, looking for synset start elements
@@ -86,22 +76,23 @@ class SynsetLoader {
                 case XMLStreamConstants.START_ELEMENT:
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_SYNSET)) {
-                        Synset syn = processSynset(parser);
-                        germaNet.addSynset(syn);
+                        Synset syn = processSynset(parser, namespace);
+                        synsets.add(syn);
                     }
                     break;
             }
         }
         parser.close();
+        return synsets;
     }
 
     /**
      * Returns the <code>Synset</code> for which the start tag was just encountered.
      * @param parser the <code>parser</code> being used on the current file
      * @return a <code>Synset</code> representing the data parsed
-     * @throws javax.xml.stream.XMLStreamException
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    private Synset processSynset(XMLStreamReader parser) throws XMLStreamException {
+    static private Synset processSynset(XMLStreamReader parser, String namespace) throws XMLStreamException {
         int sID;
         WordCategory wordCategory;
         WordClass wordClass;
@@ -113,7 +104,7 @@ class SynsetLoader {
         String aParaphrase;
 
         // get the synset attributes
-        sID = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
+        sID = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_ID).substring(1));
         wordCategory = WordCategory.valueOf(parser.getAttributeValue(namespace,
                 GermaNet.XML_WORD_CATEGORY));
         wordClass = WordClass.valueOf(parser.getAttributeValue(namespace,
@@ -130,7 +121,7 @@ class SynsetLoader {
                     nodeName = parser.getLocalName();
                     // process subtrees
                     if (nodeName.equals(GermaNet.XML_LEX_UNIT)) {
-                        curLexUnit = processLexUnit(parser, curSynset);
+                        curLexUnit = processLexUnit(parser, namespace, curSynset);
                         curSynset.addLexUnit(curLexUnit);
                     } else if (nodeName.equals(GermaNet.XML_PARAPHRASE)) {
                         aParaphrase = parser.getElementText();
@@ -153,12 +144,13 @@ class SynsetLoader {
     /**
      * Return the <code>LexUnit</code> for which the start tag was just encountered.
      * @param parser the <code>parser</code> being used on the current file
+     * @param namespace the namespace to use
      * @param parentSynset the <code>Synset</code> to which this
      * <code>LexUnit</code> belongs
      * @return a <code>LexUnit</code> representing the data parsed
-     * @throws javax.xml.stream.XMLStreamException
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    private LexUnit processLexUnit(XMLStreamReader parser, Synset parentSynset)
+    static private LexUnit processLexUnit(XMLStreamReader parser, String namespace, Synset parentSynset)
             throws XMLStreamException {
         boolean styleMarking, artificial, namedEntity;
         int id, sense;
@@ -172,8 +164,8 @@ class SynsetLoader {
         String orthVar = null;
         String oldOrthForm = null;
         String oldOrthVar = null;
-        List<Example> examples = new ArrayList<Example>();
-        List<Frame> frames = new ArrayList<Frame>();
+        List<Example> examples = new ObjectArrayList<>();
+        List<Frame> frames = new ObjectArrayList<>();
         CompoundInfo compound = null;
 
         // get all the attributes
@@ -219,7 +211,7 @@ class SynsetLoader {
                     } else if (nodeName.equals(GermaNet.XML_EXAMPLE)) {
                         examples.add(processExample(parser));
                     } else if (nodeName.equals(GermaNet.XML_COMPOUND)) {
-                        compound = processCompound(parser);
+                        compound = processCompound(parser, namespace);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
@@ -254,9 +246,9 @@ class SynsetLoader {
      * the start tag was just encountered.
      * @param parser the <code>parser</code> being used on the current file
      * @return an </code>Example</code> object
-     * @throws javax.xml.stream.XMLStreamException
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    private Example processExample(XMLStreamReader parser) throws XMLStreamException {
+    static private Example processExample(XMLStreamReader parser) throws XMLStreamException {
         boolean done = false;
         int event;
         String nodeName;
@@ -286,7 +278,7 @@ class SynsetLoader {
         return curExample;
     }
 
-    private CompoundInfo processCompound(XMLStreamReader parser) throws XMLStreamException {
+    static private CompoundInfo processCompound(XMLStreamReader parser, String namespace) throws XMLStreamException {
         String modifier1 = null;
         CompoundProperty mod1Attr = null;
         CompoundCategory mod1Cat = null;

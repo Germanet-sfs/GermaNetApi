@@ -19,13 +19,12 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -33,7 +32,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Load <code>IliRecords</code> into a specified <code>GermaNet</code> object.
+ * Load <code>IliRecords</code> for <code>GermaNet</code>.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
@@ -41,45 +40,32 @@ import javax.xml.stream.XMLStreamReader;
 class IliLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IliLoader.class);
-    private GermaNet germaNet;
-    private String namespace;
 
     /**
-     * Constructs an <code>IliLoader</code> for the specified
-     * <code>GermaNet</code> object.
+     * Loads <code>IliRecords</code> from the specified stream and
+     * adds them to their corresponding LexUnit.
      *
-     * @param germaNet the <code>GermaNet</code> object to load the
-     *                 <code>IliRecords</code> into
+     * @param loaderData the loading data that contains the InputStream to read
+     *                   and the LexUnits to update
+     * @return a List of the loaded IliRecords
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    protected IliLoader(GermaNet germaNet) {
-        this.germaNet = germaNet;
-    }
+    static LoaderData loadILI(LoaderData loaderData) throws XMLStreamException {
 
-    /**
-     * Loads <code>IliRecords</code> from the specified file into this
-     * <code>IliLoader</code>'s <code>GermaNet</code> object.
-     *
-     * @param iliFile the file containing <code>IliRecords</code> data
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    protected void loadILI(File iliFile) throws FileNotFoundException, XMLStreamException {
-        loadILI(new FileInputStream(iliFile));
-    }
+        // nothing to do if the stream is null
+        InputStream inputStream = loaderData.getIliInputStream();
+        if (inputStream == null) {
+            return loaderData;
+        }
 
-    /**
-     * Loads <code>IliRecords</code> from the specified stream into this
-     * <code>IliLoader</code>'s <code>GermaNet</code> object.
-     *
-     * @param inputStream the stream containing <code>IliRecords</code> data
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    protected void loadILI(InputStream inputStream) throws XMLStreamException {
+        Int2ObjectMap<LexUnit> lexUnitIDMap = loaderData.getLexUnitIdMap();
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
+        String namespace = null;
         int event;
         String nodeName;
         int iliCnt = 0;
+        List<IliRecord> iliRecords = new ObjectArrayList<>();
 
         LOGGER.info("Loading interLingualIndex_DE-EN.xml...");
 
@@ -93,25 +79,35 @@ class IliLoader {
                 case XMLStreamConstants.START_ELEMENT:
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_ILI_RECORD)) {
-                        IliRecord ili = processIliRecord(parser);
-                        germaNet.addIliRecord(ili);
-                        iliCnt++;
+                        IliRecord ili = processIliRecord(parser, namespace);
+                        iliRecords.add(ili);
+                        int lexUnitId = ili.getLexUnitId();
+                        LexUnit lexUnit = lexUnitIDMap.getOrDefault(lexUnitId, null);
+                        if (lexUnit != null) {
+                            lexUnit.addIliRecord(ili);
+                            lexUnitIDMap.put(lexUnitId, lexUnit);
+                            iliCnt++;
+                        }
                     }
                     break;
             }
         }
         parser.close();
         LOGGER.info("Done loading {} ILI records.", iliCnt);
+
+        loaderData.setIliRecords(iliRecords);
+        return loaderData;
     }
 
     /**
      * Returns the <code>IliRecord</code> for which the start tag was just encountered.
      *
      * @param parser the <code>parser</code> being used on the current file
+     * @param namespace the namespace to use
      * @return a <code>IliRecord</code> representing the data parsed
-     * @throws javax.xml.stream.XMLStreamException
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    private IliRecord processIliRecord(XMLStreamReader parser) throws XMLStreamException {
+    private static IliRecord processIliRecord(XMLStreamReader parser, String namespace) throws XMLStreamException {
         int lexUnitId;
         String ewnRelation;
         String pwnWord;
@@ -140,7 +136,7 @@ class IliLoader {
                 case XMLStreamConstants.START_ELEMENT:
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_PWN20_SYNONYM)) {
-                        englishSynonyms.add(processEnglishSynonyms(parser));
+                        englishSynonyms.add(parser.getElementText());
                     }
                 case XMLStreamConstants.END_ELEMENT:
                     nodeName = parser.getLocalName();
@@ -159,17 +155,5 @@ class IliLoader {
         }
 
         return curIli;
-    }
-
-    /**
-     * Returns an English synonym for the currently processed <code>IliRecord</code>
-     *
-     * @param parser the <code>parser</code> being used on the current file
-     * @return <code>String</code> representation of an English synonym
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    private String processEnglishSynonyms(XMLStreamReader parser) throws XMLStreamException {
-        String englishSynonym = parser.getElementText();
-        return englishSynonym;
     }
 }
