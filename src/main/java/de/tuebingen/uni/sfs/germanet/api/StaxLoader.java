@@ -21,12 +21,17 @@ package de.tuebingen.uni.sfs.germanet.api;
 
 import java.io.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 
+import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
 import static de.tuebingen.uni.sfs.germanet.api.GermaNet.NUMBER_OF_GERMANET_FILES;
 
 /**
@@ -38,56 +43,112 @@ import static de.tuebingen.uni.sfs.germanet.api.GermaNet.NUMBER_OF_GERMANET_FILE
  */
 class StaxLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(StaxLoader.class);
-    private List<InputStream> inputStreams;
-    private List<String> xmlNames;
-    private InputStream relsInputStream;
-    private String relsXmlName;
-    private SynsetLoader synLoader;  // loader for synsets
-    private RelationLoader relLoader; // loader for relations
 
     /**
-     * Constructs a <code>StaxLoader</code> for data files in directory
-     * <code>germanetDirectory</code> and existing <code>GermaNet</code> object
-     * <code>germaNet</code>.
+     * Loads all synset streams and then all relations.
      *
-     * @param germaNet <code>GermaNet</code> object to load into
-     * @throws java.io.FileNotFoundException
+     * @throws FileNotFoundException if a file is not found
+     * @throws XMLStreamException if there is a problem with a stream
      */
-    protected StaxLoader(GermaNet germaNet) {
-        this.inputStreams = germaNet.inputStreams;
-        this.xmlNames = germaNet.xmlNames;
-        this.relsInputStream = germaNet.relsInputStream;
-        this.relsXmlName = germaNet.relsXmlName;
-        this.synLoader = new SynsetLoader(germaNet);
-        this.relLoader = new RelationLoader(germaNet);
-    }
+    static LoaderData load(LoaderData loaderData) throws XMLStreamException, IOException {
 
-    /**
-     * Loads all synset files or streams (depending on what exists) and then all relation files.
-     *
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    protected void load() throws XMLStreamException, IOException {
+        List<InputStream> inputStreams = loaderData.getInputStreams();
+        List<String> xmlNames = loaderData.getXmlNames();
+        InputStream relsInputStream = loaderData.getRelsInputStream();
+        String relsXmlName = loaderData.getRelsXmlName();
 
         int loadedFiles = 0;
         if (inputStreams == null || inputStreams.isEmpty()) {
             throw new FileNotFoundException("Unable to load GermaNet data.");
         }
 
+        // setting capacity for Synset and LexUnit data structures
+        // does not seem to make a significant difference in performance
+        // using default values
+        List<Synset> synsets = new ObjectArrayList<>();
+        List<LexUnit> lexUnits = new ObjectArrayList<>();
+        Int2ObjectOpenHashMap<Synset> synsetIdMap = new Int2ObjectOpenHashMap<>();
+        Int2ObjectOpenHashMap<LexUnit> lexUnitIdMap = new Int2ObjectOpenHashMap<>();
+        Object2ObjectOpenHashMap<WordCategory, Set<Synset>> catSynsetMap = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
+        Object2ObjectOpenHashMap<WordCategory, Set<LexUnit>> catLexUnitMap = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
+        Map<WordCategory, Map<String, Set<LexUnit>>> wordCategoryMapAllOrthForms = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
+        Object2ObjectMap<String, ObjectSet<String>> lowerToUpperMap = new Object2ObjectOpenHashMap<>();
+
+        ObjectIterator<Synset> synsetIterator;
+        ObjectIterator<LexUnit> lexUnitIterator;
+        List<Synset> synsetsFromInputStream;
+        Synset synset;
+        LexUnit lexUnit;
+        Set<Synset> synsetSet;
+        Set<LexUnit> lexUnitSet;
+        WordCategory cat;
+        Map<String, Set<LexUnit>> mapAllOrthForms;
+        String orthForm;
+
         // load all synset input streams first with a SynsetLoader
         for (int i = 0; i < inputStreams.size(); i++) {
             InputStream stream = inputStreams.get(i);
             String name = xmlNames.get(i);
+
             LOGGER.info("Loading {}...", name);
-            synLoader.loadSynsets(stream);
+            synsetsFromInputStream = SynsetLoader.loadSynsets(stream);
+            synsets.addAll(synsetsFromInputStream);
+            synsetIterator = ObjectIterators.asObjectIterator(synsetsFromInputStream.iterator());
+
+            while (synsetIterator.hasNext()) {
+                synset = synsetIterator.next();
+                cat = synset.getWordCategory();
+                synsetIdMap.put(synset.getId(), synset);
+
+                // Don't add Root or its LexUnit to any of the
+                // WordCategory or orthForm maps
+                if (synset.getId() == GNROOT_ID) {
+                    continue;
+                }
+
+                synsetSet = catSynsetMap.getOrDefault(cat, new ObjectOpenHashSet<>());
+                synsetSet.add(synset);
+                catSynsetMap.put(cat, synsetSet);
+                mapAllOrthForms = wordCategoryMapAllOrthForms.getOrDefault(synset.getWordCategory(), new Object2ObjectOpenHashMap<>());
+
+                lexUnitIterator = ObjectIterators.asObjectIterator(synset.getLexUnits().iterator());
+                while (lexUnitIterator.hasNext()) {
+                    lexUnit = lexUnitIterator.next();
+                    lexUnitIdMap.put(lexUnit.getId(), lexUnit);
+                    lexUnitSet = catLexUnitMap.getOrDefault(cat, new ObjectOpenHashSet<>());
+                    lexUnitSet.add(lexUnit);
+                    catLexUnitMap.put(cat, lexUnitSet);
+                    lexUnits.add(lexUnit);
+
+                    // add orthForm and lowercase orthForm to lowerToUpperMap
+                    orthForm = lexUnit.getOrthForm();
+                    StaxLoader.processOrthForm(orthForm, lexUnit, mapAllOrthForms, lowerToUpperMap);
+
+                    // get orthVar
+                    // add orthVar and lowercase orthVar to lowerToUpperMap
+                    orthForm = lexUnit.getOrthVar();
+                    StaxLoader.processOrthForm(orthForm, lexUnit, mapAllOrthForms, lowerToUpperMap);
+
+                    // get oldOrthForm
+                    // add oldOrthForm and lowercase oldOrthForm to lowerToUpperMap
+                    orthForm = lexUnit.getOldOrthForm();
+                    StaxLoader.processOrthForm(orthForm, lexUnit, mapAllOrthForms, lowerToUpperMap);
+
+                    // get oldOrthVar
+                    // add oldOrthVar and lowercase oldOrthVar to lowerToUpperMap
+                    orthForm = lexUnit.getOldOrthVar();
+                    StaxLoader.processOrthForm(orthForm, lexUnit, mapAllOrthForms, lowerToUpperMap);
+                }
+                wordCategoryMapAllOrthForms.put(cat, mapAllOrthForms);
+            }
+
             stream.close();
             loadedFiles++;
         }
 
         // load relations with a RelationLoader
         LOGGER.info("Loading {}...", relsXmlName);
-        relLoader.loadRelations(relsInputStream);
+        RelationLoader.loadRelations(relsInputStream, synsetIdMap, lexUnitIdMap);
         loadedFiles++;
 
         if (loadedFiles >= NUMBER_OF_GERMANET_FILES) {
@@ -95,8 +156,37 @@ class StaxLoader {
         } else {
             throw new FileNotFoundException("GermaNet data not found or files are missing.");
         }
+
+        loaderData.setSynsets(synsets);
+        loaderData.setLexUnits(lexUnits);
+        loaderData.setSynsetIdMap(synsetIdMap);
+        loaderData.setLexUnitIdMap(lexUnitIdMap);
+        loaderData.setCatSynsetMap(catSynsetMap);
+        loaderData.setCatLexUnitMap(catLexUnitMap);
+        loaderData.setWordCategoryMapAllOrthForms(wordCategoryMapAllOrthForms);
+        loaderData.setLowerToUpperMap(lowerToUpperMap);
+
+        return loaderData;
     }
 
+    private static void processOrthForm(String orthForm, LexUnit lexUnit,
+                                        Map<String, Set<LexUnit>> mapAllOrthForms,
+                                        Object2ObjectMap<String, ObjectSet<String>> lowerToUpperMap) {
+        String orthFormLower;
+        ObjectSet<String> orthFormSet;
+        Set<LexUnit> lexUnitSet;
+
+        if (orthForm != null) {
+            orthFormLower = orthForm.toLowerCase();
+            orthFormSet = lowerToUpperMap.getOrDefault(orthFormLower, new ObjectOpenHashSet<>());
+            orthFormSet.add(orthForm);
+            orthFormSet.add(orthFormLower);
+            lowerToUpperMap.put(orthFormLower, orthFormSet);
+        }
+        lexUnitSet = mapAllOrthForms.getOrDefault(orthForm, new ObjectOpenHashSet<>());
+        lexUnitSet.add(lexUnit);
+        mapAllOrthForms.put(orthForm, lexUnitSet);
+    }
     /**
      * Filters out synset files by name.
      */

@@ -29,5 +29,23 @@ public enum OrthFormVariant {
     orthForm,
     orthVar,
     oldOrthForm,
-    oldOrthVar
+    oldOrthVar;
+
+    /**
+     * Returns true if the <code>String</code> <code>variantName</code> represents a
+     * valid <code>OrthFormVariant</code>.
+     * @param variantName the name of the variant to verify
+     * @return true if the <code>String variantName</code> represents a valid
+     * <code>OrthFormVariant</code>
+     */
+    public static boolean isOrthFormVariant(String variantName) {
+        OrthFormVariant[] vals = values();
+
+        for (int i = 0; i < vals.length; i++) {
+            if (vals[i].toString().equals(variantName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

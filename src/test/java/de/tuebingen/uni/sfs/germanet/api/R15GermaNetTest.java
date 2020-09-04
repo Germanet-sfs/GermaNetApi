@@ -125,9 +125,9 @@ class R15GermaNetTest {
      * Search gnet for Synsets with filterConfig and a GermaNet instance constructed with ignoreCase true | false.
      * Test that the expected synsets , identified by ID, are returned
      *
-     * @param filterConfig
-     * @param useGnetIgnoreCase
-     * @param expectedIds
+     * @param filterConfig the filter config to use
+     * @param useGnetIgnoreCase use data loaded with ignoreCase true, otherwise false
+     * @param expectedIds synset IDs expected
      */
     @ParameterizedTest(name = "{index} {1} {2} {0}")
     @MethodSource({"emptyFilterProvider",
@@ -161,9 +161,9 @@ class R15GermaNetTest {
      * Search gnet for LexUnits with filterConfig and a GermaNet instance constructed with ignoreCase true | false.
      * Test that the expected lexunits , identified by ID, are returned
      *
-     * @param filterConfig
-     * @param useGnetIgnoreCase
-     * @param expectedIds
+     * @param filterConfig the filter config to use
+     * @param useGnetIgnoreCase use data loaded with ignoreCase true, otherwise false
+     * @param expectedIds lexunit IDs expected
      */
     @ParameterizedTest(name = "{index} {1} {2} {0}")
     @MethodSource({"emptyFilterProvider",
@@ -1152,9 +1152,18 @@ class R15GermaNetTest {
             actualIds.add(synset.getId());
         }
 
+        actualList = gnet.getSynsets(orthForm, false);
+        List<Integer> actualIds2 = new ArrayList<>(actualList.size());
+
+        for (Synset synset : actualList) {
+            actualIds2.add(synset.getId());
+        }
+
         Collections.sort(expectedIds);
         Collections.sort(actualIds);
+        Collections.sort(actualIds2);
         assertEquals(expectedIds, actualIds);
+        assertEquals(expectedIds, actualIds2);
     }
 
     /**
@@ -1200,9 +1209,18 @@ class R15GermaNetTest {
             actualIds.add(lexUnit.getId());
         }
 
+        actualList = gnet.getLexUnits(orthForm, false);
+        List<Integer> actualIds2 = new ArrayList<>(actualList.size());
+
+        for (LexUnit lexUnit : actualList) {
+            actualIds2.add(lexUnit.getId());
+        }
+
         Collections.sort(expectedIds);
         Collections.sort(actualIds);
+        Collections.sort(actualIds2);
         assertEquals(expectedIds, actualIds);
+        assertEquals(expectedIds, actualIds2);
     }
 
     /**
@@ -1240,13 +1258,9 @@ class R15GermaNetTest {
      */
     @ParameterizedTest(name = "{index} {0} {1} {2}")
     @MethodSource({"getSynsetsMainOnlyProvider"})
-    void getSynsetsMainOnly(String orthForm, List<Integer> expectedIds, boolean useGnetIgnoreCase, TestReporter testReporter) {
+    void getSynsetsMainOnly(String orthForm, List<Integer> expectedIds, boolean useGnetIgnoreCase) {
         GermaNet gnet;
         List<Synset> actualList;
-
-        testReporter.publishEntry("params", orthForm + " " + expectedIds + " "
-                + (useGnetIgnoreCase ? "ignoreCase" : "caseSensitive"));
-
 
         gnet = (useGnetIgnoreCase) ? gnetIgnoreCase : gnetCaseSensitive;
         actualList = gnet.getSynsets(orthForm, true);
@@ -1332,9 +1346,18 @@ class R15GermaNetTest {
             actualIds.add(synset.getId());
         }
 
+        actualList = gnet.getSynsets(orthForm, cat, false);
+        List<Integer> actualIds2 = new ArrayList<>(actualList.size());
+
+        for (Synset synset : actualList) {
+            actualIds2.add(synset.getId());
+        }
+
         Collections.sort(expectedIds);
         Collections.sort(actualIds);
+        Collections.sort(actualIds2);
         assertEquals(expectedIds, actualIds);
+        assertEquals(expectedIds, actualIds2);
     }
 
     private static Stream<Arguments> getSynsetsAllOrthCatProvider() {
@@ -1381,9 +1404,18 @@ class R15GermaNetTest {
             actualIds.add(lexUnit.getId());
         }
 
+        actualList = gnet.getLexUnits(orthForm, cat, false);
+        List<Integer> actualIds2 = new ArrayList<>(actualList.size());
+
+        for (LexUnit lexUnit : actualList) {
+            actualIds2.add(lexUnit.getId());
+        }
+
         Collections.sort(expectedIds);
         Collections.sort(actualIds);
+        Collections.sort(actualIds2);
         assertEquals(expectedIds, actualIds);
+        assertEquals(expectedIds, actualIds2);
     }
 
     private static Stream<Arguments> getLexUnitsAllOrthCatProvider() {
@@ -1663,6 +1695,178 @@ class R15GermaNetTest {
         cleared.clear();
         List<IliRecord> afterClear = gnetCaseSensitive.getSynsetByID(laufenID).getIliRecords();
         assertEquals(expected, afterClear);
+    }
+
+    @Test
+    void immutable5Test() {
+        FilterConfig filterConfig = new FilterConfig("laufen");
+        List<Synset> expected = gnetCaseSensitive.getSynsets(filterConfig);
+        List<Synset> cleared = gnetCaseSensitive.getSynsets(filterConfig);
+        cleared.clear();
+        List<Synset> afterClear = gnetCaseSensitive.getSynsets(filterConfig);
+        assertEquals(expected, afterClear);
+    }
+
+    @Test
+    void immutable6Test() {
+        FilterConfig filterConfig = new FilterConfig("lauf.*");
+        filterConfig.setRegEx(true);
+        List<Synset> expected = gnetCaseSensitive.getSynsets(filterConfig);
+        List<Synset> cleared = gnetCaseSensitive.getSynsets(filterConfig);
+        cleared.clear();
+        List<Synset> afterClear = gnetCaseSensitive.getSynsets(filterConfig);
+        assertEquals(expected, afterClear);
+    }
+
+    @Test
+    void immutable7Test() {
+        FilterConfig filterConfig = new FilterConfig("laufen");
+        filterConfig.setEditDistance(1);
+        List<Synset> expected = gnetCaseSensitive.getSynsets(filterConfig);
+        List<Synset> cleared = gnetCaseSensitive.getSynsets(filterConfig);
+        cleared.clear();
+        List<Synset> afterClear = gnetCaseSensitive.getSynsets(filterConfig);
+        assertEquals(expected, afterClear);
+    }
+
+    @Test
+    void equalitySynset1Test() {
+        GermaNet gnet = gnetIgnoreCase;
+        List<Synset> actualList;
+
+        actualList = gnet.getSynsets();
+        Iterator<Synset> iterator = actualList.iterator();
+        Synset synset;
+        while (iterator.hasNext()) {
+            synset = iterator.next();
+            Synset lookupSynset = gnet.getSynsetByID(synset.getId());
+            if (synset != lookupSynset) {
+                fail("lookup reference equality failed for synset " + synset.getId());
+            }
+            if (!synset.equals(lookupSynset)) {
+                fail("lookup equals() failed for synset " + synset.getId());
+            }
+        }
+    }
+
+    @Test
+    void equalitySynset2Test() {
+        GermaNet gnet = gnetCaseSensitive;
+        List<Synset> actualList;
+
+        actualList = gnet.getSynsets();
+        Iterator<Synset> iterator = actualList.iterator();
+        Synset synset;
+        while (iterator.hasNext()) {
+            synset = iterator.next();
+            Synset lookupSynset = gnet.getSynsetByID(synset.getId());
+            if (synset != lookupSynset) {
+                fail("lookup reference equality failed for synset " + synset.getId());
+            }
+            if (!synset.equals(lookupSynset)) {
+                fail("lookup equals() failed for synset " + synset.getId());
+            }
+        }
+    }
+
+    @Test
+    void equalityLexUnit1Test() {
+        GermaNet gnet = gnetIgnoreCase;
+        List<LexUnit> actualList;
+
+        actualList = gnet.getLexUnits();
+        Iterator<LexUnit> iterator = actualList.iterator();
+        LexUnit lexUnit;
+        while (iterator.hasNext()) {
+            lexUnit = iterator.next();
+            LexUnit lookupLexunit = gnet.getLexUnitByID(lexUnit.getId());
+            if (lexUnit != lookupLexunit) {
+                fail("lookup reference equality failed for lexUnit " + lexUnit.getId());
+            }
+            if (!lexUnit.equals(lookupLexunit)) {
+                fail("lookup equals() failed for lexUnit " + lexUnit.getId());
+            }
+        }
+    }
+
+    @Test
+    void equalityLexUnit2Test() {
+        GermaNet gnet = gnetCaseSensitive;
+        List<LexUnit> actualList;
+
+        actualList = gnet.getLexUnits();
+        Iterator<LexUnit> iterator = actualList.iterator();
+        LexUnit lexUnit;
+        while (iterator.hasNext()) {
+            lexUnit = iterator.next();
+            LexUnit lookupLexunit = gnet.getLexUnitByID(lexUnit.getId());
+            if (lexUnit != lookupLexunit) {
+                fail("lookup reference equality failed for lexUnit " + lexUnit.getId());
+            }
+            if (!lexUnit.equals(lookupLexunit)) {
+                fail("lookup equals() failed for lexUnit " + lexUnit.getId());
+            }
+        }
+    }
+
+    @Test
+    void synsetsByCatTest() {
+        GermaNet gnet1 = gnetIgnoreCase;
+        GermaNet gnet2 = gnetCaseSensitive;
+        for (WordCategory cat : WordCategory.values()) {
+            List<Synset> synsetsByCat1 = gnet1.getSynsets(cat);
+            List<Synset> synsetsByCat2 = gnet2.getSynsets(cat);
+            //LOGGER.info("{},{} Synsets of WordCategory {}", synsetsByCat1.size(), synsetsByCat2.size(), cat);
+            assertEquals(synsetsByCat1.size(), synsetsByCat2.size());
+        }
+    }
+
+    @Test
+    void lexUnitsByCatTest() {
+        GermaNet gnet1 = gnetIgnoreCase;
+        GermaNet gnet2 = gnetCaseSensitive;
+        for (WordCategory cat : WordCategory.values()) {
+            List<LexUnit> lexUnitsByCat1 = gnet1.getLexUnits(cat);
+            List<LexUnit> lexUnitsByCat2 = gnet2.getLexUnits(cat);
+            //LOGGER.info("{},{} LexUnits of WordCategory {}", lexUnitsByCat1.size(), lexUnitsByCat2.size(), cat);
+            assertEquals(lexUnitsByCat1.size(), lexUnitsByCat2.size());
+        }
+    }
+
+    @Test
+    void synsetsByClassTest() {
+        GermaNet gnet1 = gnetIgnoreCase;
+        GermaNet gnet2 = gnetCaseSensitive;
+        for (WordClass wordClass : WordClass.values()) {
+            List<Synset> synsetsByClass1 = gnet1.getSynsets(wordClass);
+            List<Synset> synsetsByClass2 = gnet2.getSynsets(wordClass);
+            //LOGGER.info("{},{} Synsets of WordClass {}", synsetsByClass1.size(), synsetsByClass2.size(), wordClass);
+            assertEquals(synsetsByClass1.size(), synsetsByClass2.size());
+        }
+    }
+
+    @Test
+    void missingSynsetId1Test() {
+        Synset synset = gnetCaseSensitive.getSynsetByID(-1);
+        assertEquals(null, synset);
+    }
+
+    @Test
+    void missingSynsetId2Test() {
+        Synset synset = gnetIgnoreCase.getSynsetByID(-1);
+        assertEquals(null, synset);
+    }
+
+    @Test
+    void missingLexunitId1Test() {
+        LexUnit lexUnit = gnetCaseSensitive.getLexUnitByID(-1);
+        assertEquals(null, lexUnit);
+    }
+
+    @Test
+    void missingLexunitId2Test() {
+        LexUnit lexUnit = gnetIgnoreCase.getLexUnitByID(-1);
+        assertEquals(null, lexUnit);
     }
 }
 

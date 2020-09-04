@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Map;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -38,41 +39,31 @@ class RelationLoader {
     static final String DIR_BOTH = "both";
     static final String DIR_REVERT = "revert";
 
-    private GermaNet germaNet;
-    private String namespace;
-
-    /**
-     * Constructs a <code>RelationLoader</code> for the specified
-     * <code>GermaNet</code> object.
-     * @param germaNet the <code>GermaNet</code> object to load the relations
-     * into
-     */
-    protected RelationLoader(GermaNet germaNet) {
-        this.germaNet = germaNet;
-    }
-
     /**
      * Loads relations from the specified file into this
      * <code>RelationLoader</code>'s <code>GermaNet</code> object.
      * @param relationFile file containing GermaNet relation data
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
+     * @throws java.io.FileNotFoundException if the file is not found
+     * @throws javax.xml.stream.XMLStreamException if there is a problem with the stream
      */
-    void loadRelations(File relationFile) throws FileNotFoundException,
-            XMLStreamException {
-        loadRelations(new FileInputStream(relationFile));
+    static void loadRelations(File relationFile, Map<Integer, Synset> synsetIdMap, Map<Integer, LexUnit> lexUnitIdMap) throws FileNotFoundException, XMLStreamException {
+        RelationLoader.loadRelations(new FileInputStream(relationFile), synsetIdMap, lexUnitIdMap);
     }
 
     /**
-     * Loads relations from the specified file into this
-     * <code>RelationLoader</code>'s <code>GermaNet</code> object.
+     * Loads relations from the specified file and
+     * adds them to the corresponding Synsets and LexUnits.
      * @param inputStream containing GermaNet relation data
-     * @throws java.io.FileNotFoundException
-     * @throws javax.xml.stream.XMLStreamException
+     * @param synsetIdMap map of all synset IDs to the Synsets
+     * @param lexUnitIdMap map of all lexUnit IDs to the LexUnits
+     * @throws XMLStreamException if there is a problem with the steam
      */
-    void loadRelations(InputStream inputStream) throws XMLStreamException {
+    static void loadRelations(InputStream inputStream,
+                              Map<Integer, Synset> synsetIdMap,
+                              Map<Integer, LexUnit> lexUnitIdMap) throws XMLStreamException {
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader parser = factory.createXMLStreamReader(inputStream);
+        String namespace = null;
         int event;
         String nodeName;
 
@@ -89,9 +80,9 @@ class RelationLoader {
                 case XMLStreamConstants.START_ELEMENT:
                     nodeName = parser.getLocalName();
                     if (nodeName.equals(GermaNet.XML_LEX_REL)) {
-                        processLexRel(parser);
+                        processLexRel(parser, namespace, lexUnitIdMap);
                     } else if (nodeName.equals(GermaNet.XML_CON_REL)) {
-                        processConRel(parser);
+                        processConRel(parser, namespace, synsetIdMap);
                     }
                     break;
             }
@@ -105,7 +96,7 @@ class RelationLoader {
      * just encountered.
      * @param parser the <code>XMLStreamParser</code> to get the attributes from
      */
-    private void processLexRel(XMLStreamReader parser) {
+    static private void processLexRel(XMLStreamReader parser, String namespace, Map<Integer, LexUnit> lexUnitIdMap) {
         String name, direction;
         int fromLexUnitId, toLexUnitId;
         LexUnit fromLexUnit, toLexUnit;
@@ -115,12 +106,12 @@ class RelationLoader {
         name = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_NAME);
         LexRel rel = LexRel.valueOf(name);
         direction = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_DIR);
-        fromLexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
-        toLexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
+        fromLexUnitId = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
+        toLexUnitId = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
 
         // look up the LexUnits
-        fromLexUnit = germaNet.getLexUnitByID(fromLexUnitId);
-        toLexUnit = germaNet.getLexUnitByID(toLexUnitId);
+        fromLexUnit = lexUnitIdMap.get(fromLexUnitId);
+        toLexUnit = lexUnitIdMap.get(toLexUnitId);
 
         // add outgoing relation "from" -> "to"
         fromLexUnit.addRelation(rel, toLexUnit, RelDirection.outgoing);
@@ -144,7 +135,7 @@ class RelationLoader {
      * just encountered.
      * @param parser the <code>XMLStreamReader</code> to get the attributes from
      */
-    private void processConRel(XMLStreamReader parser) {
+    static private void processConRel(XMLStreamReader parser, String namespace, Map<Integer, Synset> synsetIdMap) {
         String name, direction;
         int fromSynsetId, toSynsetId;
         Synset fromSynset, toSynset;
@@ -154,12 +145,12 @@ class RelationLoader {
         name = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_NAME);
         ConRel rel = ConRel.valueOf(name);
         direction = parser.getAttributeValue(namespace, GermaNet.XML_RELATION_DIR);
-        fromSynsetId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
-        toSynsetId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
+        fromSynsetId = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_FROM).substring(1));
+        toSynsetId = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_RELATION_TO).substring(1));
 
         // look up the Synsets
-        fromSynset = germaNet.getSynsetByID(fromSynsetId);
-        toSynset = germaNet.getSynsetByID(toSynsetId);
+        fromSynset = synsetIdMap.get(fromSynsetId);
+        toSynset = synsetIdMap.get(toSynsetId);
 
         // add outgoing relation "from" -> "to"
         fromSynset.addRelation(rel, toSynset, RelDirection.outgoing);

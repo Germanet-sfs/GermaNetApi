@@ -19,7 +19,8 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import com.google.common.collect.Lists;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
@@ -38,26 +39,29 @@ public class SemanticUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SemanticUtils.class);
 
     private boolean freqFilesFound;
-    private Map<WordCategory, Integer> catMaxHypernymDistanceMap;
-    private Map<WordCategory, Set<LeastCommonSubsumer>> catLongestLCSMap;
-    private Map<WordCategory, Integer> catMaxDepthMap;
-    private Map<WordCategory, Map<SemRelMeasure, List<Double>>> catNormalizationMap;
-    private Map<WordCategory, Map<Integer, Double>> catICMap;
+    private Object2IntMap<WordCategory> catMaxHypernymDistanceMap;
+    private Map<WordCategory, Set<Synset>> catSynsetMap;
+    private Int2ObjectMap<Synset> synsetIDMap;
+    private Object2ObjectMap<WordCategory, ObjectSet<LeastCommonSubsumer>> catLongestLCSMap;
+    private Object2IntMap<WordCategory> catMaxDepthMap;
+    private Object2ObjectMap<WordCategory, Object2ObjectMap<SemRelMeasure, ObjectList<Double>>> catNormalizationMap;
+    private Object2ObjectMap<WordCategory, Int2DoubleMap> catICMap;
 
     // used only during construction to generate IC maps
-    private Map<WordCategory, Map<String, Long>> formFreqMaps;
-    private Map<WordCategory, Map<Integer, Long>> individualFreqMaps;
-    private Map<WordCategory, Map<Integer, Long>> cumulativeFreqMaps;
+    private Object2ObjectMap<WordCategory, Object2LongMap<String>> formFreqMaps;
+    private Object2ObjectMap<WordCategory, Int2LongMap> individualFreqMaps;
+    private Object2ObjectMap<WordCategory, Int2LongMap> cumulativeFreqMaps;
 
-    private GermaNet gnet;
-
-    SemanticUtils(Map<WordCategory, Integer> catMaxHypernymDistanceMap, GermaNet gnet,
+    SemanticUtils(Object2IntMap<WordCategory> catMaxHypernymDistanceMap,
+                  Map<WordCategory, Set<Synset>> catSynsetMap,
+                  Int2ObjectMap<Synset> synsetIDMap,
                   File nounFreqFile, File verbFreqFile, File adjFreqFile) throws IOException {
 
         this.catMaxHypernymDistanceMap = catMaxHypernymDistanceMap;
-        this.gnet = gnet;
-        catMaxDepthMap = new HashMap<>(WordCategory.values().length);
-        catNormalizationMap = new HashMap<>(WordCategory.values().length);
+        this.catSynsetMap = catSynsetMap;
+        this.synsetIDMap = synsetIDMap;
+        catMaxDepthMap = new Object2IntOpenHashMap<>(WordCategory.values().length);
+        catNormalizationMap = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
 
         long startTime = System.currentTimeMillis();
         LOGGER.info("Initializing SemanticUtils object...");
@@ -70,10 +74,10 @@ public class SemanticUtils {
         if (nounFreqFile == null || verbFreqFile == null || adjFreqFile == null) {
             freqFilesFound = false;
         } else {
-            catICMap = new HashMap<>(WordCategory.values().length);
-            formFreqMaps = new HashMap<>(WordCategory.values().length);
-            individualFreqMaps = new HashMap<>(WordCategory.values().length);
-            cumulativeFreqMaps = new HashMap<>(WordCategory.values().length);
+            catICMap = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
+            formFreqMaps = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
+            individualFreqMaps = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
+            cumulativeFreqMaps = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
 
             LOGGER.info("Loading frequency lists...");
             formFreqMaps.put(WordCategory.nomen, loadFreqData(nounFreqFile));
@@ -111,20 +115,22 @@ public class SemanticUtils {
             // keep track of max IC values for the normalization map
             // min IC is always 0.0 (value for root)
 
-            Map<Integer, Double> icMap = new HashMap<>();
-            Map<Integer, Long> cumulativeFreqMap = cumulativeFreqMaps.get(wordCategory);
-            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
-            Long cumFreqRoot = cumulativeFreqMap.get(GermaNet.GNROOT_ID);
+            Int2DoubleMap icMap = new Int2DoubleOpenHashMap(175000);
+            Int2LongMap cumulativeFreqMap = cumulativeFreqMaps.get(wordCategory);
+            Set<Synset> synsetsByWordCat = catSynsetMap.get(wordCategory);
+            long cumFreqRoot = cumulativeFreqMap.get(GermaNet.GNROOT_ID);
 
-            Double maxIC = Double.MIN_VALUE;
+            double maxIC = Double.MIN_VALUE;
 
-            for (Synset synset : synsetsByWordCat) {
+            ObjectIterator<Synset> iterator = ObjectIterators.asObjectIterator(synsetsByWordCat.iterator());
+            Synset synset;
+            while (iterator.hasNext()) {
+                synset = iterator.next();
                 int synsetID = synset.getId();
-                Long cumulativeFreq = cumulativeFreqMap.get(synsetID);
+                long cumulativeFreq = cumulativeFreqMap.getOrDefault(synsetID, 0);
 
                 // calculate the IC for this synset
-                Double ic = null;
-                ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
+                double ic = -Math.log10((double) cumulativeFreq / cumFreqRoot);
 
                 // update max IC if this IC is larger than any seen so far
                 if (Double.compare(ic, maxIC) > 0) {
@@ -141,24 +147,24 @@ public class SemanticUtils {
 
             // for each of the IC measures,
             // put the min/max IC values in the normalization map for this wordCategory
-            Map<SemRelMeasure, List<Double>> normMap = catNormalizationMap.get(wordCategory);
+            Object2ObjectMap<SemRelMeasure, ObjectList<Double>> normMap = catNormalizationMap.get(wordCategory);
 
             // Resnik: min 0.0, max maxIC
-            List<Double> minMaxList = new ArrayList<>();
+            ObjectList<Double> minMaxList = new ObjectArrayList<>(2);
             minMaxList.add(0.0);
             minMaxList.add(maxIC);
             normMap.put(SemRelMeasure.Resnik, minMaxList);
 
             // JiangAndConrath: min 0.0, max 2 * -log10(1.0 / cumFreqRoot)
-            minMaxList = new ArrayList<>();
-            Double min = 0.0;
-            Double max = 2 * -Math.log10(1.0 / cumFreqRoot);
+            minMaxList = new ObjectArrayList<>(2);
+            double min = 0.0;
+            double max = 2 * -Math.log10(1.0 / cumFreqRoot);
             minMaxList.add(min);
             minMaxList.add(max);
             normMap.put(SemRelMeasure.JiangAndConrath, minMaxList);
 
             // Lin: min 0.0, max 1.0
-            minMaxList = new ArrayList<>();
+            minMaxList = new ObjectArrayList<>(2);
             min = 0.0;
             max = 1.0;
             minMaxList.add(min);
@@ -168,15 +174,15 @@ public class SemanticUtils {
         }
     }
 
-    private Map<String, Long> loadFreqData(File file) throws IOException {
-        Map<String, Long> freqMap = new HashMap<>();
+    private Object2LongMap<String> loadFreqData(File file) throws IOException {
+        Object2LongMap<String> freqMap = new Object2LongOpenHashMap<>();
         Files.lines(Paths.get(file.getPath()))
                 .map(line -> line.split("\\s+"))
                 .forEach(splits -> {
                     String word = splits[0];
-                    Long freq = Long.valueOf(splits[1]);
-                    Long curFreq = freqMap.get(word);
-                    if (curFreq != null) {
+                    long freq = Long.parseLong(splits[1]);
+                    long curFreq = freqMap.getOrDefault(word, -1);
+                    if (curFreq > 0) {
                         freq += curFreq;
                     }
                     freqMap.put(word, freq);
@@ -187,18 +193,24 @@ public class SemanticUtils {
     private void initIndividualFreqMaps() {
 
         for (WordCategory wordCategory : WordCategory.values()) {
-            Map<Integer, Long> individualFreqMap = new HashMap<>();
-            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
-            Map<String, Long> formFreqMap = formFreqMaps.get(wordCategory);
+            Int2LongMap individualFreqMap = new Int2LongOpenHashMap();
+            Set<Synset> synsetsByWordCat = catSynsetMap.get(wordCategory);
+            Object2LongMap<String> formFreqMap = formFreqMaps.get(wordCategory);
 
-            for (Synset synset : synsetsByWordCat) {
-                Integer synsetID = synset.getId();
+            ObjectIterator<Synset> iterator = ObjectIterators.asObjectIterator(synsetsByWordCat.iterator());
+            Synset synset;
+            while (iterator.hasNext()) {
+                synset = iterator.next();
+                int synsetID = synset.getId();
 
-                Long totalFreq = 1L;
-                List<String> allOrthForms = synset.getAllOrthForms();
-                for (String orthForm : allOrthForms) {
-                    Long orthFormFreq = formFreqMap.get(orthForm);
-                    if (orthFormFreq != null) {
+                long totalFreq = 1L;
+                ObjectList<String> allOrthForms = new ObjectArrayList<>(synset.getAllOrthForms());
+                ObjectIterator<String> orthFormIterator = allOrthForms.iterator();
+                String orthForm;
+                while (orthFormIterator.hasNext()) {
+                    orthForm = orthFormIterator.next();
+                    long orthFormFreq = formFreqMap.getOrDefault(orthForm, -1L);
+                    if (orthFormFreq > 0L) {
                         totalFreq += orthFormFreq;
                     }
                 }
@@ -216,29 +228,35 @@ public class SemanticUtils {
 
         for (WordCategory wordCategory : WordCategory.values()) {
 
-            Map<Integer, Long> cumulativeFreqMap = new HashMap<>();
-            List<Synset> synsetsByWordCat = gnet.getSynsets(wordCategory);
+            Int2LongMap cumulativeFreqMap = new Int2LongOpenHashMap();
+            Set<Synset> synsetsByWordCat = catSynsetMap.get(wordCategory);
+            ObjectIterator<Synset> iterator = ObjectIterators.asObjectIterator(synsetsByWordCat.iterator());
+            Synset synset;
 
-            for (Synset synset : synsetsByWordCat) {
-                Integer synsetID = synset.getId();
+            while (iterator.hasNext()) {
+                synset = iterator.next();
+                int synsetID = synset.getId();
 
                 // ROOT is a special case that is handled separately
                 // its word category is noun, but it has hyponyms of all word categories
                 if (synsetID == GermaNet.GNROOT_ID) {
                     continue;
                 }
-                if (cumulativeFreqMap.get(synsetID) == null) {
+                if (cumulativeFreqMap.getOrDefault(synsetID, -1L) == -1L) {
                     calcCumulativeSynsetFreq(synset, cumulativeFreqMap);
                 }
             }
 
             // add an entry for ROOT
             // count only cum freqs of hyponyms with the same word category
-            List<Synset>  rootHyponyms = gnet.getSynsetByID(GermaNet.GNROOT_ID).getRelatedSynsets(ConRel.has_hyponym);
-            Long rootCumFreq = 1L;
-            for (Synset hyponym : rootHyponyms) {
+            List<Synset>  rootHyponyms = synsetIDMap.get(GermaNet.GNROOT_ID).getRelatedSynsets(ConRel.has_hyponym);
+            long rootCumFreq = 1L;
+            ObjectIterator<Synset> hyponymIterator = ObjectIterators.asObjectIterator(rootHyponyms.iterator());
+            Synset hyponym;
+            while (hyponymIterator.hasNext()) {
+                hyponym = hyponymIterator.next();
                 if (hyponym.getWordCategory() == wordCategory) {
-                    rootCumFreq += cumulativeFreqMap.get(hyponym.getId());
+                    rootCumFreq += cumulativeFreqMap.getOrDefault(hyponym.getId(), 0);
                 }
             }
             cumulativeFreqMap.put(GermaNet.GNROOT_ID, rootCumFreq);
@@ -249,23 +267,27 @@ public class SemanticUtils {
     }
 
     // recursively fill in the cumulativeFreqMap
-    private Long calcCumulativeSynsetFreq(Synset synset, Map<Integer, Long> cumulativeFreqMap) {
+    private Long calcCumulativeSynsetFreq(Synset synset, Int2LongMap cumulativeFreqMap) {
 
         // See if we already calculated the cumulative frequency of the synset
-        Integer synsetID = synset.getId();
-        Long cumulativeFreq = cumulativeFreqMap.get(synsetID);
-        if (cumulativeFreq != null) {
+        int synsetID = synset.getId();
+        long cumulativeFreq = cumulativeFreqMap.getOrDefault(synsetID, -1);
+        if (cumulativeFreq != -1) {
             return cumulativeFreq;
         }
 
         // Calculate and store cumulative freq for this synset (ie freq of this synset plus all its hyponyms (transitive))
-        Map<Integer, Long> individualFreqMap = individualFreqMaps.get(synset.getWordCategory());
-        Long individualFreq = individualFreqMap.get(synsetID); // this should never be null
+        Int2LongMap individualFreqMap = individualFreqMaps.get(synset.getWordCategory());
+        long individualFreq = individualFreqMap.get(synsetID); // this should never be null
 
         // include synset's own freq in its cumulativeFreq
         cumulativeFreq = individualFreq;
         List<Synset> hyponyms = synset.getRelatedSynsets(ConRel.has_hyponym);
-        for (Synset hyponym : hyponyms) {
+        ObjectIterator<Synset> hyponymIterator = ObjectIterators.asObjectIterator(hyponyms.iterator());
+        Synset hyponym;
+
+        while (hyponymIterator.hasNext()) {
+            hyponym = hyponymIterator.next();
             cumulativeFreq += calcCumulativeSynsetFreq(hyponym, cumulativeFreqMap);
         }
         cumulativeFreqMap.put(synsetID, cumulativeFreq);
@@ -276,10 +298,13 @@ public class SemanticUtils {
     private void initMaxDepthMap() {
         LOGGER.info("Calculating max depths...");
         for (WordCategory wordCategory : WordCategory.values()) {
-            List<Synset> synsets = gnet.getSynsets(wordCategory);
+            Set<Synset> synsets = catSynsetMap.get(wordCategory);
             int maxDepth = 0;
 
-            for (Synset synset : synsets) {
+            ObjectIterator<Synset> iterator = ObjectIterators.asObjectIterator(synsets.iterator());
+            Synset synset;
+            while (iterator.hasNext()) {
+                synset = iterator.next();
                 int depth = synset.getDepth();
                 if (depth > maxDepth) {
                     maxDepth = depth;
@@ -296,7 +321,7 @@ public class SemanticUtils {
      */
     private void initPathNormalizationValues() {
         for (WordCategory wordCategory : WordCategory.values()) {
-            Map<SemRelMeasure, List<Double>> normalizeMinMaxValues = new HashMap<>();
+            Object2ObjectMap<SemRelMeasure, ObjectList<Double>> normalizeMinMaxValues = new Object2ObjectOpenHashMap<>(SemRelMeasure.values().length);
 
             for (SemRelMeasure semRelMeasure : SemRelMeasure.values()) {
                 switch (semRelMeasure) {
@@ -304,16 +329,18 @@ public class SemanticUtils {
                     case LeacockAndChodorow:
                     case WuAndPalmer:
                         // min at index0, max at index1
-                        List<Double> minMax = new ArrayList<>(2); // min at index 0, max at index 1
+                        ObjectList<Double> minMax = new ObjectArrayList<>(2); // min at index 0, max at index 1
                         Synset synset1;
                         Synset synset2;
                         double minVal = 0;
                         double maxVal = 1;
 
                         // Maximally distant synsets using path algorithms are those with the longest LCSs
-                        List<Integer> maxDistantSynsetIds = Lists.newArrayList(catLongestLCSMap.get(wordCategory).iterator().next().getFromToSynsetIDs());
-                        synset1 = gnet.getSynsetByID(maxDistantSynsetIds.get(0));
-                        synset2 = gnet.getSynsetByID(maxDistantSynsetIds.get(1));
+                        IntList maxDistantSynsetIds = new IntArrayList(2);
+                        maxDistantSynsetIds.addAll(catLongestLCSMap.get(wordCategory).iterator().next().getFromToSynsetIDs());
+
+                        synset1 = synsetIDMap.get(maxDistantSynsetIds.getInt(0));
+                        synset2 = synsetIDMap.get(maxDistantSynsetIds.getInt(1));
 
                         minVal = getSimilarity(semRelMeasure, synset1, synset2, 0); // least similar, lowest value, not normalized
                         maxVal = getSimilarity(semRelMeasure, synset1, synset1, 0); // most similar, highest value, not normalized
@@ -355,14 +382,14 @@ public class SemanticUtils {
 
     private void initCatLongestLCSMap() {
         if (catLongestLCSMap == null) {
-            catLongestLCSMap = new HashMap<>();
+            catLongestLCSMap = new Object2ObjectOpenHashMap<>(WordCategory.values().length);
         }
         LOGGER.info("Calculating longest LCS's...");
         for (WordCategory wordCategory : WordCategory.values()) {
             // don't calculate again if it was already done
             if (catLongestLCSMap.get(wordCategory) == null) {
                 long startTime = System.currentTimeMillis();
-                Set<LeastCommonSubsumer> lcsSet = longestLeastCommonSubsumer(wordCategory);
+                ObjectSet<LeastCommonSubsumer> lcsSet = longestLeastCommonSubsumer(wordCategory);
                 catLongestLCSMap.put(wordCategory, lcsSet);
 
                 long endTime = System.currentTimeMillis();
@@ -381,21 +408,24 @@ public class SemanticUtils {
      * @param wordCategory WordCategory to process
      * @return a set of LeastCommonSubsumers with the longest possible paths for WordCategory
      */
-    private Set<LeastCommonSubsumer> longestLeastCommonSubsumer(WordCategory wordCategory) {
-        Set<LeastCommonSubsumer> leastCommonSubsumers = new HashSet<>();
+    private ObjectSet<LeastCommonSubsumer> longestLeastCommonSubsumer(WordCategory wordCategory) {
+        ObjectSet<LeastCommonSubsumer> leastCommonSubsumers = new ObjectOpenHashSet<>();
 
         // processing is faster if the synsets are sorted by maxDistance to any synset on its path to root
-        List<Synset> synsetsByCat = gnet.getSynsets(wordCategory);
+        List<Synset> synsetsByCat = new ObjectArrayList<>(catSynsetMap.get(wordCategory));
         Collections.sort(synsetsByCat, (s1, s2) -> (s2.getMaxDistance() - s1.getMaxDistance()));
 
         // longest distance between 2 synsets found so far
         int longestDistance = 0;
         // longest path between a synset and any of its hypernyms in the graph
-        int maxHypernymDistance = catMaxHypernymDistanceMap.get(wordCategory);
+        int maxHypernymDistance = catMaxHypernymDistanceMap.getOrDefault(wordCategory, 0);
 
         // iterate over all pairs of synsets, avoiding processing any pair twice
-        for (int i = 0; i < synsetsByCat.size(); i++) {
-            Synset synset1 = synsetsByCat.get(i);
+        Synset synset1;
+        Synset synset2;
+        int size = synsetsByCat.size();
+        for (int i = 0; i < size; i++) {
+            synset1 = synsetsByCat.get(i);
             int synset1MaxHypernymDist = synset1.getMaxDistance();
 
             // not possible for this synset to be one of the longest
@@ -404,8 +434,8 @@ public class SemanticUtils {
             }
 
             // start at i+1 to avoid double processing
-            for (int j = i + 1; j < synsetsByCat.size(); j++) {
-                Synset synset2 = synsetsByCat.get(j);
+            for (int j = i + 1; j < size; j++) {
+                synset2 = synsetsByCat.get(j);
 
                 // not possible for these two synsets to have a path longer than
                 // the longest distance so far
@@ -466,13 +496,21 @@ public class SemanticUtils {
         Set<SynsetPath> paths = new HashSet<>();
         Set<LeastCommonSubsumer> lcsSet = fromSynset.getLeastCommonSubsumers(toSynset);
 
+        int lcsID;
         for (LeastCommonSubsumer lcs : lcsSet) {
-            List<List<Synset>> fromSynsetToLcsPaths = getPathToHypernym(fromSynset, lcs.getLcsID(), fromSynset.getDistanceToHypernym(lcs.getLcsID()));
-            List<List<Synset>> toSynsetToLcsPaths = getPathToHypernym(toSynset, lcs.getLcsID(), toSynset.getDistanceToHypernym(lcs.getLcsID()));
+            lcsID = lcs.getLcsID();
+            List<List<Synset>> fromSynsetToLcsPaths = getPathToHypernym(fromSynset, lcsID, fromSynset.getDistanceToHypernym(lcsID));
+            List<List<Synset>> toSynsetToLcsPaths = getPathToHypernym(toSynset, lcsID, toSynset.getDistanceToHypernym(lcsID));
 
-            for (List<Synset> fromSynsetPath : fromSynsetToLcsPaths) {
-                for (List<Synset> toSynsetPath : toSynsetToLcsPaths) {
-                    paths.add(new SynsetPath(fromSynset, toSynset, lcs.getLcsID(), fromSynsetPath, toSynsetPath));
+            int fromSize = fromSynsetToLcsPaths.size();
+            int toSize = toSynsetToLcsPaths.size();
+            List<Synset> fromSynsetPath;
+            List<Synset> toSynsetPath;
+            for (int i = 0; i < fromSize; i++) {
+                fromSynsetPath = fromSynsetToLcsPaths.get(i);
+                for (int j = 0; j < toSize; j++) {
+                    toSynsetPath = toSynsetToLcsPaths.get(j);
+                    paths.add(new SynsetPath(fromSynset, toSynset, lcsID, fromSynsetPath, toSynsetPath));
                 }
             }
         }
@@ -490,16 +528,16 @@ public class SemanticUtils {
      * @return the shortest path between synset and hypernym with ID lcsId, or null if lcsId is not
      * a hypernym of synset or if lcsId is farther than maxDistance from synset.
      */
-    private List<List<Synset>> getPathToHypernym(Synset synset, Integer lcsId, int maxDistance) {
+    private List<List<Synset>> getPathToHypernym(Synset synset, int lcsId, int maxDistance) {
 
         // the synset is not on the shortest path to lcs
-        Integer synsetLcsDistance = synset.getDistanceToHypernym(lcsId);
-        if (synsetLcsDistance == null || synsetLcsDistance > maxDistance) {
+        int synsetLcsDistance = synset.getDistanceToHypernym(lcsId);
+        if ((synsetLcsDistance < 0) || (synsetLcsDistance > maxDistance)) {
             return null;
         }
 
-        List<List<Synset>> rval = new ArrayList<>();
-        List<Synset> path = new LinkedList<>();
+        List<List<Synset>> rval = new ObjectArrayList<>();
+        List<Synset> path = new ObjectArrayList<>();
 
         // got to the lcs, we're done
         if (synset.getId() == lcsId) {
@@ -509,10 +547,18 @@ public class SemanticUtils {
             path.add(synset);
 
             // process each direct hypernym of this synset
-            for (Synset hypernym : synset.getRelatedSynsets(ConRel.has_hypernym)) {
-                List<List<Synset>> paths = getPathToHypernym(hypernym, lcsId, maxDistance - 1);
+            List<Synset> hypernyms = synset.getRelatedSynsets(ConRel.has_hypernym);
+            int hypernymsSize = hypernyms.size();
+            Synset hypernym;
+            List<List<Synset>> paths;
+            for (int i = 0; i < hypernymsSize; i++) {
+                hypernym = hypernyms.get(i);
+                paths = getPathToHypernym(hypernym, lcsId, maxDistance - 1);
                 if (paths != null && !paths.isEmpty()) {
-                    for (List<Synset> partialPath : paths) {
+                    List<Synset> partialPath;
+                    int pathsSize = paths.size();
+                    for (int j = 0; j < pathsSize; j++) {
+                        partialPath = paths.get(j);
                         partialPath.addAll(0, path);
                         rval.add(partialPath);
                     }
@@ -591,12 +637,12 @@ public class SemanticUtils {
 
         // the longest LCS for any two synsets in GermaNet for the WordCategory that
         // s1 and s2 belong to
-        Set<LeastCommonSubsumer> lcsSet = catLongestLCSMap.get(s1.getWordCategory());
+        Set<LeastCommonSubsumer> catLongestLCSs = catLongestLCSMap.get(s1.getWordCategory());
 
         // all LCS's have the same distance, just get the first one
-        int maxShortestPathLength = lcsSet.iterator().next().getDistance();
+        int maxShortestPathLength = catLongestLCSs.iterator().next().getDistance();
 
-        int pathLength = s1.getDistanceToSynset(s2);
+        int pathLength = s1.getLeastCommonSubsumers(s2).iterator().next().getDistance();
 
         double rawValue = (maxShortestPathLength - pathLength) / (double) maxShortestPathLength;
         return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.SimplePath, rawValue, normalizedMax) : rawValue;
@@ -630,19 +676,18 @@ public class SemanticUtils {
             return null;
         }
 
-        Set<LeastCommonSubsumer> lcsSet;
-        int maxLCSdistToRoot = 0;
+        Set<LeastCommonSubsumer> lcsSet = s1.getLeastCommonSubsumers(s2);
 
-        lcsSet = s1.getLeastCommonSubsumers(s2);
+        int maxLCSdistToRoot = 0;
         for (LeastCommonSubsumer lcs : lcsSet) {
-            Synset lcsSynset = gnet.getSynsetByID(lcs.getLcsID());
+            Synset lcsSynset = synsetIDMap.get(lcs.getLcsID());
             int lcsSynsetDistToRoot = lcsSynset.getDistanceToHypernym(GermaNet.GNROOT_ID);
             if (lcsSynsetDistToRoot > maxLCSdistToRoot) {
                 maxLCSdistToRoot = lcsSynsetDistToRoot;
             }
         }
 
-        int pathLength = s1.getDistanceToSynset(s2);
+        int pathLength = lcsSet.iterator().next().getDistance(); //same as s1.getDistanceToSynset(s2);
         double doubleMaxLCSdistToRoot = 2.0 * maxLCSdistToRoot;
         double rawValue = doubleMaxLCSdistToRoot / (pathLength + doubleMaxLCSdistToRoot);
         return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.WuAndPalmer, rawValue, normalizedMax) : rawValue;
@@ -678,7 +723,7 @@ public class SemanticUtils {
 
         // maxDepth and pathLength represent the number of edges
         // add 1 to get the number of nodes
-        int maxDepth = catMaxDepthMap.get(s1.getWordCategory()) + 1;
+        int maxDepth = catMaxDepthMap.getOrDefault(s1.getWordCategory(), 0) + 1;
 
         // the distance, using hypernym relations, between s1 and s2
         int pathLength = s1.getDistanceToSynset(s2) + 1;
@@ -724,14 +769,11 @@ public class SemanticUtils {
      * calculate the similarity (such as missing frequency files).
      */
     public Double getSimilarityResnik(Synset s1, Synset s2, int normalizedMax) {
-        if (!freqFilesFound) {
-            return null;
-        }
-        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
+        if (!freqFilesFound || (s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return null;
         }
 
-        Double maxIC = getMaxICofLCSs(s1, s2);
+        double maxIC = getMaxICofLCSs(s1, s2);
         return (normalizedMax > 0) ? normalize(s1.getWordCategory(), SemRelMeasure.Resnik, maxIC, normalizedMax) : maxIC;
     }
 
@@ -762,16 +804,14 @@ public class SemanticUtils {
      * calculate the similarity (such as missing frequency files).
      */
     public Double getSimilarityJiangAndConrath(Synset s1, Synset s2, int normalizedMax) {
-        if (!freqFilesFound) {
-            return null;
-        }
-        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
+
+        if (!freqFilesFound || (s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return null;
         }
 
         WordCategory cat = s1.getWordCategory();
         Map<Integer, Double> icMap = catICMap.get(cat);
-        Double lcsIC = getMaxICofLCSs(s1, s2);
+        double lcsIC = getMaxICofLCSs(s1, s2);
 
         double icS1 = icMap.get(s1.getId());
         double icS2 = icMap.get(s2.getId());
@@ -802,16 +842,14 @@ public class SemanticUtils {
      * calculate the similarity (such as missing frequency files).
      */
     public Double getSimilarityLin(Synset s1, Synset s2, int normalizedMax) {
-        if (!freqFilesFound) {
-            return null;
-        }
-        if ((s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
+
+        if (!freqFilesFound || (s1 == null) || (s2 == null) || !s2.inWordCategory(s1.getWordCategory())) {
             return null;
         }
 
         WordCategory cat = s1.getWordCategory();
-        Map<Integer, Double> icMap = catICMap.get(cat);
-        Double lcsIC = getMaxICofLCSs(s1, s2);
+        Int2DoubleMap icMap = catICMap.get(cat);
+        double lcsIC = getMaxICofLCSs(s1, s2);
 
         double icS1 = icMap.get(s1.getId());
         double icS2 = icMap.get(s2.getId());
@@ -829,20 +867,21 @@ public class SemanticUtils {
      * @param s2 second synset
      * @return the maximum Information Content (IC) value of the Least Common Subsumer(s) of s1 and s2.
      */
-    private Double getMaxICofLCSs(Synset s1, Synset s2) {
+    private double getMaxICofLCSs(Synset s1, Synset s2) {
         Set<LeastCommonSubsumer> leastCommonSubsumers = getLeastCommonSubsumers(s1, s2);
-        Map<Integer, Double> icMap = catICMap.get(s1.getWordCategory());
-        Double curIC;
-        Double prevIC = null;
-        Double maxIC = null;
-        Double epsilon = 0.00001;
+        Int2DoubleMap icMap = catICMap.get(s1.getWordCategory());
+        double curIC;
+        double prevIC = Double.MIN_EXPONENT;
+        double maxIC = Double.MIN_EXPONENT;
+        double epsilon = 0.00001;
+
+        boolean prevICNull = true;
 
         for (LeastCommonSubsumer leastCommonSubsumer : leastCommonSubsumers) {
             int lcsID = leastCommonSubsumer.getLcsID();
-            curIC = icMap.get(lcsID);
-
-            if (curIC != null) {
-                if (prevIC == null) {
+            if (icMap.containsKey(lcsID)) {
+                curIC = icMap.getOrDefault(lcsID,-1);
+                if (prevICNull) {
                     maxIC = curIC;
                 } else {
                     double diff = curIC - prevIC;
@@ -851,6 +890,7 @@ public class SemanticUtils {
                     }
                 }
                 prevIC = curIC;
+                prevICNull = false;
             }
         }
         return maxIC;

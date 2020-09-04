@@ -19,6 +19,8 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Load <code>WiktionaryParaphrases</code> into a specified <code>GermaNet</code> object.
+ * Load <code>WiktionaryParaphrases</code> for <code>GermaNet</code>.
  *
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
@@ -38,33 +40,34 @@ import javax.xml.stream.XMLStreamReader;
 class WiktionaryLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WiktionaryLoader.class);
-    private GermaNet germaNet;
-    private String namespace;
 
     /**
-     * Constructs a <code>WiktionaryLoader</code> for the specified
-     * <code>GermaNet</code> object.
+     * Loads <code>WiktionaryParaphrases</code> from the given streams and
+     * adds them to their corresponding LexUnit.
      *
-     * @param germaNet the <code>GermaNet</code> object to load the
-     *                 <code>WiktionaryParaphrases</code> into
+     * @param loaderData the loading data that contains the InputStream to read
+     *                   and the LexUnits to update
+     * @return a List of the loaded WiktionaryParaphrases
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    protected WiktionaryLoader(GermaNet germaNet) {
-        this.germaNet = germaNet;
-    }
+    static LoaderData loadWiktionary(LoaderData loaderData) throws XMLStreamException {
 
+        List<InputStream> wiktStreams = loaderData.getWiktInputStreams();
 
-    /**
-     * Loads <code>WiktionaryParaphrases</code> from the given streams into this
-     * <code>WiktionaryLoader</code>'s <code>GermaNet</code> object.
-     *
-     * @param wiktStreams the list of streams containing <code>WiktionaryParaphrases</code> data
-     * @param wiktNames   the names of the streams
-     * @throws javax.xml.stream.XMLStreamException
-     */
-    protected void loadWiktionary(List<InputStream> wiktStreams, List<String> wiktNames) throws XMLStreamException {
+        // nothing to do if there is no data to read
+        if (wiktStreams.isEmpty()) {
+            return loaderData;
+        }
+
+        List<String> wiktNames = loaderData.getWiktXmlNames();
+        Int2ObjectMap<LexUnit> lexUnitIDMap = loaderData.getLexUnitIdMap();
+
+        String namespace = null;
+        List<WiktionaryParaphrase> wiktionaryParaphrases = new ObjectArrayList<>();
+        int wiktCnt = 0;
 
         for (int i = 0; i < wiktStreams.size(); i++) {
-            LOGGER.info("Loading input stream " + wiktNames.get(i) + "...");
+            LOGGER.info("Loading wiktionary stream " + wiktNames.get(i) + "...");
             XMLInputFactory factory = XMLInputFactory.newInstance();
             XMLStreamReader parser = factory.createXMLStreamReader(wiktStreams.get(i));
             int event;
@@ -80,34 +83,46 @@ class WiktionaryLoader {
                     case XMLStreamConstants.START_ELEMENT:
                         nodeName = parser.getLocalName();
                         if (nodeName.equals(GermaNet.XML_WIKTIONARY_PARAPHRASE)) {
-                            WiktionaryParaphrase wiki = processWiktionaryParaphrase(parser);
-                            germaNet.addWiktionaryParaphrase(wiki);
+                            WiktionaryParaphrase wikt = processWiktionaryParaphrase(parser, namespace);
+                            wiktionaryParaphrases.add(wikt);
+                            int lexUnitId = wikt.getLexUnitId();
+                            LexUnit lexUnit = lexUnitIDMap.getOrDefault(lexUnitId, null);
+                            if (lexUnit != null) {
+                                lexUnit.addWiktionaryParaphrase(wikt);
+                                lexUnitIDMap.put(lexUnitId, lexUnit);
+                                wiktCnt++;
+                            }
                         }
                         break;
                 }
             }
             parser.close();
         }
+
+        LOGGER.info("Done loading {} wiktionary records.", wiktCnt);
+        loaderData.setWiktionaryParaphrases(wiktionaryParaphrases);
+        return loaderData;
     }
 
     /**
      * Returns the <code>WiktionaryParaphrase</code> for which the start tag was just encountered.
      *
      * @param parser the <code>parser</code> being used on the current file
+     * @param namespace the namespace to use
      * @return a <code>WiktionaryParaphrase</code> representing the data parsed
-     * @throws javax.xml.stream.XMLStreamException
+     * @throws XMLStreamException if there is a problem with the stream
      */
-    private WiktionaryParaphrase processWiktionaryParaphrase(XMLStreamReader parser) throws XMLStreamException {
+    private static WiktionaryParaphrase processWiktionaryParaphrase(XMLStreamReader parser, String namespace) throws XMLStreamException {
         int lexUnitId;
         int wiktionaryId;
         int wiktionarySenseId;
         String wiktionarySense;
         boolean edited = false;
-        WiktionaryParaphrase curWiki;
+        WiktionaryParaphrase curWikt;
 
-        lexUnitId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
-        wiktionaryId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_ID).substring(1));
-        wiktionarySenseId = Integer.valueOf(parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_SENSE_ID));
+        lexUnitId = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID).substring(1));
+        wiktionaryId = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_ID).substring(1));
+        wiktionarySenseId = Integer.parseInt(parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_SENSE_ID));
         wiktionarySense = parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_SENSE);
 
         String edit = parser.getAttributeValue(namespace, GermaNet.XML_WIKTIONARY_EDITED);
@@ -115,9 +130,9 @@ class WiktionaryLoader {
             edited = true;
         }
 
-        curWiki = new WiktionaryParaphrase(lexUnitId, wiktionaryId, wiktionarySenseId,
+        curWikt = new WiktionaryParaphrase(lexUnitId, wiktionaryId, wiktionarySenseId,
                 wiktionarySense, edited);
 
-        return curWiki;
+        return curWikt;
     }
 }
