@@ -21,7 +21,7 @@ To use the API you can either download the [jar](https://search.maven.org/artifa
 <dependency>
     <groupId>de.tuebingen.uni.sfs.germanet</groupId>
     <artifactId>germanet-api</artifactId>
-    <version>13.2.1</version>
+    <version>13.3.0</version>
 </dependency>
 ```
 The latest version of the API works for GermaNet realeases starting from 13.0. 

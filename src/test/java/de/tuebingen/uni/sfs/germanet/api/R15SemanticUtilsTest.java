@@ -50,7 +50,7 @@ public class R15SemanticUtilsTest {
     static SemanticUtils semanticUtils;
     static String dataPath;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(R14SemanticUtilsTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(R15SemanticUtilsTest.class);
 
     // nouns: synset IDs
     static int alleebaumID = 100607;
@@ -120,7 +120,7 @@ public class R15SemanticUtilsTest {
             String sep = System.getProperty("file.separator");
             dataPath = userHome + sep + "Data" + sep + "GermaNetForApiUnitTesting" + sep;
             String goodDataPath = dataPath + "R" + release + sep + "XML-Valid" + sep;
-            String freqListDir = dataPath + "FreqLists" + sep;
+            String freqListDir = dataPath + "R" + release + sep + "GN_V" + release + "0-FreqLists" + sep;
             String nounFreqListPath = freqListDir + "noun_freqs_decow14_16.txt";
             String verbFreqListPath = freqListDir + "verb_freqs_decow14_16.txt";
             String adjFreqListPath = freqListDir + "adj_freqs_decow14_16.txt";

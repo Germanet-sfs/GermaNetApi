@@ -179,13 +179,15 @@ public class SemanticUtils {
         Files.lines(Paths.get(file.getPath()))
                 .map(line -> line.split("\\s+"))
                 .forEach(splits -> {
-                    String word = splits[0];
-                    long freq = Long.parseLong(splits[1]);
-                    long curFreq = freqMap.getOrDefault(word, -1);
-                    if (curFreq > 0) {
-                        freq += curFreq;
+                    if (splits.length == 2) {
+                        String word = splits[0];
+                        long freq = Long.parseLong(splits[1]);
+                        long curFreq = freqMap.getOrDefault(word, -1);
+                        if (curFreq > 0) {
+                            freq += curFreq;
+                        }
+                        freqMap.put(word, freq);
                     }
-                    freqMap.put(word, freq);
                 });
         return freqMap;
     }
