@@ -159,6 +159,9 @@ public class GermaNet {
 
     // number of GermaNet files
     public static final int NUMBER_OF_GERMANET_FILES = 55;
+    
+    //for ZIP files
+    public static final String ZIP_PATH_SEPARATOR = "/";
 
     private Map<WordCategory, Map<String, Set<LexUnit>>> wordCategoryMapAllOrthForms;
     private Object2ObjectMap<String, ObjectSet<String>> lowerToUpperMap;
@@ -292,8 +295,9 @@ public class GermaNet {
             while (entries.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) entries.nextElement();
                 String name = entry.getName();
-                if (name.split(File.separator).length > 1) {
-                    name = name.split(File.separator)[name.split(File.separator).length - 1];
+                String[] nameSplit = name.split(ZIP_PATH_SEPARATOR);
+                if (nameSplit.length > 1) {
+                    name = nameSplit[nameSplit.length - 1];
                 }
                 InputStream stream = zipFile.getInputStream(entry);
                 loaderData.addStreamToLists(name, stream);
