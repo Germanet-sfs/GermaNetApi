@@ -19,7 +19,20 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import com.google.common.collect.Sets;
+import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import javax.xml.stream.XMLStreamException;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,14 +43,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.stream.XMLStreamException;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Stream;
-
-import static de.tuebingen.uni.sfs.germanet.api.GermaNet.GNROOT_ID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import com.google.common.collect.Sets;
 
 /**
  * Junit tests for the semantic relatedness functionality of the GermaNet API.

@@ -19,11 +19,14 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import javax.xml.stream.XMLStreamException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 /**
  * Extra (optional) tests for checking the correct behavior when ILI or Wiktionary files
