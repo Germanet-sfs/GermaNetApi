@@ -280,12 +280,19 @@ class SynsetLoader {
 
     static private CompoundInfo processCompound(XMLStreamReader parser, String namespace) throws XMLStreamException {
         String modifier1 = null;
+        String mod1LexId1 = null;
+        String mod1LexId2 = null;
+        String mod1LexId3 = null;
         CompoundProperty mod1Attr = null;
         CompoundCategory mod1Cat = null;
         String modifier2 = null;
+        String mod2LexId1 = null;
+        String mod2LexId2 = null;
+        String mod2LexId3 = null;
         CompoundProperty mod2Attr = null;
         CompoundCategory mod2Cat = null;
         String head = null;
+        String headLexId = null;
         CompoundProperty headAttr = null;
         int event = -1;
         String nodeName;
@@ -308,6 +315,18 @@ class SynsetLoader {
                             if (attrVal != null) {
                                 mod1Cat = CompoundCategory.valueOf(attrVal);
                             }
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID);
+                            if (attrVal != null) {
+                            	mod1LexId1 = attrVal;
+                            }
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID2);
+                            if (attrVal != null) {
+                            	mod1LexId2 = attrVal;
+                            }
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID3);
+                            if (attrVal != null) {
+                            	mod1LexId3 = attrVal;
+                            }
                             modifier1 = parser.getElementText();
                         } else { // we are dealing with the 2nd modifier
                             attrVal = parser.getAttributeValue(namespace, GermaNet.XML_PROPERTY);
@@ -318,12 +337,28 @@ class SynsetLoader {
                             if (attrVal != null) {
                                 mod2Cat = CompoundCategory.valueOf(attrVal);
                             }
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID);
+                            if (attrVal != null) {
+                            	mod2LexId1 = attrVal;
+                            }
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID2);
+                            if (attrVal != null) {
+                            	mod2LexId2 = attrVal;
+                            }
+                            attrVal = parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID3);
+                            if (attrVal != null) {
+                            	mod2LexId3 = attrVal;
+                            }
                             modifier2 = parser.getElementText();
                         }
                     } else if (nodeName.equals(GermaNet.XML_COMPOUND_HEAD)) {
                         attrVal = parser.getAttributeValue(namespace, GermaNet.XML_PROPERTY);
                         if (attrVal != null) {
                             headAttr = CompoundProperty.valueOf(attrVal);
+                        }
+                        attrVal = parser.getAttributeValue(namespace, GermaNet.XML_LEX_UNIT_ID);
+                        if (attrVal != null) {
+                        	headLexId = attrVal;
                         }
                         head = parser.getElementText();
                     }
@@ -338,8 +373,8 @@ class SynsetLoader {
             }
         }
 
-        CompoundInfo curCompound = new CompoundInfo(modifier1, mod1Attr,
-                mod1Cat, modifier2, mod2Attr, mod2Cat, head, headAttr);
+        CompoundInfo curCompound = new CompoundInfo(modifier1, mod1LexId1, mod1LexId2, mod1LexId3, mod1Attr, mod1Cat, modifier2, 
+        		mod2LexId1, mod2LexId2, mod2LexId3, mod2Attr, mod2Cat, head, headLexId, headAttr);
         return curCompound;
     }
 }

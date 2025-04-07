@@ -156,6 +156,8 @@ public class GermaNet {
     public static final String XML_CATEGORY = "category";
     public static final String XML_COMPOUND_MODIFIER = "modifier";
     public static final String XML_COMPOUND_HEAD = "head";
+    public static final String XML_LEX_UNIT_ID2 = "lexUnitId2";
+    public static final String XML_LEX_UNIT_ID3 = "lexUnitId3";
 
     // number of GermaNet files
     public static final int NUMBER_OF_GERMANET_FILES = 55;
