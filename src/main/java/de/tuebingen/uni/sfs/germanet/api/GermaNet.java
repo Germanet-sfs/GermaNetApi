@@ -918,13 +918,13 @@ public class GermaNet {
     }
 
     public HashMap<LexUnit, CompoundInfo> getLexUnitsWithCompoundInfo() {
-        HashMap<LexUnit, CompoundInfo> lexUnitsWithCimpounds = new HashMap<>();
+        HashMap<LexUnit, CompoundInfo> lexUnitsWithCompounds = new HashMap<>();
         for (LexUnit lu : getLexUnits()) {
             if (lu.getCompoundInfo() != null) {
-                lexUnitsWithCimpounds.put(lu, lu.getCompoundInfo());
+                lexUnitsWithCompounds.put(lu, lu.getCompoundInfo());
             }
         }
-        return lexUnitsWithCimpounds;
+        return lexUnitsWithCompounds;
     }
 
     /**
