@@ -34,7 +34,7 @@ import javax.xml.stream.XMLStreamReader;
 /**
  * Load <code>Synsets</code> for <code>GermaNet</code>.
  * 
- * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
+ * @author University of Tuebingen, Department of Linguistics (germanet-info at semsprach.uni-tuebingen.de)
  * @version 13.0
  */
 class SynsetLoader {
@@ -164,6 +164,7 @@ class SynsetLoader {
         String orthVar = null;
         String oldOrthForm = null;
         String oldOrthVar = null;
+        String comment = null;
         List<Example> examples = new ObjectArrayList<>();
         List<Frame> frames = new ObjectArrayList<>();
         CompoundInfo compound = null;
@@ -206,6 +207,8 @@ class SynsetLoader {
                         oldOrthForm = parser.getElementText();
                     } else if (nodeName.equals(GermaNet.XML_OLD_ORTH_VAR)) {
                         oldOrthVar = parser.getElementText();
+                    } else if (nodeName.equals(GermaNet.XML_COMMENT)) {
+                        comment = parser.getElementText();
                     } else if (nodeName.equals(GermaNet.XML_FRAME)) {
                         frames.add(new Frame(parser.getElementText()));
                     } else if (nodeName.equals(GermaNet.XML_EXAMPLE)) {
@@ -226,7 +229,7 @@ class SynsetLoader {
 
         // create a new LexUnit with those attributes
         curLexUnit = new LexUnit(id, parentSynset, sense, styleMarking, artificial,
-                orthForm, orthVar, oldOrthForm, oldOrthVar, namedEntity, source);
+                orthForm, orthVar, oldOrthForm, oldOrthVar, comment, namedEntity, source);
 
         for (Frame frame : frames) {
             curLexUnit.addFrame(frame);

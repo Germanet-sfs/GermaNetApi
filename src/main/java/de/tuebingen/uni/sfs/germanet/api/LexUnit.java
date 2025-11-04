@@ -65,12 +65,13 @@ import java.util.*;
  * @author University of Tuebingen, Department of Linguistics (germanetinfo at uni-tuebingen.de)
  * @version 13.0
  */
-public class LexUnit {
+public class  LexUnit {
     private int id;
     private String source;
     private boolean styleMarking, artificial, namedEntity;
     private Synset synset;
     private String orthForm, orthVar, oldOrthForm, oldOrthVar;
+    private String comment;
     private List<String> allOrthForms;
     private int sense;
     private ArrayList<Frame> frames;
@@ -90,16 +91,17 @@ public class LexUnit {
      * @param sense       running sense number
      * @param markedStyle boolean attribute
      * @param artificial  boolean attribute
-     * @param orthForm    boolean attribute
-     * @param orthVar     boolean attribute
-     * @param oldOrthForm boolean attribute
-     * @param oldOrthVar  boolean attribute
+     * @param orthForm    orthographic form
+     * @param orthVar     orthographic form variant
+     * @param oldOrthForm old orthographic form
+     * @param oldOrthVar  old orthographic form variant
+     * @param comment     annotator comment
      * @param namedEntity boolean attribute
      * @param source      source of this <code>LexUnit</code> (eg "core")
      */
     LexUnit(int id, Synset synset, int sense,
             boolean markedStyle, boolean artificial, String orthForm, String orthVar,
-            String oldOrthForm, String oldOrthVar, boolean namedEntity, String source) {
+            String oldOrthForm, String oldOrthVar, String comment, boolean namedEntity, String source) {
         this.id = id;
         this.synset = synset;
         this.sense = sense;
@@ -109,6 +111,7 @@ public class LexUnit {
         this.orthVar = orthVar;
         this.oldOrthForm = oldOrthForm;
         this.oldOrthVar = oldOrthVar;
+        this.comment = comment;
         this.namedEntity = namedEntity;
         this.source = source;
         this.outgoingRelations = new Object2ObjectOpenHashMap<>(LexRel.values().length);
@@ -268,6 +271,15 @@ public class LexUnit {
     }
 
     /**
+     * Returns the comment on this <code>LexUnit</code>.
+     *
+     * @return the comment on this <code>LexUnit</code>
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
      * If <code>direction</code> is <code>RelDirection.outgoing</code>, add an
      * outgoing relation of the specified type to this <code>LexUnit</code>.
      * If <code>direction</code> is <code>RelDirection.incoming</code>, add an
@@ -418,7 +430,8 @@ public class LexUnit {
                 + ", source: " + source
                 + ", named entity: " + namedEntity
                 + ", artificial: " + artificial
-                + ", style marking: " + styleMarking;
+                + ", style marking: " + styleMarking
+                + ", comment: " + comment;
 
         return lexUnitAsString;
     }

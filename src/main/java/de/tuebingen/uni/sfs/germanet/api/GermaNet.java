@@ -109,6 +109,7 @@ public class GermaNet {
     public static final String XML_ORTH_VAR = "orthVar";
     public static final String XML_OLD_ORTH_FORM = "oldOrthForm";
     public static final String XML_OLD_ORTH_VAR = "oldOrthVar";
+    public static final String XML_COMMENT = "comment";
     public static final String XML_SOURCE = "source";
     public static final String XML_SENSE = "sense";
     public static final String XML_STYLE_MARKING = "styleMarking";
