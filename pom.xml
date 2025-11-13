@@ -4,7 +4,7 @@
   <!-- removed deprecated oss-parent -->
   <groupId>de.tuebingen.uni.sfs.germanet</groupId>
   <artifactId>germanet-api</artifactId>
-  <version>20.0</version>
+  <version>20.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>germanet-api</name>
@@ -106,7 +106,7 @@
     <url>https://github.com/germanet-sfs/GermaNetApi</url>
     <connection>scm:git:https://github.com/germanet-sfs/GermaNetApi.git</connection>
     <developerConnection>scm:git:git@github.com:germanet-sfs/GermaNetApi.git</developerConnection>
-    <tag>germanet-api-20.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <build>
