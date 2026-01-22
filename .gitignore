@@ -60,3 +60,5 @@ webui/lib/
 
 # Emacs
 *~
+/key2.asc
+/key.asc
