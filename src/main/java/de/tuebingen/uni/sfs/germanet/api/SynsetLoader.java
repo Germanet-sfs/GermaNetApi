@@ -165,6 +165,8 @@ class SynsetLoader {
         String oldOrthForm = null;
         String oldOrthVar = null;
         String comment = null;
+        String particle = null;
+        String baseVerb = null;
         List<Example> examples = new ObjectArrayList<>();
         List<Frame> frames = new ObjectArrayList<>();
         CompoundInfo compound = null;
@@ -209,6 +211,10 @@ class SynsetLoader {
                         oldOrthVar = parser.getElementText();
                     } else if (nodeName.equals(GermaNet.XML_COMMENT)) {
                         comment = parser.getElementText();
+                    } else if (nodeName.equals(GermaNet.XML_PARTICLE)) {
+                        particle = parser.getElementText();
+                    } else if (nodeName.equals(GermaNet.XML_BASE_VERB)) {
+                        baseVerb = parser.getElementText();
                     } else if (nodeName.equals(GermaNet.XML_FRAME)) {
                         frames.add(new Frame(parser.getElementText()));
                     } else if (nodeName.equals(GermaNet.XML_EXAMPLE)) {
@@ -229,7 +235,8 @@ class SynsetLoader {
 
         // create a new LexUnit with those attributes
         curLexUnit = new LexUnit(id, parentSynset, sense, styleMarking, artificial,
-                orthForm, orthVar, oldOrthForm, oldOrthVar, comment, namedEntity, source);
+                orthForm, orthVar, oldOrthForm, oldOrthVar, comment, namedEntity, source,
+                particle, baseVerb);
 
         for (Frame frame : frames) {
             curLexUnit.addFrame(frame);

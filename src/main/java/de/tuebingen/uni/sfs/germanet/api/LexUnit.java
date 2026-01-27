@@ -19,9 +19,19 @@
  */
 package de.tuebingen.uni.sfs.germanet.api;
 
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 /**
  * A <code>LexUnit</code> consists of an orthForm (represented as a String),
@@ -82,6 +92,8 @@ public class  LexUnit {
     private Object2ObjectMap<LexRel, ObjectSet<LexUnit>> outgoingRelations;
     private Object2ObjectMap<LexRel, ObjectSet<LexUnit>> incomingRelations;
     private CompoundInfo compoundInfo;
+    private String particle;
+    private String baseVerb;
 
     /**
      * Constructs a <code>LexUnit</code> with the specified attributes.
@@ -101,7 +113,8 @@ public class  LexUnit {
      */
     LexUnit(int id, Synset synset, int sense,
             boolean markedStyle, boolean artificial, String orthForm, String orthVar,
-            String oldOrthForm, String oldOrthVar, String comment, boolean namedEntity, String source) {
+            String oldOrthForm, String oldOrthVar, String comment, boolean namedEntity, 
+            String source, String particle, String baseVerb) {
         this.id = id;
         this.synset = synset;
         this.sense = sense;
@@ -133,6 +146,9 @@ public class  LexUnit {
             allOrthForms.add(oldOrthVar);
         }
         Collections.sort(allOrthForms);
+        
+        this.particle = particle;
+        this.baseVerb = baseVerb;
     }
 
     /**
@@ -601,6 +617,34 @@ public class  LexUnit {
     }
 
     /**
+	 * @return the particle
+	 */
+	public String getParticle() {
+		return particle;
+	}
+
+	/**
+	 * @param particle the particle to set
+	 */
+	public void setParticle(String particle) {
+		this.particle = particle;
+	}
+
+	/**
+	 * @return the baseVerb
+	 */
+	public String getBaseVerb() {
+		return baseVerb;
+	}
+
+	/**
+	 * @param baseVerb the baseVerb to set
+	 */
+	public void setBaseVerb(String baseVerb) {
+		this.baseVerb = baseVerb;
+	}
+
+	/**
      * Return true if this <code>LexUnit</code> is equal to another <code>LexUnit</code>.
      *
      * @param o the <code>LexUnit</code> to compare to
