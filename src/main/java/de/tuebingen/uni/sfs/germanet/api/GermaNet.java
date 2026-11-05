@@ -121,6 +121,10 @@ public class GermaNet {
     public static final String XML_TEXT = "text";
     public static final String XML_EXFRAME = "exframe";
     public static final String XML_FRAME = "frame";
+    public static final String XML_LLM_MODEL = "llmModel";
+    public static final String XML_LLM_VERSION = "llmVersion";
+    public static final String XML_DATE_CREATED = "dateCreated";
+    public static final String XML_EDITED = "edited";
     public static final String XML_RELATIONS = "relations";
     public static final String XML_RELATION = "relation";
     public static final String XML_CON_REL = "con_rel";

@@ -274,6 +274,14 @@ class SynsetLoader {
                         curExample.setText(parser.getElementText());
                     } else if (nodeName.equals(GermaNet.XML_EXFRAME)) {
                         curExample.setFrame(new Frame(parser.getElementText()));
+                    } else if (nodeName.equals(GermaNet.XML_LLM_MODEL)) {
+                        curExample.setLlmModel(parser.getElementText());
+                    } else if (nodeName.equals(GermaNet.XML_LLM_VERSION)) {
+                    	curExample.setLlmVersion(parser.getElementText());
+                    } else if (nodeName.equals(GermaNet.XML_DATE_CREATED)) {
+                    	curExample.setDateCreated(parser.getElementText());
+                    } else if (nodeName.equals(GermaNet.XML_EDITED)) {
+                        curExample.setEdited(Boolean.parseBoolean(parser.getElementText()));
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:

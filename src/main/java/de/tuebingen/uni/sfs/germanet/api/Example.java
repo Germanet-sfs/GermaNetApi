@@ -29,6 +29,10 @@ package de.tuebingen.uni.sfs.germanet.api;
 public class Example {
     private String text;
     private Frame frame = null;
+    private String llmModel;
+    private String llmVersion;
+    private String dateCreated;
+    private Boolean edited;
 
     /**
      * Constructs a new <code>Example</code> with empty text and no
@@ -36,6 +40,10 @@ public class Example {
      */
     protected Example() {
         this.text = "";
+        this.llmModel = null;
+		this.llmVersion = null;
+		this.dateCreated = null;
+		this.edited = false;
     }
 
     /**
@@ -47,7 +55,7 @@ public class Example {
         this.text = text;
     }
 
-    /**
+	/**
      * Replaces the text with the specified text.
      * @param text the new text
      */
@@ -86,6 +94,62 @@ public class Example {
     }
 
     /**
+	 * @return the llmModel
+	 */
+	public String getLlmModel() {
+		return llmModel;
+	}
+
+	/**
+	 * @param llmModel the llmModel to set
+	 */
+	public void setLlmModel(String llmModel) {
+		this.llmModel = llmModel;
+	}
+
+	/**
+	 * @return the llmVersion
+	 */
+	public String getLlmVersion() {
+		return llmVersion;
+	}
+
+	/**
+	 * @param llmVersion the llmVersion to set
+	 */
+	public void setLlmVersion(String llmVersion) {
+		this.llmVersion = llmVersion;
+	}
+
+	/**
+	 * @return the dateCreated
+	 */
+	public String getDateCreated() {
+		return dateCreated;
+	}
+
+	/**
+	 * @param dateCreated the dateCreated to set
+	 */
+	public void setDateCreated(String dateCreated) {
+		this.dateCreated = dateCreated;
+	}
+
+	/**
+	 * @return the edited
+	 */
+	public Boolean getEdited() {
+		return edited;
+	}
+
+	/**
+	 * @param edited the edited to set
+	 */
+	public void setEdited(Boolean edited) {
+		this.edited = edited;
+	}
+
+	/**
      * Return a String representation of this <code>Example</code>.
      * @return a String representation of this <code>Example</code>.
      */
